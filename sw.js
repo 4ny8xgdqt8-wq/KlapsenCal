@@ -1,4 +1,4 @@
-const VERSION = '2.3.8';
+const VERSION = '2.4.0';
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -8,8 +8,17 @@ const ASSETS_TO_CACHE = [
   './css/style.css',
   './js/app.js',
   './logo.png',
+  './favicon.ico',
+  './favicon-32x32.png',
+  './favicon-16x16.png',
+  './apple-touch-icon.png',
+  './apple-touch-icon-180x180.png',
+  './apple-touch-icon-152x152.png',
+  './apple-touch-icon-120x120.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
   './avatars/Daniel.webp',
   './avatars/Daniela.webp',
   './avatars/Peter.webp',
