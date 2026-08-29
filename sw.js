@@ -1,5 +1,5 @@
-const VERSION = '1.0.2';
-const CACHE_NAME = `klapsenwanderung-cache-${VERSION}`;
+const VERSION = '1.0.1';
+const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
   './',
@@ -8,7 +8,6 @@ const ASSETS_TO_CACHE = [
   './css/style.css',
   './js/app.js',
   './logo.png',
-  './logo.svg',
   './avatars/Daniel.webp',
   './avatars/Daniela.webp',
   './avatars/Peter.webp',

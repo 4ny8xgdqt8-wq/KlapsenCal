@@ -31,16 +31,34 @@ enableIndexedDbPersistence(db).catch((err) => {
 // 2. Globale Variablen & State
 // ==========================================
 const DEFAULT_AUTHORS = ["Daniel", "Daniela", "Peter", "Simone", "Tanja", "Thorsten"];
-const DEFAULT_CATEGORIES = ["Wanderung", "Ausflug", "Party / Feier", "Urlaub / Reise", "Sport / Billard", "Essen & Trinken", "Geburtstag", "Sonstiges"];
+const DEFAULT_CATEGORIES = ["Essen", "Konzert", "Veranstaltung", "Geburtstag", "Dart", "Billard", "Sonstiges"];
+
+const CATEGORY_COLORS = {
+    "Essen": { color: "#f97316", bg: "rgba(249, 115, 22, 0.18)", border: "rgba(249, 115, 22, 0.45)" },
+    "Konzert": { color: "#a855f7", bg: "rgba(168, 85, 247, 0.18)", border: "rgba(168, 85, 247, 0.45)" },
+    "Veranstaltung": { color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.18)", border: "rgba(14, 165, 233, 0.45)" },
+    "Geburtstag": { color: "#ec4899", bg: "rgba(236, 72, 153, 0.18)", border: "rgba(236, 72, 153, 0.45)" },
+    "Dart": { color: "#eab308", bg: "rgba(234, 179, 8, 0.18)", border: "rgba(234, 179, 8, 0.45)" },
+    "Billard": { color: "#10b981", bg: "rgba(16, 185, 129, 0.18)", border: "rgba(16, 185, 129, 0.45)" },
+    "Sonstiges": { color: "#94a3b8", bg: "rgba(148, 163, 184, 0.18)", border: "rgba(148, 163, 184, 0.45)" }
+};
+
+function getCategoryColor(cat) {
+    return CATEGORY_COLORS[cat] || { color: "#10b981", bg: "rgba(16, 185, 129, 0.18)", border: "rgba(16, 185, 129, 0.45)" };
+}
 
 let allAuthors = [...DEFAULT_AUTHORS];
 let allCategories = [...DEFAULT_CATEGORIES];
 let allEvents = [];
 let selectedCategory = 'Alle';
-let selectedType = 'Wanderung';
+let selectedType = 'Essen';
 let editingEventId = null;
 let currentDetailData = null;
 let isInitialLoad = true;
+
+let calCurrentYear = new Date().getFullYear();
+let calCurrentMonth = new Date().getMonth();
+let selectedCalendarDate = null;
 
 const MONTH_NAMES_SHORT = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
 const WEEKDAY_NAMES_SHORT = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"];
@@ -61,7 +79,7 @@ window.requestNotificationPermission = async function() {
         if (permission === 'granted') {
             window.showAppModal("Aktiviert! 🔔", "Du erhältst nun Benachrichtigungen, wenn Termine eingetragen oder geändert werden.");
             updateNotificationButton();
-            sendLocalNotification("Klapsenwanderung 🔔", "Benachrichtigungen sind erfolgreich aktiviert!");
+            sendLocalNotification("Klapsentouren 🔔", "Benachrichtigungen sind erfolgreich aktiviert!");
         } else if (permission === 'denied') {
             window.showAppModal("Deaktiviert", "Benachrichtigungen wurden blockiert. Du kannst sie in den Browser-Einstellungen freigeben.");
             updateNotificationButton();
@@ -112,70 +130,160 @@ async function sendLocalNotification(title, body) {
 }
 
 // ==========================================
-// 4. Autoren & Kategorien laden
+// 3.1 Automatische Terminerinnerungen (2h vorher / Vorabend 20 Uhr)
 // ==========================================
-async function loadAuthors() {
-    const select = document.getElementById('event-author');
+function checkUpcomingReminders() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    let sentReminders = {};
     try {
-        const docRef = doc(db, "data_termine", "Ersteller");
-        const docSnap = await getDoc(docRef);
+        sentReminders = JSON.parse(localStorage.getItem('klapsen_sent_reminders') || '{}');
+    } catch (e) {
+        sentReminders = {};
+    }
+
+    const now = new Date();
+
+    allEvents.forEach((ev) => {
+        if (!ev.Datum || !ev.Titel) return;
+
+        const isAllDay = !!ev.isAllDay || !ev.Uhrzeit;
+        const parts = ev.Datum.split('-');
+        if (parts.length !== 3) return;
+
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+
+        if (isAllDay) {
+            // Ganztägiger Termin: Vorabend ab 20:00 Uhr erinnern
+            const eveReminderTime = new Date(year, month, day - 1, 20, 0, 0);
+            const eventDayEnd = new Date(year, month, day, 23, 59, 59);
+
+            const reminderKey = `reminder_allday_${ev.id || ev.Titel}_${ev.Datum}`;
+
+            if (now >= eveReminderTime && now <= eventDayEnd && !sentReminders[reminderKey]) {
+                const isEve = (now.getFullYear() === year && now.getMonth() === month && now.getDate() === day - 1);
+                const titleText = isEve ? `☀️ Erinnerung für morgen: ${ev.Titel}` : `☀️ Heute ganztägig: ${ev.Titel}`;
+                const bodyText = `${isEve ? 'Morgen' : 'Heute'} steht '${ev.Titel}' an!${ev.Ort ? ' (📍 ' + ev.Ort + ')' : ''}`;
+
+                sendLocalNotification(titleText, bodyText);
+                sentReminders[reminderKey] = Date.now();
+            }
+        } else {
+            // Termin mit fester Uhrzeit: 2 Stunden vorher erinnern
+            const timeParts = (ev.Uhrzeit || '00:00').split(':');
+            const hours = parseInt(timeParts[0]) || 0;
+            const minutes = parseInt(timeParts[1]) || 0;
+
+            const eventStartTime = new Date(year, month, day, hours, minutes, 0);
+            const reminderTime = new Date(eventStartTime.getTime() - (2 * 60 * 60 * 1000)); // 2 Std vorher
+
+            const reminderKey = `reminder_timed_${ev.id || ev.Titel}_${ev.Datum}_${ev.Uhrzeit}`;
+
+            if (now >= reminderTime && now < eventStartTime && !sentReminders[reminderKey]) {
+                const titleText = `⏰ In 2 Stunden: ${ev.Titel}`;
+                const bodyText = `Um ${ev.Uhrzeit} Uhr: '${ev.Titel}'${ev.Ort ? ' (📍 ' + ev.Ort + ')' : ''}`;
+
+                sendLocalNotification(titleText, bodyText);
+                sentReminders[reminderKey] = Date.now();
+            }
+        }
+    });
+
+    try {
+        localStorage.setItem('klapsen_sent_reminders', JSON.stringify(sentReminders));
+    } catch (e) {}
+}
+
+// Regelmäßige Prüfung alle 60 Sekunden
+setInterval(checkUpcomingReminders, 60000);
+
+// ==========================================
+// 4. Autoren & Kategorien (Echtzeit aus Firebase)
+// ==========================================
+function initAuthorsListener() {
+    const docRef = doc(db, "data_termine", "Ersteller");
+    onSnapshot(docRef, (docSnap) => {
+        const select = document.getElementById('event-author');
+        const currentVal = select.value;
+
         if (docSnap.exists() && Array.isArray(docSnap.data().names)) {
             allAuthors = docSnap.data().names;
         } else {
+            allAuthors = [...DEFAULT_AUTHORS];
             setDoc(docRef, { names: DEFAULT_AUTHORS }).catch(() => {});
         }
-    } catch (e) {
-        console.warn("Ersteller Fallback verwendet:", e);
-    }
 
-    select.innerHTML = '<option value="" disabled selected>Wähle Ersteller...</option>';
-    allAuthors.forEach((name) => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        select.appendChild(opt);
+        select.innerHTML = '<option value="" disabled selected>Wähle Ersteller...</option>';
+        allAuthors.forEach((name) => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        });
+
+        if (currentVal && allAuthors.includes(currentVal)) {
+            select.value = currentVal;
+        }
+    }, (e) => {
+        console.warn("Ersteller Listener Fehler:", e);
     });
 }
 
-async function loadCategories() {
-    const filterCont = document.getElementById('filter-container');
-    const formChipsCont = document.getElementById('event-type-chips');
+function initCategoriesListener() {
+    const docRef = doc(db, "data_termine", "Art");
 
-    try {
-        const docRef = doc(db, "data_termine", "Art");
-        const docSnap = await getDoc(docRef);
+    // Einmalig die neuen Kategorien in Firebase sicherstellen
+    setDoc(docRef, { typ: DEFAULT_CATEGORIES }).catch((e) => {
+        console.warn("Konnte Kategorien in Firebase nicht schreiben:", e);
+    });
+
+    onSnapshot(docRef, (docSnap) => {
+        const filterCont = document.getElementById('filter-container');
+        const formChipsCont = document.getElementById('event-type-chips');
+
         if (docSnap.exists() && Array.isArray(docSnap.data().typ)) {
             allCategories = docSnap.data().typ;
         } else {
-            setDoc(docRef, { typ: DEFAULT_CATEGORIES }).catch(() => {});
+            allCategories = [...DEFAULT_CATEGORIES];
         }
-    } catch (e) {
-        console.warn("Kategorien Fallback verwendet:", e);
-    }
 
-    // Filter Chips rendern
-    filterCont.innerHTML = '<div class="filter-chip active" onclick="window.selectCategory(\'Alle\', this)">Alle</div>';
-    formChipsCont.innerHTML = '';
+        // Filter Chips in der Hauptansicht
+        filterCont.innerHTML = `<div class="filter-chip ${selectedCategory === 'Alle' ? 'active' : ''}" onclick="window.selectCategory('Alle', this)">Alle</div>`;
+        formChipsCont.innerHTML = '';
 
-    allCategories.forEach((cat, idx) => {
-        const fChip = document.createElement('div');
-        fChip.className = 'filter-chip';
-        fChip.textContent = cat;
-        fChip.onclick = (e) => window.selectCategory(cat, e.currentTarget);
-        filterCont.appendChild(fChip);
+        allCategories.forEach((cat, idx) => {
+            const cStyle = getCategoryColor(cat);
 
-        const sChip = document.createElement('div');
-        sChip.className = `selectable-chip ${idx === 0 ? 'selected' : ''}`;
-        sChip.textContent = cat;
-        sChip.dataset.name = cat;
-        sChip.onclick = () => {
-            selectedType = cat;
-            document.querySelectorAll('#event-type-chips .selectable-chip').forEach(c => c.classList.remove('selected'));
-            sChip.classList.add('selected');
-        };
-        formChipsCont.appendChild(sChip);
+            // Filter Chip
+            const fChip = document.createElement('div');
+            fChip.className = `filter-chip ${selectedCategory === cat ? 'active' : ''}`;
+            fChip.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${cStyle.color}; margin-right:5px; vertical-align:middle;"></span>${cat}`;
+            fChip.onclick = (e) => window.selectCategory(cat, e.currentTarget);
+            filterCont.appendChild(fChip);
+
+            // Formular Chip
+            const sChip = document.createElement('div');
+            sChip.className = `selectable-chip ${selectedType === cat ? 'selected' : (idx === 0 && !selectedType ? 'selected' : '')}`;
+            sChip.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${cStyle.color}; margin-right:6px; vertical-align:middle;"></span>${cat}`;
+            sChip.dataset.name = cat;
+            sChip.onclick = () => {
+                selectedType = cat;
+                document.querySelectorAll('#event-type-chips .selectable-chip').forEach(c => c.classList.remove('selected'));
+                sChip.classList.add('selected');
+            };
+            formChipsCont.appendChild(sChip);
+        });
+
+        if (!allCategories.includes(selectedType)) {
+            selectedType = allCategories[0] || 'Essen';
+        }
+
+        filterAndRender();
+    }, (e) => {
+        console.warn("Kategorien Listener Fehler:", e);
     });
-    selectedType = allCategories[0] || 'Wanderung';
 }
 
 // ==========================================
@@ -215,8 +323,10 @@ function initEventsListener() {
 
         isInitialLoad = false;
         allEvents = list;
+        renderCalendarWidget();
         filterAndRender();
         updateTasksBadge();
+        checkUpcomingReminders();
         
         if (currentDetailData) {
             const refreshed = allEvents.find(e => e.id === currentDetailData.id);
@@ -307,7 +417,8 @@ function renderEvents(events) {
         card.onclick = () => showEventDetails(item);
 
         const dateParts = formatDateObj(item.Datum);
-        const timeStr = item.Uhrzeit ? ` • ⏰ ${item.Uhrzeit} Uhr` : '';
+        const isAllDay = item.isAllDay || !item.Uhrzeit;
+        const timeStr = isAllDay ? ' • ☀️ Ganztägig' : (item.Uhrzeit ? ` • ⏰ ${item.Uhrzeit} Uhr` : '');
         const locationStr = item.Ort ? `<span class="event-location">📍 ${item.Ort}</span>` : '';
         
         const rsvp = item.Teilnehmer || {};
@@ -339,7 +450,7 @@ function renderEvents(events) {
                     ${countdown.badgeText ? `<span class="countdown-badge ${countdown.badgeClass}">${countdown.badgeText}</span>` : ''}
                 </div>
                 <div class="event-meta">
-                    <span class="event-tag">${item.Kategorie || 'Vorhaben'}</span>
+                    <span class="event-tag" style="color: ${getCategoryColor(item.Kategorie).color}; background: ${getCategoryColor(item.Kategorie).bg}; border: 1px solid ${getCategoryColor(item.Kategorie).border}; font-weight: 700;">${item.Kategorie || 'Essen'}</span>
                     ${locationStr}
                     <span>${timeStr}</span>
                 </div>
@@ -353,13 +464,188 @@ function renderEvents(events) {
     });
 }
 
+// ==========================================
+// 7.1 Monats-Kalender Widget Logik
+// ==========================================
+function renderCalendarWidget() {
+    const titleEl = document.getElementById('calendar-month-year');
+    const gridEl = document.getElementById('calendar-days-grid');
+    if (!titleEl || !gridEl) return;
+
+    titleEl.textContent = `${MONTH_NAMES_LONG[calCurrentMonth]} ${calCurrentYear}`;
+
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = now.getMonth();
+    const todayDay = now.getDate();
+    const todayStr = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+
+    // Termine zählen pro Datum
+    const eventDatesMap = {};
+    allEvents.forEach(ev => {
+        if (ev.Datum) {
+            eventDatesMap[ev.Datum] = (eventDatesMap[ev.Datum] || 0) + 1;
+        }
+    });
+
+    gridEl.innerHTML = '';
+
+    // Erster Tag des Monats (Montag = 0, Sonntag = 6)
+    const firstDay = new Date(calCurrentYear, calCurrentMonth, 1);
+    const startDayOfWeek = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(calCurrentYear, calCurrentMonth, 0).getDate();
+
+    // Tage des vorherigen Monats (ausgegraut)
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const d = daysInPrevMonth - i;
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day-cell other-month';
+        cell.textContent = d;
+        gridEl.appendChild(cell);
+    }
+
+    // Tage des aktuellen Monats
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${calCurrentYear}-${String(calCurrentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isToday = (dateStr === todayStr);
+        const isSelected = (dateStr === selectedCalendarDate);
+        const eventsOnDay = allEvents.filter(ev => ev.Datum === dateStr);
+        const hasEvents = eventsOnDay.length > 0;
+
+        const cell = document.createElement('div');
+        let classes = ['calendar-day-cell'];
+        if (isToday) classes.push('today');
+        if (isSelected) classes.push('selected');
+        if (hasEvents) classes.push('has-events');
+
+        cell.className = classes.join(' ');
+        cell.textContent = d;
+        cell.onclick = () => window.selectCalendarDay(dateStr);
+
+        if (hasEvents) {
+            const dayCats = [...new Set(eventsOnDay.map(ev => ev.Kategorie || 'Sonstiges'))];
+            const primaryCatColor = getCategoryColor(dayCats[0]);
+
+            if (!isSelected) {
+                cell.style.background = primaryCatColor.bg;
+            }
+
+            const dotsRow = document.createElement('div');
+            dotsRow.className = 'event-dots-row';
+
+            // Für jedes Event an diesem Tag einen farbigen Punkt anzeigen (bis zu 4)
+            eventsOnDay.slice(0, 4).forEach(ev => {
+                const catStyle = getCategoryColor(ev.Kategorie);
+                const dot = document.createElement('span');
+                dot.className = 'event-dot';
+                if (isSelected) {
+                    dot.style.background = '#064e3b';
+                    dot.style.boxShadow = 'none';
+                } else {
+                    dot.style.background = catStyle.color;
+                    dot.style.boxShadow = `0 0 3px ${catStyle.color}`;
+                }
+                dotsRow.appendChild(dot);
+            });
+
+            cell.appendChild(dotsRow);
+        }
+
+        gridEl.appendChild(cell);
+    }
+
+    // Tage des nächsten Monats auffüllen
+    const totalCellsSoFar = startDayOfWeek + daysInMonth;
+    const nextPadding = totalCellsSoFar % 7 === 0 ? 0 : 7 - (totalCellsSoFar % 7);
+    for (let d = 1; d <= nextPadding; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day-cell other-month';
+        cell.textContent = d;
+        gridEl.appendChild(cell);
+    }
+}
+window.renderCalendarWidget = renderCalendarWidget;
+
+window.navCalendarMonth = function(delta) {
+    calCurrentMonth += delta;
+    if (calCurrentMonth > 11) {
+        calCurrentMonth = 0;
+        calCurrentYear += 1;
+    } else if (calCurrentMonth < 0) {
+        calCurrentMonth = 11;
+        calCurrentYear -= 1;
+    }
+    renderCalendarWidget();
+};
+
+window.navCalendarToday = function() {
+    const today = new Date();
+    calCurrentYear = today.getFullYear();
+    calCurrentMonth = today.getMonth();
+    selectedCalendarDate = null;
+    renderCalendarWidget();
+    filterAndRender();
+};
+
+window.clearDateFilter = function() {
+    selectedCalendarDate = null;
+    renderCalendarWidget();
+    filterAndRender();
+};
+
+window.selectCalendarDay = function(dateStr) {
+    if (selectedCalendarDate === dateStr) {
+        selectedCalendarDate = null;
+    } else {
+        selectedCalendarDate = dateStr;
+    }
+    renderCalendarWidget();
+    filterAndRender();
+};
+
 function filterAndRender() {
     const searchEl = document.getElementById('event-search');
     const sortEl = document.getElementById('event-sort');
+    const sectionTitleEl = document.getElementById('events-section-title');
+    const clearBtn = document.getElementById('btn-clear-date-filter');
+
     const query = (searchEl ? searchEl.value : '').toLowerCase().trim();
     const sortType = sortEl ? sortEl.value : 'upcoming';
 
-    const filtered = allEvents.filter(ev => {
+    const now = new Date();
+    const nowStr = now.toISOString().split('T')[0];
+    
+    // 30 Tage Limit
+    const future30 = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+    const future30Str = future30.toISOString().split('T')[0];
+
+    let filtered = [];
+
+    if (selectedCalendarDate) {
+        // Bestimmter Tag im Kalender ausgewählt
+        filtered = allEvents.filter(ev => ev.Datum === selectedCalendarDate);
+        const formatted = formatDateObj(selectedCalendarDate).formattedLong;
+        if (sectionTitleEl) sectionTitleEl.textContent = `Termine am ${formatted}`;
+        if (clearBtn) clearBtn.style.display = 'inline-block';
+    } else {
+        // Standard: Anstehend in den nächsten 30 Tagen (oder Vollsuche bei Textsuche)
+        filtered = allEvents.filter(ev => {
+            if (!ev.Datum) return false;
+            if (query) return true;
+            return ev.Datum >= nowStr && ev.Datum <= future30Str;
+        });
+
+        if (sectionTitleEl) {
+            sectionTitleEl.textContent = query 
+                ? `Suchergebnisse (${filtered.length})` 
+                : `Anstehend (nächste 30 Tage • ${filtered.length})`;
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+    }
+
+    // Filter nach Kategorie & Query
+    filtered = filtered.filter(ev => {
         const matchesCategory = (selectedCategory === 'Alle') || (ev.Kategorie === selectedCategory);
         const matchesQuery = !query || 
             (ev.Titel && ev.Titel.toLowerCase().includes(query)) ||
@@ -369,6 +655,7 @@ function filterAndRender() {
         return matchesCategory && matchesQuery;
     });
 
+    // Sortierung
     filtered.sort((a, b) => {
         const dateA = a.Datum || '9999-99-99';
         const dateB = b.Datum || '9999-99-99';
@@ -378,18 +665,11 @@ function filterAndRender() {
         const fullB = `${dateB}T${timeB}`;
 
         if (sortType === 'upcoming') {
-            const nowStr = new Date().toISOString().split('T')[0];
-            const isPastA = a.Datum < nowStr;
-            const isPastB = b.Datum < nowStr;
-            if (isPastA && !isPastB) return 1;
-            if (!isPastA && isPastB) return -1;
             return fullA.localeCompare(fullB);
         } else if (sortType === 'newest') {
             const tA = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0;
             const tB = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0;
             return tB - tA;
-        } else if (sortType === 'oldest') {
-            return fullA.localeCompare(fullB);
         } else if (sortType === 'alpha') {
             return (a.Titel || '').localeCompare(b.Titel || '', 'de');
         }
@@ -416,7 +696,14 @@ function showEventDetails(data) {
     const countdown = getCountdownInfo(data.Datum);
 
     document.getElementById('detail-title').textContent = data.Titel;
-    document.getElementById('detail-category-tag').textContent = data.Kategorie || 'Vorhaben';
+    
+    const catTag = document.getElementById('detail-category-tag');
+    const catColor = getCategoryColor(data.Kategorie);
+    catTag.textContent = data.Kategorie || 'Sonstiges';
+    catTag.style.color = catColor.color;
+    catTag.style.background = catColor.bg;
+    catTag.style.borderColor = catColor.border;
+    catTag.style.fontWeight = '700';
     
     const cdContainer = document.getElementById('detail-countdown');
     if (countdown.badgeText) {
@@ -427,30 +714,31 @@ function showEventDetails(data) {
     }
 
     const startFormatted = formatDateObj(data.Datum).formattedLong;
-    const endFormatted = data.Enddatum ? ` bis ${formatDateObj(data.Enddatum).formattedLong}` : '';
-    document.getElementById('detail-date-str').textContent = `${startFormatted}${endFormatted}`;
-    document.getElementById('detail-time-str').textContent = data.Uhrzeit ? `${data.Uhrzeit} Uhr` : 'Ganztägig / flexibel';
+    const isAllDay = data.isAllDay || !data.Uhrzeit;
+    document.getElementById('detail-date-str').textContent = startFormatted;
+    document.getElementById('detail-time-str').textContent = isAllDay ? '☀️ Ganztägig' : `${data.Uhrzeit} Uhr`;
     document.getElementById('detail-location-str').textContent = data.Ort || 'Wird noch bekanntgegeben';
     document.getElementById('detail-author-str').textContent = data.Ersteller || 'Unbekannt';
 
-    const mapsBtn = document.getElementById('btn-open-maps');
-    const linkBtn = document.getElementById('btn-open-link');
-    
-    if (data.OrtLink) {
-        mapsBtn.href = data.OrtLink;
-        mapsBtn.style.display = 'flex';
-    } else if (data.Ort) {
-        mapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.Ort)}`;
-        mapsBtn.style.display = 'flex';
-    } else {
-        mapsBtn.style.display = 'none';
+    const authorAvatarImg = document.getElementById('detail-author-avatar');
+    if (authorAvatarImg) {
+        if (data.Ersteller) {
+            authorAvatarImg.src = `avatars/${data.Ersteller}.webp`;
+            authorAvatarImg.onerror = () => { authorAvatarImg.src = 'logo.png'; };
+        } else {
+            authorAvatarImg.src = 'logo.png';
+        }
     }
 
-    if (data.Link) {
-        linkBtn.href = data.Link;
-        linkBtn.style.display = 'flex';
+    const linkBtn = document.getElementById('btn-open-link');
+    const actionsCont = document.getElementById('detail-actions-container');
+    const targetLink = data.OrtLink || data.Link;
+    
+    if (targetLink) {
+        linkBtn.href = targetLink;
+        if (actionsCont) actionsCont.style.display = 'flex';
     } else {
-        linkBtn.style.display = 'none';
+        if (actionsCont) actionsCont.style.display = 'none';
     }
 
     renderDetailRSVP(data);
@@ -531,7 +819,7 @@ function renderDetailChecklist(data) {
         <div class="checklist-item-row ${item.checked ? 'checked' : ''}" onclick="window.toggleEventTask(${idx})">
             <div class="checklist-checkbox">✓</div>
             <span class="checklist-name">${item.name}</span>
-            ${item.assignedTo ? `<span class="checklist-assignee">👤 ${item.assignedTo}</span>` : ''}
+            ${item.assignedTo ? `<span class="checklist-assignee">${item.assignedTo.includes('und') ? '👫' : '👤'} ${item.assignedTo}</span>` : ''}
         </div>
     `).join('');
 }
@@ -559,50 +847,7 @@ window.closeEventDetails = function() {
 };
 
 // ==========================================
-// 9. Kalender Export (.ics)
-// ==========================================
-window.exportToICS = function() {
-    if (!currentDetailData) return;
-    const ev = currentDetailData;
-    const startDate = (ev.Datum || '').replace(/-/g, '');
-    const startTime = (ev.Uhrzeit || '00:00').replace(/:/g, '') + '00';
-    const startICS = `${startDate}T${startTime}`;
-
-    let endICS = startICS;
-    if (ev.Enddatum) {
-        const endDate = ev.Enddatum.replace(/-/g, '');
-        endICS = `${endDate}T235959`;
-    }
-
-    const icsContent = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Klapsenwanderung//DE',
-        'CALSCALE:GREGORIAN',
-        'BEGIN:VEVENT',
-        `SUMMARY:${ev.Titel || 'Klapsen-Termin'}`,
-        `DESCRIPTION:${(ev.Beschreibung || '').replace(/\n/g, '\\n')}`,
-        `LOCATION:${ev.Ort || ''}`,
-        `DTSTART:${startICS}`,
-        `DTEND:${endICS}`,
-        `STATUS:CONFIRMED`,
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ].join('\r\n');
-
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', `${(ev.Titel || 'Termin').replace(/\s+/g, '_')}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    window.showAppModal("Kalender-Export", "Die .ics Kalenderdatei wurde heruntergeladen!");
-};
-
-// ==========================================
-// 10. Aufgaben / Mitbringsel Tab
+// 9. Aufgaben / Mitbringsel Tab
 // ==========================================
 function renderAllTasks() {
     const container = document.getElementById('all-tasks-container');
@@ -633,7 +878,7 @@ function renderAllTasks() {
             <div class="checklist-item-row ${item.checked ? 'checked' : ''}" onclick="window.toggleGlobalTask('${ev.id}', ${idx})">
                 <div class="checklist-checkbox">✓</div>
                 <span class="checklist-name">${item.name}</span>
-                ${item.assignedTo ? `<span class="checklist-assignee">👤 ${item.assignedTo}</span>` : ''}
+                ${item.assignedTo ? `<span class="checklist-assignee">${item.assignedTo.includes('und') ? '👫' : '👤'} ${item.assignedTo}</span>` : ''}
             </div>
         `).join('');
 
@@ -694,13 +939,25 @@ window.addItemBuilderRow = function(name = '', assignedTo = '') {
     const row = document.createElement('div');
     row.className = 'item-builder-row';
 
-    const authorOptions = allAuthors.map(a => `<option value="${a}" ${assignedTo === a ? 'selected' : ''}>${a}</option>`).join('');
+    const couples = [
+        "Daniela und Daniel",
+        "Simone und Peter",
+        "Tanja und Thorsten"
+    ];
+
+    const coupleOptions = couples.map(c => `<option value="${c}" ${assignedTo === c ? 'selected' : ''}>👫 ${c}</option>`).join('');
+    const singleOptions = allAuthors.map(a => `<option value="${a}" ${assignedTo === a ? 'selected' : ''}>👤 ${a}</option>`).join('');
 
     row.innerHTML = `
         <input type="text" class="form-control item-name-input" placeholder="z.B. Grillkohle, Salat, Kasten Bier..." value="${name}" style="flex: 2;" required>
-        <select class="form-control item-assignee-select" style="flex: 1.2;">
+        <select class="form-control item-assignee-select" style="flex: 1.3;">
             <option value="">Wer bringt's mit?</option>
-            ${authorOptions}
+            <optgroup label="Paare / Teams">
+                ${coupleOptions}
+            </optgroup>
+            <optgroup label="Einzeln">
+                ${singleOptions}
+            </optgroup>
         </select>
         <button type="button" class="btn-remove-item" onclick="this.closest('.item-builder-row').remove()">✕</button>
     `;
@@ -715,7 +972,15 @@ function resetForm() {
     document.getElementById('author-avatar').src = 'logo.png';
     document.getElementById('items-builder-container').innerHTML = '';
     
-    selectedType = allCategories[0] || 'Wanderung';
+    const allDayCheckbox = document.getElementById('event-all-day');
+    if (allDayCheckbox) allDayCheckbox.checked = false;
+    const timeGroup = document.getElementById('time-group');
+    if (timeGroup) {
+        timeGroup.style.opacity = '1';
+        timeGroup.style.pointerEvents = 'auto';
+    }
+
+    selectedType = allCategories[0] || 'Essen';
     document.querySelectorAll('#event-type-chips .selectable-chip').forEach((c, idx) => {
         c.classList.toggle('selected', idx === 0);
     });
@@ -737,7 +1002,16 @@ window.editEventFromDetail = function() {
     document.getElementById('event-title').value = data.Titel || '';
     document.getElementById('event-date').value = data.Datum || '';
     document.getElementById('event-time').value = data.Uhrzeit || '';
-    document.getElementById('event-end-date').value = data.Enddatum || '';
+
+    const isAllDay = !!data.isAllDay || !data.Uhrzeit;
+    const allDayCheckbox = document.getElementById('event-all-day');
+    if (allDayCheckbox) allDayCheckbox.checked = isAllDay;
+    const timeGroup = document.getElementById('time-group');
+    if (timeGroup) {
+        timeGroup.style.opacity = isAllDay ? '0.35' : '1';
+        timeGroup.style.pointerEvents = isAllDay ? 'none' : 'auto';
+    }
+
     document.getElementById('event-location').value = data.Ort || '';
     document.getElementById('event-link').value = data.OrtLink || data.Link || '';
     document.getElementById('event-description').value = data.Beschreibung || '';
@@ -798,13 +1072,12 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
     const title = document.getElementById('event-title').value.trim();
     const date = document.getElementById('event-date').value;
     const time = document.getElementById('event-time').value;
-    const endDate = document.getElementById('event-end-date').value;
     const location = document.getElementById('event-location').value.trim();
     const link = document.getElementById('event-link').value.trim();
     const description = document.getElementById('event-description').value.trim();
 
     if (!author || !title || !date) {
-        window.showAppModal("Angaben fehlen", "Bitte fülle Ersteller, Titel und Startdatum aus!");
+        window.showAppModal("Angaben fehlen", "Bitte fülle Ersteller, Titel und Datum aus!");
         return;
     }
 
@@ -825,15 +1098,17 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
         existingRsvp[author] = 'yes';
     }
 
+    const isAllDay = document.getElementById('event-all-day').checked || !time;
+
     const eventData = {
         Ersteller: author,
         Titel: title,
         Datum: date,
-        Uhrzeit: time || '',
-        Enddatum: endDate || '',
+        Uhrzeit: isAllDay ? '' : time,
+        isAllDay: isAllDay,
         Ort: location || '',
         OrtLink: link || '',
-        Kategorie: selectedType || 'Vorhaben',
+        Kategorie: selectedType || 'Essen',
         Beschreibung: description || '',
         Mitbringliste: items,
         Teilnehmer: existingRsvp,
@@ -880,13 +1155,29 @@ document.getElementById('event-author').addEventListener('change', (e) => {
     img.onerror = () => { img.src = 'logo.png'; };
 });
 
+const allDayCheckbox = document.getElementById('event-all-day');
+const timeGroup = document.getElementById('time-group');
+if (allDayCheckbox && timeGroup) {
+    allDayCheckbox.addEventListener('change', () => {
+        if (allDayCheckbox.checked) {
+            timeGroup.style.opacity = '0.35';
+            timeGroup.style.pointerEvents = 'none';
+            document.getElementById('event-time').value = '';
+        } else {
+            timeGroup.style.opacity = '1';
+            timeGroup.style.pointerEvents = 'auto';
+        }
+    });
+}
+
 // ==========================================
 // 12. Initialisierung beim Laden
 // ==========================================
 signInAnonymously(auth).then(() => {
-    console.log("Klapsenwanderung: Anonym bei Firebase angemeldet.");
-    loadAuthors();
-    loadCategories();
+    console.log("Klapsentouren: Anonym bei Firebase angemeldet.");
+    renderCalendarWidget();
+    initAuthorsListener();
+    initCategoriesListener();
     initEventsListener();
     updateNotificationButton();
 }).catch((error) => {

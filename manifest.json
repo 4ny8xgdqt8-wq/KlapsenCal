@@ -1,6 +1,6 @@
 {
-  "name": "Klapsenwanderung",
-  "short_name": "Klapsenwanderung",
+  "name": "Klapsentouren",
+  "short_name": "Klapsentouren",
   "description": "Gruppen-Kalender & Event-Planer für die Klapse",
   "start_url": "index.html",
   "display": "standalone",

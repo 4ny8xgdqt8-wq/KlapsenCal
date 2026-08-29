@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Klapsenwanderung</title>
+    <title>Klapsentouren</title>
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Klapsenwanderung">
+    <meta name="apple-mobile-web-app-title" content="Klapsentouren">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="shortcut icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
@@ -25,8 +25,8 @@
 
 <!-- Splash Screen -->
 <div id="splash-screen">
-    <img src="logo.png" alt="Klapsenwanderung Logo" onerror="this.src='logo.svg'">
-    <h1>Klapsenwanderung</h1>
+    <img src="logo.png" alt="Klapsentouren Logo">
+    <h1>Klapsentouren</h1>
     <div class="splash-subtitle">Gruppen-Planer & Termine</div>
     <div class="version" id="app-version">Lade...</div>
 </div>
@@ -34,10 +34,10 @@
 <!-- Header -->
 <header>
     <div class="header-side">
-        <img src="logo.png" class="logo-img" onerror="this.src='logo.svg'" alt="Logo">
+        <img src="logo.png" class="logo-img" alt="Logo">
     </div>
     <div class="title-stack">
-        <div class="main-title">Klapsenwanderung</div>
+        <div class="main-title">Klapsentouren</div>
         <div class="sub-title" id="header-sub-title">Termine & Vorhaben</div>
     </div>
     <div class="header-side right" style="gap: 6px;">
@@ -51,23 +51,44 @@
 
     <!-- TAB 1: Termine Übersicht -->
     <div id="termine" class="tab-content active">
-        <!-- Suche -->
-        <div class="search-container">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="event-search" class="search-input" placeholder="Termine, Orte, Ersteller suchen...">
+        <!-- Monats-Kalender Widget -->
+        <div class="calendar-widget" id="calendar-widget">
+            <div class="calendar-header">
+                <button type="button" class="calendar-nav-btn" onclick="window.navCalendarMonth(-1)" title="Vorheriger Monat">‹</button>
+                <div class="calendar-month-title" id="calendar-month-year">Monat 2026</div>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="calendar-today-btn" onclick="window.navCalendarToday()">Heute</button>
+                    <button type="button" class="calendar-nav-btn" onclick="window.navCalendarMonth(1)" title="Nächster Monat">›</button>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+            </div>
+            <div class="calendar-days-grid" id="calendar-days-grid"></div>
         </div>
 
-        <!-- Sortierung -->
-        <select id="event-sort" class="sort-select" onchange="filterAndRender()">
-            <option value="upcoming">🗓️ Nächste Termine zuerst</option>
-            <option value="newest">✨ Neueste Einträge zuerst</option>
-            <option value="oldest">⏳ Älteste Einträge</option>
-            <option value="alpha">🔤 Alphabetisch (A-Z)</option>
-        </select>
+        <!-- Abschnitts-Titel & Zurück-Button -->
+        <div class="section-header-row">
+            <div id="events-section-title" class="section-title">Anstehend (nächste 30 Tage)</div>
+            <button id="btn-clear-date-filter" class="btn-clear-filter" style="display:none;" onclick="window.clearDateFilter()">✕ 30 Tage anzeigen</button>
+        </div>
 
         <!-- Kategorien Filter Chips -->
         <div class="filter-chips" id="filter-container">
             <div class="filter-chip active" onclick="selectCategory('Alle', this)">Alle</div>
+        </div>
+
+        <!-- Suche & Sortierung (Kompakt) -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <div class="search-container" style="flex: 1; margin: 0;">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="event-search" class="search-input" placeholder="Suchen...">
+            </div>
+            <select id="event-sort" class="sort-select" style="margin: 0; width: auto; max-width: 140px; font-size: 0.8rem; padding: 0 10px;" onchange="filterAndRender()">
+                <option value="upcoming">🗓️ Chronologisch</option>
+                <option value="newest">✨ Neueste</option>
+                <option value="alpha">🔤 A-Z</option>
+            </select>
         </div>
 
         <!-- Termine Liste Container -->
@@ -81,7 +102,7 @@
             <div class="form-group">
                 <label>Ersteller</label>
                 <div class="author-select-wrapper">
-                    <img id="author-avatar" src="logo.png" class="author-avatar-preview" onerror="this.src='logo.svg'" alt="Avatar">
+                    <img id="author-avatar" src="logo.png" class="author-avatar-preview" alt="Avatar">
                     <select id="event-author" class="form-control" style="flex: 1;" required>
                         <option value="" disabled selected>Wähle Ersteller...</option>
                     </select>
@@ -96,20 +117,20 @@
 
             <!-- Datum & Uhrzeit -->
             <div class="form-row">
-                <div class="form-group">
-                    <label>Startdatum</label>
+                <div class="form-group" style="flex: 1.2;">
+                    <label>Datum</label>
                     <input type="date" id="event-date" class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label>Uhrzeit (optional)</label>
+                <div class="form-group" id="time-group" style="flex: 1;">
+                    <label>Uhrzeit</label>
                     <input type="time" id="event-time" class="form-control">
                 </div>
             </div>
 
-            <!-- Optionales Enddatum für mehrtägige Events -->
-            <div class="form-group">
-                <label>Enddatum (optional für Wochenendtrips/Urlaub)</label>
-                <input type="date" id="event-end-date" class="form-control">
+            <!-- Ganztägig Checkbox Toggle -->
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: -6px; margin-bottom: 8px;">
+                <input type="checkbox" id="event-all-day" style="width: 18px; height: 18px; accent-color: var(--primary-color); cursor: pointer;">
+                <label for="event-all-day" style="font-size: 0.85rem; color: #cbd5e1; cursor: pointer; user-select: none; margin: 0;">☀️ Ganztägiger Termin (ohne Uhrzeit)</label>
             </div>
 
             <!-- Ort & Treffpunkt -->
@@ -216,7 +237,7 @@
                 </div>
             </div>
             <div class="meta-item">
-                <span class="meta-icon">👤</span>
+                <img id="detail-author-avatar" src="logo.png" class="author-avatar-img" style="width: 36px; height: 36px; border: 2px solid var(--primary-color);" alt="Avatar">
                 <div class="meta-text-stack">
                     <span class="meta-label">Erstellt von</span>
                     <span class="meta-value" id="detail-author-str">Admin</span>
@@ -224,17 +245,11 @@
             </div>
         </div>
 
-        <!-- Action Buttons (Maps & Kalender Export) -->
-        <div class="detail-action-buttons">
-            <a id="btn-open-maps" href="#" target="_blank" class="btn-action-tile" style="display: none;">
-                <span>🗺️</span> <span>In Maps öffnen</span>
+        <!-- Action Buttons (Web-Link) -->
+        <div class="detail-action-buttons" id="detail-actions-container" style="display: none;">
+            <a id="btn-open-link" href="#" target="_blank" class="btn-action-tile">
+                <span>🔗</span> <span>Weblink / Info öffnen</span>
             </a>
-            <a id="btn-open-link" href="#" target="_blank" class="btn-action-tile" style="display: none;">
-                <span>🔗</span> <span>Link öffnen</span>
-            </a>
-            <div class="btn-action-tile primary" onclick="exportToICS()">
-                <span>📥</span> <span>Kalender-Export</span>
-            </div>
         </div>
 
         <!-- Interaktive Teilnehmer-Runde (Wer ist dabei?) -->
@@ -311,7 +326,7 @@
             'neu': 'Termin anlegen',
             'aufgaben': 'Mitbringsel & Aufgaben'
         };
-        document.getElementById('header-sub-title').textContent = subTitles[tabId] || 'Klapsenwanderung';
+        document.getElementById('header-sub-title').textContent = subTitles[tabId] || 'Klapsentouren';
     }
     window.switchTab = switchTab;
 
@@ -336,12 +351,13 @@
     window.minTimePassed = false;
     window.firebaseDataReceived = false;
 
-    window.attemptHideSplash = function() {
-        if (window.minTimePassed && window.firebaseDataReceived) {
+    window.attemptHideSplash = function(force = false) {
+        if (force || (window.minTimePassed && window.firebaseDataReceived)) {
             const splash = document.getElementById('splash-screen');
             if (splash && !splash.classList.contains('hidden')) {
                 splash.classList.add('hidden');
-                document.querySelector('.tab-bar').classList.add('visible');
+                const tabBar = document.querySelector('.tab-bar');
+                if (tabBar) tabBar.classList.add('visible');
             }
         }
     };
@@ -350,7 +366,7 @@
         setTimeout(() => {
             window.minTimePassed = true;
             window.attemptHideSplash();
-        }, 1500);
+        }, 1200);
 
         setTimeout(() => {
             const activeTab = document.querySelector('.tab-item.active');
@@ -361,6 +377,13 @@
             }
         }, 300);
     });
+
+    // Sicherheits-Timer: Nach maximal 2.5 Sekunden immer einblenden
+    setTimeout(() => {
+        window.minTimePassed = true;
+        window.firebaseDataReceived = true;
+        window.attemptHideSplash(true);
+    }, 2500);
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');
