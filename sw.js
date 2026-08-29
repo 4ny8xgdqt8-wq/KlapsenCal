@@ -1,4 +1,4 @@
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const CACHE_NAME = `klapsencal-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -79,6 +79,25 @@ self.addEventListener('fetch', (event) => {
     }).catch(() => {
       if (event.request.mode === 'navigate') {
         return caches.match('./index.html');
+      }
+    })
+  );
+});
+
+// Notification Click Handling
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || './index.html';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes('index.html') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
       }
     })
   );

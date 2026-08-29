@@ -40,6 +40,7 @@ let selectedCategory = 'Alle';
 let selectedType = 'Wanderung';
 let editingEventId = null;
 let currentDetailData = null;
+let isInitialLoad = true;
 
 const MONTH_NAMES_SHORT = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
 const WEEKDAY_NAMES_SHORT = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"];
@@ -47,7 +48,71 @@ const MONTH_NAMES_LONG = ["Januar", "Februar", "März", "April", "Mai", "Juni", 
 const WEEKDAY_NAMES_LONG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 
 // ==========================================
-// 3. Autoren & Kategorien laden
+// 3. Benachrichtigungen (Push & Local)
+// ==========================================
+window.requestNotificationPermission = async function() {
+    if (!('Notification' in window)) {
+        window.showAppModal("Nicht unterstützt", "Dieser Browser unterstützt leider keine Benachrichtigungen.");
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            window.showAppModal("Aktiviert! 🔔", "Du erhältst nun Benachrichtigungen, wenn Termine eingetragen oder geändert werden.");
+            updateNotificationButton();
+            sendLocalNotification("KlapsenCal 🔔", "Benachrichtigungen sind erfolgreich aktiviert!");
+        } else if (permission === 'denied') {
+            window.showAppModal("Deaktiviert", "Benachrichtigungen wurden blockiert. Du kannst sie in den Browser-Einstellungen freigeben.");
+            updateNotificationButton();
+        }
+    } catch (e) {
+        console.error("Fehler bei Benachrichtigungs-Berechtigung:", e);
+    }
+};
+
+function updateNotificationButton() {
+    const btn = document.getElementById('btn-toggle-notifications');
+    if (!btn) return;
+    if ('Notification' in window && Notification.permission === 'granted') {
+        btn.textContent = '🔔';
+        btn.title = 'Benachrichtigungen aktiv';
+        btn.style.opacity = '1';
+    } else {
+        btn.textContent = '🔕';
+        btn.title = 'Benachrichtigungen aktivieren';
+        btn.style.opacity = '0.6';
+    }
+}
+
+async function sendLocalNotification(title, body) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const reg = await navigator.serviceWorker.ready;
+            if (reg && reg.showNotification) {
+                reg.showNotification(title, {
+                    body: body,
+                    icon: 'logo.png',
+                    badge: 'icons/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    data: { url: './index.html' }
+                });
+                return;
+            }
+        }
+        new Notification(title, {
+            body: body,
+            icon: 'logo.png'
+        });
+    } catch (e) {
+        console.warn("Konnte Benachrichtigung nicht senden:", e);
+    }
+}
+
+// ==========================================
+// 4. Autoren & Kategorien laden
 // ==========================================
 async function loadAuthors() {
     const select = document.getElementById('event-author');
@@ -114,7 +179,7 @@ async function loadCategories() {
 }
 
 // ==========================================
-// 4. Firestore Realtime Listener
+// 5. Firestore Realtime Listener
 // ==========================================
 function initEventsListener() {
     const colRef = collection(db, "data_termine");
@@ -128,6 +193,27 @@ function initEventsListener() {
             }
         });
 
+        // Benachrichtigung bei neuem oder aktualisiertem Termin (nach initialem Laden)
+        if (!isInitialLoad) {
+            snapshot.docChanges().forEach((change) => {
+                const item = change.doc.data();
+                if (change.doc.id === "Ersteller" || change.doc.id === "Art" || !item.Titel) return;
+
+                if (change.type === "added") {
+                    sendLocalNotification(
+                        `Neuer Termin! 📅`,
+                        `${item.Ersteller || 'Jemand'} hat '${item.Titel}' (${item.Datum}) eingetragen.`
+                    );
+                } else if (change.type === "modified" && item.lastAction === "update") {
+                    sendLocalNotification(
+                        `Termin aktualisiert 🔄`,
+                        `'${item.Titel}' wurde aktualisiert.`
+                    );
+                }
+            });
+        }
+
+        isInitialLoad = false;
         allEvents = list;
         filterAndRender();
         updateTasksBadge();
@@ -150,7 +236,7 @@ function initEventsListener() {
 }
 
 // ==========================================
-// 5. Datums- & Countdown-Helfer
+// 6. Datums- & Countdown-Helfer
 // ==========================================
 function getCountdownInfo(dateStr) {
     if (!dateStr) return { badgeText: '', badgeClass: 'past', daysDiff: -999 };
@@ -196,7 +282,7 @@ function formatDateObj(dateStr) {
 }
 
 // ==========================================
-// 6. Termine Rendern & Filtern
+// 7. Termine Rendern & Filtern
 // ==========================================
 function renderEvents(events) {
     const container = document.getElementById('event-list-container');
@@ -322,7 +408,7 @@ window.selectCategory = function(name, el) {
 };
 
 // ==========================================
-// 7. Event Detail Modal & RSVP
+// 8. Event Detail Modal & RSVP
 // ==========================================
 function showEventDetails(data) {
     currentDetailData = data;
@@ -473,7 +559,7 @@ window.closeEventDetails = function() {
 };
 
 // ==========================================
-// 8. Kalender Export (.ics)
+// 9. Kalender Export (.ics)
 // ==========================================
 window.exportToICS = function() {
     if (!currentDetailData) return;
@@ -516,7 +602,7 @@ window.exportToICS = function() {
 };
 
 // ==========================================
-// 9. Aufgaben / Mitbringsel Tab
+// 10. Aufgaben / Mitbringsel Tab
 // ==========================================
 function renderAllTasks() {
     const container = document.getElementById('all-tasks-container');
@@ -601,7 +687,7 @@ function updateTasksBadge() {
 }
 
 // ==========================================
-// 10. Formular Logik (Neu / Bearbeiten)
+// 11. Formular Logik (Neu / Bearbeiten)
 // ==========================================
 window.addItemBuilderRow = function(name = '', assignedTo = '') {
     const container = document.getElementById('items-builder-container');
@@ -795,17 +881,17 @@ document.getElementById('event-author').addEventListener('change', (e) => {
 });
 
 // ==========================================
-// 11. Initialisierung beim Laden
+// 12. Initialisierung beim Laden
 // ==========================================
 signInAnonymously(auth).then(() => {
     console.log("KlapsenCal: Anonym bei Firebase angemeldet.");
     loadAuthors();
     loadCategories();
     initEventsListener();
+    updateNotificationButton();
 }).catch((error) => {
     console.error("Login Fehler:", error);
     window.firebaseDataReceived = true;
     if (typeof window.attemptHideSplash === 'function') window.attemptHideSplash();
     window.showAppModal("Offline-Modus", "Anmeldung bei Firebase nicht möglich. Offline-Daten werden geladen.");
 });
-

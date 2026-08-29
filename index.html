@@ -40,7 +40,8 @@
         <div class="main-title">KlapsenCal</div>
         <div class="sub-title" id="header-sub-title">Termine & Vorhaben</div>
     </div>
-    <div class="header-side right">
+    <div class="header-side right" style="gap: 6px;">
+        <button class="btn-header-action" id="btn-toggle-notifications" onclick="window.requestNotificationPermission()" title="Benachrichtigungen aktivieren">🔔</button>
         <button class="btn-header-action" onclick="window.forceUpdate()" title="Update suchen">🔄</button>
     </div>
 </header>
