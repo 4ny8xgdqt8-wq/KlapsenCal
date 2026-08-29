@@ -133,6 +133,27 @@
                 <label for="event-all-day" style="font-size: 0.85rem; color: #cbd5e1; cursor: pointer; user-select: none; margin: 0;">☀️ Ganztägiger Termin (ohne Uhrzeit)</label>
             </div>
 
+            <!-- Wiederholung (Serientermin) -->
+            <div class="form-group">
+                <label>🔁 Wiederholung</label>
+                <div class="recurrence-select-row" style="display: flex; gap: 8px; width: 100%;">
+                    <select id="event-recurrence" class="form-control" style="flex: 1.2; min-width: 0;">
+                        <option value="none" selected>Einmalig (keine Wiederholung)</option>
+                        <option value="weekly">🔁 Wöchentlich</option>
+                        <option value="biweekly">🔁 Alle 2 Wochen</option>
+                        <option value="monthly">🔁 Monatlich</option>
+                        <option value="yearly">🔁 Jährlich</option>
+                    </select>
+                    <select id="event-recurrence-duration" class="form-control" style="flex: 1; min-width: 0; display: none;">
+                        <option value="forever" selected>♾️ Immer</option>
+                        <option value="1y">1 Jahr</option>
+                        <option value="2y">2 Jahre</option>
+                        <option value="6m">6 Monate</option>
+                        <option value="3m">3 Monate</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Ort & Treffpunkt -->
             <div class="form-group">
                 <label>Ort / Treffpunkt</label>
@@ -290,7 +311,10 @@
         <div class="detail-title-section" style="padding-right: 130px;">
             <div id="detail-countdown" style="margin-bottom: 6px;"></div>
             <h1 id="detail-title">Termin Titel</h1>
-            <div id="detail-category-tag" class="event-tag" style="display: inline-block;">Kategorie</div>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <div id="detail-category-tag" class="event-tag" style="display: inline-block;">Kategorie</div>
+                <div id="detail-recurrence-tag" class="recurrence-tag" style="display: none;">🔁 Wöchentlich</div>
+            </div>
         </div>
     </div>
 
@@ -668,7 +692,7 @@
 </script>
 
 <!-- Firebase SDK Module -->
-<script type="module" src="js/app.js?v=2.2.2"></script>
+<script type="module" src="js/app.js?v=2.3.4"></script>
 
 </body>
 </html>

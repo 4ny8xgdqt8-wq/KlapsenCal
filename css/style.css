@@ -1874,3 +1874,27 @@ select.form-control {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* ==========================================
+   16. Serientermine / Wiederholung Styles
+   ========================================== */
+.recurrence-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.18);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    padding: 3px 8px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.event-recurrence-icon {
+    font-size: 0.85rem;
+    color: #60a5fa;
+    margin-left: 4px;
+    display: inline-block;
+    vertical-align: middle;
+}
+

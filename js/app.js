@@ -506,6 +506,7 @@ function renderEvents(events) {
                 </div>
                 <div class="event-meta">
                     <span class="event-tag" style="color: ${getCategoryColor(item.Kategorie).color}; background: ${getCategoryColor(item.Kategorie).bg}; border: 1px solid ${getCategoryColor(item.Kategorie).border}; font-weight: 700;">${item.Kategorie || 'Essen'}</span>
+                    ${item.Wiederholung && item.Wiederholung !== 'none' ? '<span class="event-recurrence-icon" title="Serientermin">🔁</span>' : ''}
                     ${locationStr}
                     <span>${timeStr}</span>
                 </div>
@@ -749,6 +750,22 @@ function showEventDetails(data) {
     catTag.style.background = catColor.bg;
     catTag.style.borderColor = catColor.border;
     catTag.style.fontWeight = '700';
+
+    const recTag = document.getElementById('detail-recurrence-tag');
+    if (recTag) {
+        const recLabels = {
+            'weekly': '🔁 Wöchentlich',
+            'biweekly': '🔁 Alle 2 Wochen',
+            'monthly': '🔁 Monatlich',
+            'yearly': '🔁 Jährlich'
+        };
+        if (data.Wiederholung && recLabels[data.Wiederholung]) {
+            recTag.textContent = recLabels[data.Wiederholung];
+            recTag.style.display = 'inline-flex';
+        } else {
+            recTag.style.display = 'none';
+        }
+    }
     
     const cdContainer = document.getElementById('detail-countdown');
     if (countdown.badgeText) {
@@ -1025,11 +1042,78 @@ function renderAllTasks() {
                 <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${formatDateObj(ev.Datum).formattedLong}</span>
             </div>
             <div>${itemsHtml}</div>
+            <button type="button" class="btn-add-item" onclick="window.editEventById('${ev.id}', true)" style="margin-top: 8px; padding: 8px 12px; font-size: 0.82rem; width: 100%; justify-content: center;">
+                ➕ Weiteren Punkt hinzufügen
+            </button>
         `;
         container.appendChild(card);
     });
 }
 window.renderAllTasks = renderAllTasks;
+
+window.editEventById = function(eventId, autoAddNewItem = false) {
+    const data = allEvents.find(e => e.id === eventId);
+    if (!data) return;
+    editingEventId = data.id;
+
+    window.switchTab('neu', document.querySelector('.tab-item[onclick*="neu"]'));
+
+    document.getElementById('event-author').value = data.Ersteller || '';
+    document.getElementById('event-author').dispatchEvent(new Event('change'));
+    document.getElementById('event-title').value = data.Titel || '';
+    document.getElementById('event-date').value = data.Datum || '';
+    document.getElementById('event-time').value = data.Uhrzeit || '';
+
+    const isAllDay = !!data.isAllDay || !data.Uhrzeit;
+    const allDayCheckbox = document.getElementById('event-all-day');
+    if (allDayCheckbox) allDayCheckbox.checked = isAllDay;
+    const timeGroup = document.getElementById('time-group');
+    if (timeGroup) {
+        timeGroup.style.opacity = isAllDay ? '0.35' : '1';
+        timeGroup.style.pointerEvents = isAllDay ? 'none' : 'auto';
+    }
+
+    document.getElementById('event-location').value = data.Ort || '';
+    document.getElementById('event-link').value = data.OrtLink || data.Link || '';
+    document.getElementById('event-description').value = data.Beschreibung || '';
+
+    selectedType = data.Kategorie || allCategories[0];
+    document.querySelectorAll('#event-type-chips .selectable-chip').forEach(c => {
+        c.classList.toggle('selected', c.dataset.name === selectedType);
+    });
+
+    const recSelect = document.getElementById('event-recurrence');
+    if (recSelect) {
+        recSelect.value = data.Wiederholung || 'none';
+        const recGroup = document.getElementById('recurrence-duration-group');
+        if (recGroup) {
+            recGroup.style.display = (recSelect.value !== 'none') ? 'block' : 'none';
+        }
+    }
+
+    const builder = document.getElementById('items-builder-container');
+    builder.innerHTML = '';
+    if (data.Mitbringliste && data.Mitbringliste.length > 0) {
+        data.Mitbringliste.forEach(item => addItemBuilderRow(item.name || item));
+    }
+    if (autoAddNewItem) {
+        addItemBuilderRow('');
+        setTimeout(() => {
+            const inputs = document.querySelectorAll('#items-builder-container .item-name-input');
+            const lastInput = inputs[inputs.length - 1];
+            if (lastInput) {
+                lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                lastInput.focus();
+            }
+        }, 150);
+    }
+
+    document.getElementById('submit-event-btn').textContent = "Änderungen speichern";
+    document.getElementById('cancel-edit-btn').style.display = "block";
+    document.getElementById('header-sub-title').textContent = "Termin bearbeiten";
+
+    window.closeEventDetails();
+};
 
 window.toggleGlobalTask = async function(eventId, itemIdx) {
     const ev = allEvents.find(e => e.id === eventId);
@@ -1071,6 +1155,69 @@ function updateTasksBadge() {
 // ==========================================
 // 11. Formular Logik (Neu / Bearbeiten)
 // ==========================================
+function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
+    if (!recurrenceType || recurrenceType === 'none') {
+        return [startDateStr];
+    }
+
+    const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
+    const startDate = new Date(startYear, startMonth - 1, startDay, 12, 0, 0);
+
+    let maxMonths = 60;
+    if (durationType === '3m') maxMonths = 3;
+    else if (durationType === '6m') maxMonths = 6;
+    else if (durationType === '1y') maxMonths = 12;
+    else if (durationType === '2y') maxMonths = 24;
+    else if (durationType === 'forever') maxMonths = 60;
+
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + maxMonths);
+
+    const dates = [];
+    let cur = new Date(startDate);
+
+    if (recurrenceType === 'weekly') {
+        while (cur <= endDate) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, '0');
+            const d = String(cur.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${d}`);
+            cur.setDate(cur.getDate() + 7);
+        }
+    } else if (recurrenceType === 'biweekly') {
+        while (cur <= endDate) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, '0');
+            const d = String(cur.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${d}`);
+            cur.setDate(cur.getDate() + 14);
+        }
+    } else if (recurrenceType === 'monthly') {
+        let step = 0;
+        while (step <= maxMonths) {
+            const targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + step, startDay, 12, 0, 0);
+            if (targetDate <= endDate) {
+                const y = targetDate.getFullYear();
+                const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+                const d = String(targetDate.getDate()).padStart(2, '0');
+                dates.push(`${y}-${m}-${d}`);
+            }
+            step++;
+        }
+    } else if (recurrenceType === 'yearly') {
+        const yearsCount = Math.max(1, Math.round(maxMonths / 12));
+        for (let step = 0; step <= yearsCount; step++) {
+            const targetDate = new Date(startYear + step, startMonth - 1, startDay, 12, 0, 0);
+            const y = targetDate.getFullYear();
+            const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const d = String(targetDate.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${d}`);
+        }
+    }
+
+    return dates.length > 0 ? dates : [startDateStr];
+}
+
 window.addItemBuilderRow = function(name = '') {
     const container = document.getElementById('items-builder-container');
     const row = document.createElement('div');
@@ -1099,6 +1246,11 @@ function resetForm() {
         timeGroup.style.pointerEvents = 'auto';
     }
 
+    const recSelect = document.getElementById('event-recurrence');
+    if (recSelect) recSelect.value = 'none';
+    const recDuration = document.getElementById('event-recurrence-duration');
+    if (recDuration) recDuration.style.display = 'none';
+
     selectedType = allCategories[0] || 'Essen';
     document.querySelectorAll('#event-type-chips .selectable-chip').forEach((c, idx) => {
         c.classList.toggle('selected', idx === 0);
@@ -1111,46 +1263,7 @@ window.resetForm = resetForm;
 
 window.editEventFromDetail = function() {
     if (!currentDetailData) return;
-    const data = currentDetailData;
-    editingEventId = data.id;
-
-    window.switchTab('neu', document.querySelector('.tab-item[onclick*="neu"]'));
-
-    document.getElementById('event-author').value = data.Ersteller || '';
-    document.getElementById('event-author').dispatchEvent(new Event('change'));
-    document.getElementById('event-title').value = data.Titel || '';
-    document.getElementById('event-date').value = data.Datum || '';
-    document.getElementById('event-time').value = data.Uhrzeit || '';
-
-    const isAllDay = !!data.isAllDay || !data.Uhrzeit;
-    const allDayCheckbox = document.getElementById('event-all-day');
-    if (allDayCheckbox) allDayCheckbox.checked = isAllDay;
-    const timeGroup = document.getElementById('time-group');
-    if (timeGroup) {
-        timeGroup.style.opacity = isAllDay ? '0.35' : '1';
-        timeGroup.style.pointerEvents = isAllDay ? 'none' : 'auto';
-    }
-
-    document.getElementById('event-location').value = data.Ort || '';
-    document.getElementById('event-link').value = data.OrtLink || data.Link || '';
-    document.getElementById('event-description').value = data.Beschreibung || '';
-
-    selectedType = data.Kategorie || allCategories[0];
-    document.querySelectorAll('#event-type-chips .selectable-chip').forEach(c => {
-        c.classList.toggle('selected', c.dataset.name === selectedType);
-    });
-
-    const builder = document.getElementById('items-builder-container');
-    builder.innerHTML = '';
-    if (data.Mitbringliste && data.Mitbringliste.length > 0) {
-        data.Mitbringliste.forEach(item => addItemBuilderRow(item.name || item));
-    }
-
-    document.getElementById('submit-event-btn').textContent = "Änderungen speichern";
-    document.getElementById('cancel-edit-btn').style.display = "block";
-    document.getElementById('header-sub-title').textContent = "Termin bearbeiten";
-
-    window.closeEventDetails();
+    window.editEventById(currentDetailData.id);
 };
 
 window.cancelEdit = function() {
@@ -1194,6 +1307,8 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
     const location = document.getElementById('event-location').value.trim();
     const link = document.getElementById('event-link').value.trim();
     const description = document.getElementById('event-description').value.trim();
+    const recurrence = document.getElementById('event-recurrence')?.value || 'none';
+    const recurrenceDuration = document.getElementById('event-recurrence-duration')?.value || 'forever';
 
     if (!author || !title || !date) {
         window.showAppModal("Angaben fehlen", "Bitte fülle Ersteller, Titel und Datum aus!");
@@ -1218,10 +1333,9 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
 
     const isAllDay = document.getElementById('event-all-day').checked || !time;
 
-    const eventData = {
+    const baseEventData = {
         Ersteller: author,
         Titel: title,
-        Datum: date,
         Uhrzeit: isAllDay ? '' : time,
         isAllDay: isAllDay,
         Ort: location || '',
@@ -1229,18 +1343,44 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
         Kategorie: selectedType || 'Essen',
         Beschreibung: description || '',
         Mitbringliste: items,
-        Teilnehmer: existingRsvp,
+        Wiederholung: recurrence,
         createdAt: serverTimestamp(),
         lastAction: editingEventId ? 'update' : 'new'
     };
 
     try {
-        const sanitizedTitle = title.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '-');
-        const docId = editingEventId || `${date}_${sanitizedTitle || 'Termin'}_${Date.now().toString().slice(-4)}`;
+        if (editingEventId) {
+            const current = allEvents.find(ev => ev.id === editingEventId);
+            await setDoc(doc(db, "data_termine", editingEventId), {
+                ...baseEventData,
+                Datum: date,
+                Teilnehmer: existingRsvp,
+                Gäste: (current && current.Gäste) ? current.Gäste : { adults: 0, children: 0 }
+            });
+        } else {
+            const recurringDates = calculateRecurrenceDates(date, recurrence, recurrenceDuration);
+            const recurringGroupId = (recurrence !== 'none') ? `rec_${Date.now()}` : null;
 
-        await setDoc(doc(db, "data_termine", docId), eventData);
+            for (let i = 0; i < recurringDates.length; i++) {
+                const curDate = recurringDates[i];
+                const sanitizedTitle = title.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '-');
+                const docId = `${curDate}_${sanitizedTitle || 'Termin'}_${Date.now().toString().slice(-4)}_${i}`;
 
-        window.showAppModal("Erfolg", "Termin wurde erfolgreich im Kalender gespeichert!");
+                await setDoc(doc(db, "data_termine", docId), {
+                    ...baseEventData,
+                    Datum: curDate,
+                    recurringGroupId: recurringGroupId,
+                    recurringIndex: i,
+                    Teilnehmer: existingRsvp,
+                    Gäste: { adults: 0, children: 0 }
+                });
+            }
+        }
+
+        const successMsg = (recurrence !== 'none' && !editingEventId)
+            ? "Die Termine der Serie wurden erfolgreich im Kalender gespeichert!"
+            : "Termin wurde erfolgreich im Kalender gespeichert!";
+        window.showAppModal("Erfolg", successMsg);
 
         if (typeof confetti === 'function') {
             confetti({
@@ -1265,6 +1405,18 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
         window.showLoading(false);
     }
 });
+
+const recSelectEl = document.getElementById('event-recurrence');
+const recDurationEl = document.getElementById('event-recurrence-duration');
+if (recSelectEl && recDurationEl) {
+    recSelectEl.addEventListener('change', () => {
+        if (recSelectEl.value !== 'none') {
+            recDurationEl.style.display = 'block';
+        } else {
+            recDurationEl.style.display = 'none';
+        }
+    });
+}
 
 document.getElementById('event-author').addEventListener('change', (e) => {
     const name = e.target.value;
