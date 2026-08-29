@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KlapsenCal</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KlapsenCal">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="shortcut icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Confetti für Erfolgs-Momente -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splash-screen">
+    <img src="logo.png" alt="KlapsenCal Logo" onerror="this.src='logo.svg'">
+    <h1>KlapsenCal</h1>
+    <div class="splash-subtitle">Gruppen-Planer & Termine</div>
+    <div class="version" id="app-version">Lade...</div>
+</div>
+
+<!-- Header -->
+<header>
+    <div class="header-side">
+        <img src="logo.png" class="logo-img" onerror="this.src='logo.svg'" alt="Logo">
+    </div>
+    <div class="title-stack">
+        <div class="main-title">KlapsenCal</div>
+        <div class="sub-title" id="header-sub-title">Termine & Vorhaben</div>
+    </div>
+    <div class="header-side right">
+        <button class="btn-header-action" onclick="window.forceUpdate()" title="Update suchen">🔄</button>
+    </div>
+</header>
+
+<!-- Hauptinhalt -->
+<div id="content">
+
+    <!-- TAB 1: Termine Übersicht -->
+    <div id="termine" class="tab-content active">
+        <!-- Suche -->
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="event-search" class="search-input" placeholder="Termine, Orte, Ersteller suchen...">
+        </div>
+
+        <!-- Sortierung -->
+        <select id="event-sort" class="sort-select" onchange="filterAndRender()">
+            <option value="upcoming">🗓️ Nächste Termine zuerst</option>
+            <option value="newest">✨ Neueste Einträge zuerst</option>
+            <option value="oldest">⏳ Älteste Einträge</option>
+            <option value="alpha">🔤 Alphabetisch (A-Z)</option>
+        </select>
+
+        <!-- Kategorien Filter Chips -->
+        <div class="filter-chips" id="filter-container">
+            <div class="filter-chip active" onclick="selectCategory('Alle', this)">Alle</div>
+        </div>
+
+        <!-- Termine Liste Container -->
+        <div id="event-list-container" class="event-list"></div>
+    </div>
+
+    <!-- TAB 2: Neuer Termin / Bearbeiten -->
+    <div id="neu" class="tab-content">
+        <form id="event-form" class="event-form">
+            <!-- Ersteller Auswahl -->
+            <div class="form-group">
+                <label>Ersteller</label>
+                <div class="author-select-wrapper">
+                    <img id="author-avatar" src="logo.png" class="author-avatar-preview" onerror="this.src='logo.svg'" alt="Avatar">
+                    <select id="event-author" class="form-control" style="flex: 1;" required>
+                        <option value="" disabled selected>Wähle Ersteller...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Titel -->
+            <div class="form-group">
+                <label>Was haben wir vor? (Titel)</label>
+                <input type="text" id="event-title" class="form-control" placeholder="z.B. Sommerfest & Grillen, Wanderung..." required>
+            </div>
+
+            <!-- Datum & Uhrzeit -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Startdatum</label>
+                    <input type="date" id="event-date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Uhrzeit (optional)</label>
+                    <input type="time" id="event-time" class="form-control">
+                </div>
+            </div>
+
+            <!-- Optionales Enddatum für mehrtägige Events -->
+            <div class="form-group">
+                <label>Enddatum (optional für Wochenendtrips/Urlaub)</label>
+                <input type="date" id="event-end-date" class="form-control">
+            </div>
+
+            <!-- Ort & Treffpunkt -->
+            <div class="form-group">
+                <label>Ort / Treffpunkt</label>
+                <input type="text" id="event-location" class="form-control" placeholder="z.B. Bei Peter im Garten, Parkplatz X...">
+            </div>
+
+            <!-- Google Maps Link / Web Link -->
+            <div class="form-group">
+                <label>Link (Google Maps, Komoot, Info-Website)</label>
+                <input type="url" id="event-link" class="form-control" placeholder="https://maps.google.com/...">
+            </div>
+
+            <!-- Kategorie / Art -->
+            <div class="form-group">
+                <label>Kategorie</label>
+                <div class="chip-selection-group" id="event-type-chips"></div>
+            </div>
+
+            <!-- Beschreibung / Infos -->
+            <div class="form-group">
+                <label>Beschreibung & Infos</label>
+                <textarea id="event-description" class="form-control" placeholder="Ablauf, Übernachtung, Zeitplan, was ist geplant?"></textarea>
+            </div>
+
+            <!-- Mitbringliste / Aufgaben Builder -->
+            <div class="form-group">
+                <label>Mitbringliste / Wer besorgt was?</label>
+                <div id="items-builder-container" class="items-builder"></div>
+                <button type="button" class="btn-add-item" onclick="addItemBuilderRow()">➕ Weiteres Mitbringsel / Aufgabe</button>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submit-event-btn">Termin speichern</button>
+            <button type="button" class="btn-submit" id="cancel-edit-btn" style="display:none; background: #374151; margin-top: 4px;" onclick="cancelEdit()">Abbrechen</button>
+        </form>
+    </div>
+
+    <!-- TAB 3: Aufgaben & Mitbringliste -->
+    <div id="aufgaben" class="tab-content">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <h2 style="margin:0; font-size: 1.3rem; color: var(--accent-color);">Alle Mitbringsel</h2>
+            <button onclick="renderAllTasks()" class="btn-header-action" title="Aktualisieren">🔄</button>
+        </div>
+        <div id="all-tasks-container" class="event-list"></div>
+    </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+    <div id="tab-indicator" class="tab-indicator"></div>
+    <div class="tab-item active" onclick="switchTab('termine', this)">
+        <span class="tab-icon">📅</span>
+        <span>Termine</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('neu', this)">
+        <span class="tab-icon">➕</span>
+        <span>Neu</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('aufgaben', this)">
+        <span class="tab-icon">📋</span>
+        <span>Mitbringsel</span>
+        <span id="tasks-badge" class="badge-bubble">0</span>
+    </div>
+</div>
+
+<!-- Event Detail Overlay Modal -->
+<div id="event-detail-overlay">
+    <div class="detail-header">
+        <div class="detail-header-actions">
+            <button class="btn-detail-icon" id="btn-detail-edit" onclick="editEventFromDetail()" title="Bearbeiten">✏️</button>
+            <button class="btn-detail-icon" id="btn-detail-delete" onclick="deleteCurrentEvent()" title="Löschen" style="color: #ef4444;">🗑️</button>
+            <button class="btn-detail-icon" onclick="closeEventDetails()" title="Schließen">✕</button>
+        </div>
+        <div class="detail-title-section" style="padding-right: 130px;">
+            <div id="detail-countdown" style="margin-bottom: 6px;"></div>
+            <h1 id="detail-title">Termin Titel</h1>
+            <div id="detail-category-tag" class="event-tag" style="display: inline-block;">Kategorie</div>
+        </div>
+    </div>
+
+    <div class="detail-body">
+        <!-- Meta Info Box (Datum, Uhrzeit, Ort, Ersteller) -->
+        <div class="detail-meta-box">
+            <div class="meta-item">
+                <span class="meta-icon">🗓️</span>
+                <div class="meta-text-stack">
+                    <span class="meta-label">Wann</span>
+                    <span class="meta-value" id="detail-date-str">--.--.----</span>
+                </div>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">⏰</span>
+                <div class="meta-text-stack">
+                    <span class="meta-label">Uhrzeit</span>
+                    <span class="meta-value" id="detail-time-str">--:-- Uhr</span>
+                </div>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">📍</span>
+                <div class="meta-text-stack">
+                    <span class="meta-label">Ort</span>
+                    <span class="meta-value" id="detail-location-str">Nicht angegeben</span>
+                </div>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">👤</span>
+                <div class="meta-text-stack">
+                    <span class="meta-label">Erstellt von</span>
+                    <span class="meta-value" id="detail-author-str">Admin</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons (Maps & Kalender Export) -->
+        <div class="detail-action-buttons">
+            <a id="btn-open-maps" href="#" target="_blank" class="btn-action-tile" style="display: none;">
+                <span>🗺️</span> <span>In Maps öffnen</span>
+            </a>
+            <a id="btn-open-link" href="#" target="_blank" class="btn-action-tile" style="display: none;">
+                <span>🔗</span> <span>Link öffnen</span>
+            </a>
+            <div class="btn-action-tile primary" onclick="exportToICS()">
+                <span>📥</span> <span>Kalender-Export</span>
+            </div>
+        </div>
+
+        <!-- Interaktive Teilnehmer-Runde (Wer ist dabei?) -->
+        <div class="rsvp-section">
+            <div class="rsvp-header">
+                <h4 class="rsvp-title">👥 Wer ist dabei? (Klick für Status)</h4>
+            </div>
+            <div id="rsvp-members-container" class="rsvp-member-list"></div>
+        </div>
+
+        <!-- Mitbringliste / Aufgaben -->
+        <div class="detail-checklist-card" id="detail-checklist-section">
+            <h4 class="rsvp-title" style="margin-bottom: 10px;">📋 Mitbringliste & Aufgaben</h4>
+            <div id="detail-checklist-items"></div>
+        </div>
+
+        <!-- Beschreibung & Notizen -->
+        <div class="detail-checklist-card" id="detail-notes-section">
+            <h4 class="rsvp-title" style="margin-bottom: 8px;">📝 Details & Infos</h4>
+            <p id="detail-notes" style="color: #e2e8f0; font-size: 0.92rem; line-height: 1.5; margin: 0; white-space: pre-line;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Message Modal -->
+<div id="custom-modal-container" onclick="closeAppModal()">
+    <div class="custom-modal" onclick="event.stopPropagation()">
+        <h3 id="modal-title">Info</h3>
+        <p id="modal-text">Nachricht...</p>
+        <button class="btn-modal-close" onclick="closeAppModal()">Alles klar</button>
+    </div>
+</div>
+
+<!-- Confirm Modal (Delete / Force Update) -->
+<div id="confirm-modal-container" onclick="closeConfirmModal()">
+    <div class="custom-modal" onclick="event.stopPropagation()">
+        <h3 id="confirm-modal-title">Bestätigen</h3>
+        <p id="confirm-modal-text">Möchtest du diese Aktion durchführen?</p>
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+            <button class="btn-modal-close" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="closeConfirmModal()">Abbrechen</button>
+            <button class="btn-modal-close" id="btn-confirm-action" style="flex: 1;">Bestätigen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Bitte warten...</div>
+</div>
+
+<!-- UI Helper Scripts -->
+<script>
+    // Tab Switching
+    function switchTab(tabId, el) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        el.classList.add('active');
+
+        if (tabId === 'aufgaben') {
+            if (typeof window.renderAllTasks === 'function') window.renderAllTasks();
+        }
+
+        // Tab Indikator bewegen
+        const ind = document.getElementById('tab-indicator');
+        if (ind && el) {
+            ind.style.width = el.offsetWidth + "px";
+            ind.style.left = el.offsetLeft + "px";
+        }
+
+        const subTitles = {
+            'termine': 'Termine & Vorhaben',
+            'neu': 'Termin anlegen',
+            'aufgaben': 'Mitbringsel & Aufgaben'
+        };
+        document.getElementById('header-sub-title').textContent = subTitles[tabId] || 'KlapsenCal';
+    }
+    window.switchTab = switchTab;
+
+    // Suche Listener
+    document.getElementById('event-search').addEventListener('input', () => {
+        if (typeof window.filterAndRender === 'function') window.filterAndRender();
+    });
+
+    // Version dynamisch aus sw.js laden
+    fetch('sw.js?t=' + Date.now())
+        .then(res => res.text())
+        .then(text => {
+            const match = text.match(/const\s+VERSION\s*=\s*['"]([^'"]+)['"]/);
+            if (match && match[1]) {
+                document.getElementById('app-version').textContent = 'Version ' + match[1];
+            }
+        }).catch(() => {
+            document.getElementById('app-version').textContent = 'Version 1.0.0';
+        });
+
+    // Splash Screen Steuerung
+    window.minTimePassed = false;
+    window.firebaseDataReceived = false;
+
+    window.attemptHideSplash = function() {
+        if (window.minTimePassed && window.firebaseDataReceived) {
+            const splash = document.getElementById('splash-screen');
+            if (splash && !splash.classList.contains('hidden')) {
+                splash.classList.add('hidden');
+                document.querySelector('.tab-bar').classList.add('visible');
+            }
+        }
+    };
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            window.minTimePassed = true;
+            window.attemptHideSplash();
+        }, 1500);
+
+        setTimeout(() => {
+            const activeTab = document.querySelector('.tab-item.active');
+            if (activeTab) {
+                const ind = document.getElementById('tab-indicator');
+                ind.style.width = activeTab.offsetWidth + "px";
+                ind.style.left = activeTab.offsetLeft + "px";
+            }
+        }, 300);
+    });
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+
+    // Modal Funktionen
+    window.showAppModal = function(title, text) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-text').innerText = text;
+        document.getElementById('custom-modal-container').style.display = 'flex';
+    };
+
+    window.closeAppModal = function() {
+        document.getElementById('custom-modal-container').style.display = 'none';
+    };
+
+    window.showLoading = function(show, text = "Bitte warten...") {
+        const overlay = document.getElementById('loading-overlay');
+        overlay.querySelector('.loading-text').textContent = text;
+        overlay.style.display = show ? 'flex' : 'none';
+    };
+
+    window.forceUpdate = function() {
+        document.getElementById('confirm-modal-title').textContent = "App aktualisieren?";
+        document.getElementById('confirm-modal-text').textContent = "Lokalen Cache leeren und neueste Version vom Server laden?";
+        const btn = document.getElementById('btn-confirm-action');
+        btn.textContent = "Neu laden";
+        btn.onclick = window.doForceUpdate;
+        document.getElementById('confirm-modal-container').style.display = 'flex';
+    };
+
+    window.closeConfirmModal = function() {
+        document.getElementById('confirm-modal-container').style.display = 'none';
+    };
+
+    window.doForceUpdate = async function() {
+        window.closeConfirmModal();
+        window.showLoading(true, "Aktualisiere...");
+        try {
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+            }
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map(r => r.unregister()));
+            }
+        } catch (e) {
+            console.error("Cache Reset Fehler:", e);
+        }
+        const url = window.location.href.split('?')[0];
+        window.location.replace(url + '?u=' + Date.now());
+    };
+</script>
+
+<!-- Firebase SDK Module -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
