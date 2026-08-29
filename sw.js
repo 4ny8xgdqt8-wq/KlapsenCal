@@ -1,4 +1,4 @@
-const VERSION = '2.3.5';
+const VERSION = '2.3.8';
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -8,6 +8,8 @@ const ASSETS_TO_CACHE = [
   './css/style.css',
   './js/app.js',
   './logo.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   './avatars/Daniel.webp',
   './avatars/Daniela.webp',
   './avatars/Peter.webp',
@@ -54,11 +56,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-First for HTML, JS and CSS so app updates are always instant
+  // Network-First strategy for app assets (HTML, JS, CSS, PNG, WEBP, JSON) so updates are always immediate
   if (event.request.mode === 'navigate' || 
       url.pathname.endsWith('.html') || 
       url.pathname.endsWith('.js') || 
-      url.pathname.endsWith('.css')) {
+      url.pathname.endsWith('.css') ||
+      url.pathname.endsWith('.png') ||
+      url.pathname.endsWith('.webp') ||
+      url.pathname.endsWith('.json')) {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
@@ -73,7 +78,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-First for static assets (images, avatars, fonts)
+  // Cache-First with Network Fallback for external CDN scripts / fonts
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;

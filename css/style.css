@@ -30,6 +30,28 @@ body {
     height: 100vh;
     overflow: hidden;
     user-select: none;
+    position: relative;
+}
+
+/* Dynamisches Wasserzeichen im Hintergrund auf jeder Tabseite */
+body::before {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vw;
+    max-width: 440px;
+    height: 80vw;
+    max-height: 440px;
+    background-image: url('../logo.png?v=2.3.6');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.10;
+    pointer-events: none;
+    z-index: 0;
+    filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.3));
 }
 
 /* Top Header */
@@ -114,6 +136,8 @@ header {
 
 /* Hauptinhalt Container */
 #content {
+    position: relative;
+    z-index: 1;
     flex: 1;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
@@ -137,14 +161,15 @@ header {
 
 /* Monats-Kalender Widget (Kompakt) */
 .calendar-widget {
-    background: rgba(18, 26, 23, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 8px 10px;
-    margin: 4px 0 10px 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(180deg, rgba(24, 36, 30, 0.82) 0%, rgba(15, 24, 20, 0.88) 100%);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 18px;
+    padding: 10px 12px;
+    margin: 4px 0 12px 0;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .calendar-header {
@@ -621,17 +646,18 @@ header {
     bottom: calc(env(safe-area-inset-bottom) + 14px);
     left: 14px;
     right: 14px;
-    background: var(--nav-bg);
-    backdrop-filter: blur(22px) saturate(210%) brightness(1.2);
-    -webkit-backdrop-filter: blur(22px) saturate(210%) brightness(1.2);
-    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    background: rgba(14, 22, 18, 0.86);
+    backdrop-filter: blur(24px) saturate(210%) brightness(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(210%) brightness(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
     display: flex;
     border-radius: 36px;
     height: 68px;
     z-index: 9999;
     padding: 0 6px;
     align-items: center;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(16, 185, 129, 0.12);
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
     transform: translateZ(0);
     opacity: 0;
@@ -1415,14 +1441,15 @@ select.form-control {
    14. Kasse Tab Styles
    ========================================== */
 .kasse-balance-card {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 20, 0.85) 100%);
+    background: radial-gradient(circle at 85% 15%, rgba(16, 185, 129, 0.28) 0%, transparent 65%), linear-gradient(145deg, rgba(19, 39, 31, 0.9) 0%, rgba(12, 24, 19, 0.95) 100%);
     border: 1px solid rgba(16, 185, 129, 0.35);
+    border-top: 1px solid rgba(16, 185, 129, 0.6);
     border-radius: 20px;
-    padding: 16px 18px;
+    padding: 18px 20px;
     margin-bottom: 14px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 25px rgba(16, 185, 129, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
 .kasse-balance-header {
@@ -1791,14 +1818,15 @@ select.form-control {
 
 /* Budget Card für Anschaffungen */
 .purchases-budget-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.2) 0%, transparent 60%), linear-gradient(145deg, rgba(22, 34, 48, 0.9) 0%, rgba(13, 20, 30, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 20px;
-    padding: 16px 18px;
+    padding: 18px 20px;
     margin-bottom: 14px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(59, 130, 246, 0.1);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
 .purchases-budget-main {
