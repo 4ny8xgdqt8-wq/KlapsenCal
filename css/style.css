@@ -216,24 +216,28 @@ header {
 .calendar-days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+    gap: 3px;
 }
 
 .calendar-day-cell {
-    height: 26px;
+    height: 34px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 7px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
     color: #cbd5e1;
     cursor: pointer;
     position: relative;
     transition: all 0.15s ease;
     background: transparent;
     user-select: none;
+}
+.calendar-day-cell span {
+    line-height: 1;
+    margin-top: -3px;
 }
 
 .calendar-day-cell:active {
@@ -246,7 +250,7 @@ header {
 }
 
 .calendar-day-cell.today {
-    border: 1.2px solid var(--primary-color);
+    border: 1.5px solid var(--primary-color);
     color: var(--primary-color);
     font-weight: 800;
 }
@@ -270,17 +274,17 @@ header {
 
 .calendar-day-cell .event-dots-row {
     position: absolute;
-    bottom: 2px;
+    bottom: 3px;
     display: flex;
-    gap: 2px;
+    gap: 2.5px;
     align-items: center;
     justify-content: center;
     max-width: 100%;
 }
 
 .calendar-day-cell .event-dot {
-    width: 4px;
-    height: 4px;
+    width: 4.5px;
+    height: 4.5px;
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
@@ -1028,7 +1032,7 @@ select.form-control {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 .rsvp-title {
     margin: 0;
@@ -1038,9 +1042,49 @@ select.form-control {
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
+.rsvp-summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+}
+.rsvp-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+.rsvp-summary-count {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+}
+.rsvp-summary-count.adult {
+    color: #34d399;
+}
+.rsvp-summary-count.child {
+    color: #f472b6;
+}
+.rsvp-summary-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.rsvp-summary-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+}
 .rsvp-member-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 10px;
 }
 .rsvp-card {
@@ -1050,19 +1094,42 @@ select.form-control {
     padding: 8px 10px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
     cursor: pointer;
     transition: all 0.2s;
+    min-height: 52px;
 }
 .rsvp-card:active {
     transform: scale(0.95);
 }
 .rsvp-card-avatar {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     object-fit: cover;
     border: 1.5px solid #555;
+    flex-shrink: 0;
+}
+.rsvp-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+    gap: 1px;
+}
+.rsvp-name {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+.rsvp-badge-icon {
+    font-size: 0.95rem;
+    flex-shrink: 0;
 }
 .rsvp-card.status-yes {
     border-color: var(--primary-color);
@@ -1085,17 +1152,6 @@ select.form-control {
 }
 .rsvp-card.status-no .rsvp-card-avatar {
     border-color: var(--danger-color);
-}
-.rsvp-name {
-    font-size: 0.82rem;
-    font-weight: 700;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.rsvp-badge-icon {
-    font-size: 0.85rem;
 }
 
 /* Detail Checklist Items */
@@ -1144,13 +1200,17 @@ select.form-control {
     color: white;
     flex: 1;
 }
-.checklist-assignee {
+.checklist-assignee, .checklist-status-label {
     font-size: 0.72rem;
     font-weight: 800;
-    color: var(--accent-color);
-    background: rgba(16, 185, 129, 0.15);
-    padding: 2px 8px;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 3px 9px;
     border-radius: 6px;
+}
+.checklist-item-row.checked .checklist-status-label {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.15);
 }
 
 /* Splash Screen */
@@ -1208,16 +1268,16 @@ select.form-control {
 }
 
 /* Custom Modal */
-#custom-modal-container, #confirm-modal-container {
+#custom-modal-container, #confirm-modal-container, #guests-modal-container, .custom-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 20000;
+    z-index: 30000;
     display: none;
     align-items: center;
     justify-content: center;
@@ -1302,5 +1362,515 @@ select.form-control {
     border: 2px solid var(--primary-color) !important;
     box-shadow: 0 0 15px var(--primary-glow) !important;
     background: rgba(16, 185, 129, 0.08) !important;
+}
+
+/* Stepper Buttons & Gäste */
+.stepper-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.stepper-btn:active {
+    transform: scale(0.92);
+    background: var(--primary-color);
+    color: #064e3b;
+}
+
+.rsvp-role-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 2px;
+    text-transform: uppercase;
+}
+.rsvp-role-badge.child {
+    background: rgba(236, 72, 153, 0.2);
+    color: #f472b6;
+    border: 1px solid rgba(236, 72, 153, 0.35);
+}
+.rsvp-role-badge.adult {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.rsvp-card-guest {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+/* ==========================================
+   14. Kasse Tab Styles
+   ========================================== */
+.kasse-balance-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(15, 23, 20, 0.85) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.kasse-balance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.kasse-balance-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #a7f3d0;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.btn-kasse-add {
+    background: var(--primary-color);
+    color: #064e3b;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.btn-kasse-add:active {
+    transform: scale(0.94);
+}
+
+.kasse-balance-amount {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+.kasse-balance-amount.negative {
+    color: #f87171;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.kasse-sub-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.kasse-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.kasse-stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.kasse-stat-val {
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+.kasse-stat-val.positive {
+    color: #34d399;
+}
+.kasse-stat-val.negative {
+    color: #f87171;
+}
+
+.kasse-stat-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Transaktions-Karte */
+.kasse-tx-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    animation: fadeIn 0.25s ease;
+}
+
+.kasse-tx-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.kasse-tx-icon.positive {
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.kasse-tx-icon.negative {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.kasse-tx-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.kasse-tx-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kasse-tx-meta {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kasse-tx-person-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--primary-color);
+}
+
+.kasse-tx-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.kasse-tx-amount {
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+}
+.kasse-tx-amount.positive {
+    color: #34d399;
+}
+.kasse-tx-amount.negative {
+    color: #f87171;
+}
+
+.kasse-tx-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-tx-action {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    border-radius: 6px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-tx-action:active {
+    transform: scale(0.9);
+}
+
+/* Modal Typ Toggle */
+.kasse-type-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kasse-type-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.kasse-type-btn.active.positive {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+.kasse-type-btn.active.negative {
+    background: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================
+   15. Offene Anschaffungen Styles
+   ========================================== */
+.purchase-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    animation: fadeIn 0.25s ease;
+}
+
+.purchase-card.checked {
+    opacity: 0.55;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.purchase-card.checked .purchase-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.purchase-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    border: 2px solid var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.purchase-card.checked .purchase-checkbox {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.purchase-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+}
+
+.purchase-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.purchase-meta {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.prio-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 5px;
+    text-transform: uppercase;
+}
+.prio-badge.hoch {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.prio-badge.mittel {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.prio-badge.idee {
+    background: rgba(14, 165, 233, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(14, 165, 233, 0.35);
+}
+
+.purchase-price-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    background: rgba(16, 185, 129, 0.12);
+    padding: 1px 6px;
+    border-radius: 5px;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.purchase-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-purchase-link {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-purchase-link:active {
+    transform: scale(0.9);
+}
+
+/* Budget Card für Anschaffungen */
+.purchases-budget-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.purchases-budget-main {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.purchases-budget-status-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+}
+
+.purchases-budget-status-value {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.8px;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+.purchases-budget-status-value.missing {
+    color: #f87171;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+.purchases-budget-status-value.covered {
+    color: #34d399;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.purchases-budget-status-sub {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.purchases-budget-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.purchases-budget-detail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.purchases-budget-detail-item .detail-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.purchases-budget-detail-item .detail-val {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: white;
+}
+
+.purchases-budget-detail-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.1);
 }
 

@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="logo.png">
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=1.2.7">
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -157,11 +157,11 @@
                 <textarea id="event-description" class="form-control" placeholder="Ablauf, Übernachtung, Zeitplan, was ist geplant?"></textarea>
             </div>
 
-            <!-- Mitbringliste / Aufgaben Builder -->
+            <!-- Was fehlt noch? / Mitbringliste Builder -->
             <div class="form-group">
-                <label>Mitbringliste / Wer besorgt was?</label>
+                <label>Was fehlt noch? (Mitbringliste & Besorgungen)</label>
                 <div id="items-builder-container" class="items-builder"></div>
-                <button type="button" class="btn-add-item" onclick="addItemBuilderRow()">➕ Weiteres Mitbringsel / Aufgabe</button>
+                <button type="button" class="btn-add-item" onclick="addItemBuilderRow()">➕ Weiterer Punkt / Was fehlt noch?</button>
             </div>
 
             <button type="submit" class="btn-submit" id="submit-event-btn">Termin speichern</button>
@@ -169,13 +169,86 @@
         </form>
     </div>
 
-    <!-- TAB 3: Aufgaben & Mitbringliste -->
+    <!-- TAB 3: Was fehlt noch für die Termine -->
     <div id="aufgaben" class="tab-content">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-            <h2 style="margin:0; font-size: 1.3rem; color: var(--accent-color);">Alle Mitbringsel</h2>
+            <h2 style="margin:0; font-size: 1.3rem; color: var(--accent-color);">Was fehlt noch für die Termine</h2>
             <button onclick="renderAllTasks()" class="btn-header-action" title="Aktualisieren">🔄</button>
         </div>
         <div id="all-tasks-container" class="event-list"></div>
+    </div>
+
+    <!-- TAB 4: Kasse -->
+    <div id="kasse" class="tab-content">
+        <!-- Saldo Kachel -->
+        <div class="kasse-balance-card">
+            <div class="kasse-balance-header">
+                <span class="kasse-balance-title">💰 Gemeinschaftskasse</span>
+                <button type="button" class="btn-kasse-add" onclick="window.openKasseModal()">➕ Neue Buchung</button>
+            </div>
+            <div class="kasse-balance-amount" id="kasse-total-balance">0,00 €</div>
+            <div class="kasse-sub-stats">
+                <div class="kasse-stat-item">
+                    <span class="kasse-stat-label">🟢 Einzahlungen</span>
+                    <span class="kasse-stat-val positive" id="kasse-total-in">+0,00 €</span>
+                </div>
+                <div class="kasse-stat-divider"></div>
+                <div class="kasse-stat-item">
+                    <span class="kasse-stat-label">🔴 Ausgaben</span>
+                    <span class="kasse-stat-val negative" id="kasse-total-out">-0,00 €</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter-Leiste für Buchungen -->
+        <div class="section-header-row" style="margin-top: 16px; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div class="section-title">Buchungen & Historie</div>
+            <div class="filter-chips" id="kasse-filter-chips" style="margin: 0; padding: 0;">
+                <div class="filter-chip active" onclick="window.filterKasse('alle', this)">Alle</div>
+                <div class="filter-chip" onclick="window.filterKasse('einnahme', this)">🟢 Einzahlungen</div>
+                <div class="filter-chip" onclick="window.filterKasse('ausgabe', this)">🔴 Ausgaben</div>
+            </div>
+        </div>
+
+        <!-- Buchungsliste -->
+        <div id="kasse-list-container" class="event-list"></div>
+    </div>
+
+    <!-- TAB 5: Offene Anschaffungen -->
+    <div id="anschaffungen" class="tab-content">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <h2 style="margin: 0; font-size: 1.25rem; color: var(--accent-color);">🛒 Offene Anschaffungen</h2>
+            <button type="button" class="btn-kasse-add" onclick="window.openPurchaseModal()">➕ Neu</button>
+        </div>
+
+        <!-- Budget & Kassenstand-Vergleich Kachel -->
+        <div class="purchases-budget-card" id="purchases-budget-card">
+            <div class="purchases-budget-main">
+                <div class="purchases-budget-status-label" id="purchases-budget-status-label">Fehlender Kassenbetrag</div>
+                <div class="purchases-budget-status-value missing" id="purchases-budget-diff">0,00 €</div>
+                <div class="purchases-budget-status-sub" id="purchases-budget-status-sub">Wird berechnet...</div>
+            </div>
+            <div class="purchases-budget-details">
+                <div class="purchases-budget-detail-item">
+                    <span class="detail-label">Aktuelle Kasse</span>
+                    <span class="detail-val" id="purchases-kassenstand-val">0,00 €</span>
+                </div>
+                <div class="purchases-budget-detail-divider"></div>
+                <div class="purchases-budget-detail-item">
+                    <span class="detail-label">Offene Wünsche</span>
+                    <span class="detail-val" id="purchases-total-needed-val">0,00 €</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Chips (Alle / Offen / Angeschafft) -->
+        <div class="filter-chips" id="purchase-filter-chips" style="margin-bottom: 12px; padding: 0;">
+            <div class="filter-chip active" onclick="window.filterPurchases('alle', this)">Alle</div>
+            <div class="filter-chip" onclick="window.filterPurchases('offen', this)">🟡 Noch zu besorgen</div>
+            <div class="filter-chip" onclick="window.filterPurchases('erledigt', this)">🟢 Angeschafft ✓</div>
+        </div>
+
+        <div id="purchases-list-container" class="event-list"></div>
     </div>
 </div>
 
@@ -192,8 +265,17 @@
     </div>
     <div class="tab-item" onclick="switchTab('aufgaben', this)">
         <span class="tab-icon">📋</span>
-        <span>Mitbringsel</span>
+        <span>Was fehlt?</span>
         <span id="tasks-badge" class="badge-bubble">0</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('anschaffungen', this)">
+        <span class="tab-icon">🛒</span>
+        <span>Anschaffungen</span>
+        <span id="purchases-badge" class="badge-bubble">0</span>
+    </div>
+    <div class="tab-item" onclick="switchTab('kasse', this)">
+        <span class="tab-icon">💰</span>
+        <span>Kasse</span>
     </div>
 </div>
 
@@ -257,12 +339,31 @@
             <div class="rsvp-header">
                 <h4 class="rsvp-title">👥 Wer ist dabei? (Klick für Status)</h4>
             </div>
+
+            <!-- Summen-Übersicht (Gesamt, Erwachsene, Kinder) -->
+            <div class="rsvp-summary-bar">
+                <div class="rsvp-summary-item">
+                    <span class="rsvp-summary-count" id="rsvp-total-count">0</span>
+                    <span class="rsvp-summary-label">Gesamt</span>
+                </div>
+                <div class="rsvp-summary-divider"></div>
+                <div class="rsvp-summary-item">
+                    <span class="rsvp-summary-count adult" id="rsvp-adults-count">0</span>
+                    <span class="rsvp-summary-label">👤 Erwachsene</span>
+                </div>
+                <div class="rsvp-summary-divider"></div>
+                <div class="rsvp-summary-item">
+                    <span class="rsvp-summary-count child" id="rsvp-children-count">0</span>
+                    <span class="rsvp-summary-label">🧒 Kinder</span>
+                </div>
+            </div>
+
             <div id="rsvp-members-container" class="rsvp-member-list"></div>
         </div>
 
-        <!-- Mitbringliste / Aufgaben -->
+        <!-- Was fehlt noch? / Mitbringliste -->
         <div class="detail-checklist-card" id="detail-checklist-section">
-            <h4 class="rsvp-title" style="margin-bottom: 10px;">📋 Mitbringliste & Aufgaben</h4>
+            <h4 class="rsvp-title" style="margin-bottom: 10px;">📋 Was fehlt noch?</h4>
             <div id="detail-checklist-items"></div>
         </div>
 
@@ -283,14 +384,135 @@
     </div>
 </div>
 
-<!-- Confirm Modal (Delete / Force Update) -->
-<div id="confirm-modal-container" onclick="closeConfirmModal()">
+<!-- Custom Confirmation Modal -->
+<div id="confirm-modal-container" class="custom-modal-overlay" style="display: none;" onclick="closeConfirmModal()">
     <div class="custom-modal" onclick="event.stopPropagation()">
-        <h3 id="confirm-modal-title">Bestätigen</h3>
-        <p id="confirm-modal-text">Möchtest du diese Aktion durchführen?</p>
+        <h3 id="confirm-modal-title" style="color: var(--accent-color); margin-top: 0;">Bestätigung</h3>
+        <p id="confirm-modal-text" style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">Bist du sicher?</p>
         <div style="display: flex; gap: 10px; margin-top: 18px;">
-            <button class="btn-modal-close" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="closeConfirmModal()">Abbrechen</button>
-            <button class="btn-modal-close" id="btn-confirm-action" style="flex: 1;">Bestätigen</button>
+            <button type="button" class="btn-modal-close" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="closeConfirmModal()">Abbrechen</button>
+            <button type="button" id="btn-confirm-action" class="btn-modal-close" style="flex: 1; background: var(--primary-color);">Bestätigen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Guests Modal (Erwachsene & Kinder Zähler) -->
+<div id="guests-modal-container" class="custom-modal-overlay" style="display: none;" onclick="closeGuestsModal()">
+    <div class="custom-modal" onclick="event.stopPropagation()" style="max-width: 320px;">
+        <h3 style="color: var(--accent-color); margin-top: 0; font-size: 1.15rem;">👥 Gäste verwalten</h3>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 16px;">Wieviele zusätzliche Gäste kommen mit?</p>
+        
+        <!-- Erwachsene Stepper -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+            <span style="font-weight: 700; color: #ffffff; font-size: 0.9rem;">👤 Erwachsene:</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="stepper-btn" onclick="window.changeGuestCount('adults', -1)">−</button>
+                <span id="guest-adults-count" style="font-size: 1.15rem; font-weight: 800; min-width: 24px; text-align: center; color: var(--primary-color);">0</span>
+                <button type="button" class="stepper-btn" onclick="window.changeGuestCount('adults', 1)">+</button>
+            </div>
+        </div>
+
+        <!-- Kinder Stepper -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+            <span style="font-weight: 700; color: #ffffff; font-size: 0.9rem;">🧒 Kinder:</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="stepper-btn" onclick="window.changeGuestCount('children', -1)">−</button>
+                <span id="guest-children-count" style="font-size: 1.15rem; font-weight: 800; min-width: 24px; text-align: center; color: var(--primary-color);">0</span>
+                <button type="button" class="stepper-btn" onclick="window.changeGuestCount('children', 1)">+</button>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-modal-close" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="window.closeGuestsModal()">Abbrechen</button>
+            <button type="button" class="btn-modal-close" style="flex: 1;" onclick="window.saveGuestsModal()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- Kasse Booking Modal (Neu & Bearbeiten) -->
+<div id="kasse-modal-container" class="custom-modal-overlay" style="display: none;" onclick="window.closeKasseModal()">
+    <div class="custom-modal" onclick="event.stopPropagation()" style="max-width: 360px; text-align: left;">
+        <h3 id="kasse-modal-title" style="color: var(--accent-color); margin-top: 0; font-size: 1.2rem; text-align: center;">💰 Neue Buchung</h3>
+        
+        <!-- Typ Toggle (Einzahlung / Ausgabe) -->
+        <div class="kasse-type-toggle">
+            <button type="button" id="btn-typ-einnahme" class="kasse-type-btn active positive" onclick="window.setKasseBookingType('einnahme')">🟢 Einzahlung</button>
+            <button type="button" id="btn-typ-ausgabe" class="kasse-type-btn negative" onclick="window.setKasseBookingType('ausgabe')">🔴 Ausgabe</button>
+        </div>
+
+        <!-- Betrag -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Betrag (€)</label>
+            <input type="number" id="kasse-amount" class="form-control" placeholder="0.00" step="0.01" min="0.01" required style="font-size: 1.25rem; font-weight: 800; color: var(--primary-color);">
+        </div>
+
+        <!-- Zweck / Titel -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Zweck / Wofür?</label>
+            <input type="text" id="kasse-purpose" class="form-control" placeholder="z.B. Grillkohle & Getränke, Monatsbeitrag..." required>
+        </div>
+
+        <!-- Datum -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Datum</label>
+            <input type="date" id="kasse-date" class="form-control" required>
+        </div>
+
+        <!-- Optionale Notiz -->
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Notiz / Info (optional)</label>
+            <input type="text" id="kasse-notes" class="form-control" placeholder="z.B. Kassenzettel vorhanden">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-modal-close" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="window.closeKasseModal()">Abbrechen</button>
+            <button type="button" class="btn-modal-close" id="btn-save-kasse" style="flex: 1.2; background: var(--primary-color);" onclick="window.saveKasseBooking()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Modal (Neu & Bearbeiten) -->
+<div id="purchase-modal-container" class="custom-modal-overlay" style="display: none;" onclick="window.closePurchaseModal()">
+    <div class="custom-modal" onclick="event.stopPropagation()" style="max-width: 360px; text-align: left;">
+        <h3 id="purchase-modal-title" style="color: var(--accent-color); margin-top: 0; font-size: 1.2rem; text-align: center;">🛒 Neue Anschaffung</h3>
+        
+        <!-- Titel / Gegenstand -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Gegenstand / Was wird gebraucht?</label>
+            <input type="text" id="purchase-title" class="form-control" placeholder="z.B. Faltpavillon 3x3m, Bollerwagen..." required>
+        </div>
+
+        <!-- Geschätzter Preis (€) -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Geschätzter Preis (€) <span style="font-size: 0.7rem; font-weight: normal; color: #64748b;">(optional)</span></label>
+            <input type="number" id="purchase-price" class="form-control" placeholder="0.00" step="0.01" min="0">
+        </div>
+
+        <!-- Priorität -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Priorität / Dringlichkeit</label>
+            <div class="kasse-type-toggle" style="margin: 0;">
+                <button type="button" id="btn-prio-hoch" class="kasse-type-btn active" onclick="window.setPurchasePrio('hoch')">🔥 Dringend</button>
+                <button type="button" id="btn-prio-mittel" class="kasse-type-btn" onclick="window.setPurchasePrio('mittel')">⚡ Wichtig</button>
+                <button type="button" id="btn-prio-idee" class="kasse-type-btn" onclick="window.setPurchasePrio('idee')">💡 Idee</button>
+            </div>
+        </div>
+
+        <!-- Web-Link -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Web-Link / Shop-Link <span style="font-size: 0.7rem; font-weight: normal; color: #64748b;">(optional)</span></label>
+            <input type="url" id="purchase-link" class="form-control" placeholder="https://amazon.de/...">
+        </div>
+
+        <!-- Notiz -->
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8;">Notiz / Details <span style="font-size: 0.7rem; font-weight: normal; color: #64748b;">(optional)</span></label>
+            <input type="text" id="purchase-notes" class="form-control" placeholder="z.B. Für Regentouren, Maße beachten...">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-modal-close" style="flex: 1; background: rgba(255,255,255,0.1); color: white;" onclick="window.closePurchaseModal()">Abbrechen</button>
+            <button type="button" class="btn-modal-close" id="btn-save-purchase" style="flex: 1.2; background: var(--primary-color);" onclick="window.savePurchase()">Speichern</button>
         </div>
     </div>
 </div>
@@ -312,6 +534,10 @@
 
         if (tabId === 'aufgaben') {
             if (typeof window.renderAllTasks === 'function') window.renderAllTasks();
+        } else if (tabId === 'kasse') {
+            if (typeof window.renderKasseView === 'function') window.renderKasseView();
+        } else if (tabId === 'anschaffungen') {
+            if (typeof window.renderPurchasesView === 'function') window.renderPurchasesView();
         }
 
         // Tab Indikator bewegen
@@ -324,7 +550,9 @@
         const subTitles = {
             'termine': 'Termine & Vorhaben',
             'neu': 'Termin anlegen',
-            'aufgaben': 'Mitbringsel & Aufgaben'
+            'aufgaben': 'Was fehlt noch für die Termine',
+            'anschaffungen': 'Offene Anschaffungen',
+            'kasse': 'Gemeinschaftskasse'
         };
         document.getElementById('header-sub-title').textContent = subTitles[tabId] || 'Klapsentouren';
     }
@@ -440,7 +668,7 @@
 </script>
 
 <!-- Firebase SDK Module -->
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=2.2.2"></script>
 
 </body>
 </html>

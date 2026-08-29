@@ -19,18 +19,22 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // Offline-Persistence aktivieren
-enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-        console.warn("Persistence: Multiple tabs open");
-    } else if (err.code === 'unimplemented') {
-        console.warn("Persistence not supported by browser");
-    }
-});
+try {
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+            console.warn("Persistence: Multiple tabs open");
+        } else if (err.code === 'unimplemented') {
+            console.warn("Persistence not supported by browser");
+        }
+    });
+} catch (e) {
+    console.warn("Persistence Init Error:", e);
+}
 
 // ==========================================
 // 2. Globale Variablen & State
 // ==========================================
-const DEFAULT_AUTHORS = ["Daniel", "Daniela", "Peter", "Simone", "Tanja", "Thorsten"];
+const DEFAULT_AUTHORS = ["Daniel", "Daniela", "Peter", "Simone", "Tanja", "Thorsten", "Nic", "Tristan", "Simon", "Emily", "Alexander"];
 const DEFAULT_CATEGORIES = ["Essen", "Konzert", "Veranstaltung", "Geburtstag", "Dart", "Billard", "Sonstiges"];
 
 const CATEGORY_COLORS = {
@@ -45,6 +49,13 @@ const CATEGORY_COLORS = {
 
 function getCategoryColor(cat) {
     return CATEGORY_COLORS[cat] || { color: "#10b981", bg: "rgba(16, 185, 129, 0.18)", border: "rgba(16, 185, 129, 0.45)" };
+}
+
+const CHILDREN_NAMES = ["Nic", "Tristan", "Simon", "Emily", "Alexander"];
+const ADULT_NAMES = ["Daniel", "Daniela", "Peter", "Simone", "Tanja", "Thorsten"];
+
+function isChild(name) {
+    return CHILDREN_NAMES.includes(name);
 }
 
 let allAuthors = [...DEFAULT_AUTHORS];
@@ -204,6 +215,12 @@ setInterval(checkUpcomingReminders, 60000);
 // ==========================================
 function initAuthorsListener() {
     const docRef = doc(db, "data_termine", "Ersteller");
+
+    // Einmalig die neuen Personen in Firebase sicherstellen
+    setDoc(docRef, { names: DEFAULT_AUTHORS }).catch((e) => {
+        console.warn("Konnte Ersteller in Firebase nicht schreiben:", e);
+    });
+
     onSnapshot(docRef, (docSnap) => {
         const select = document.getElementById('event-author');
         const currentVal = select.value;
@@ -212,7 +229,6 @@ function initAuthorsListener() {
             allAuthors = docSnap.data().names;
         } else {
             allAuthors = [...DEFAULT_AUTHORS];
-            setDoc(docRef, { names: DEFAULT_AUTHORS }).catch(() => {});
         }
 
         select.innerHTML = '<option value="" disabled selected>Wähle Ersteller...</option>';
@@ -296,9 +312,25 @@ function initEventsListener() {
         snapshot.forEach((docSnap) => {
             if (docSnap.id === "Ersteller" || docSnap.id === "Art") return;
             const data = docSnap.data();
-            if (data.Titel && data.Datum) {
-                list.push({ id: docSnap.id, ...data });
+            const title = data.Titel || data.titel;
+            if (!title) return;
+
+            let datum = (data.Datum || data.datum || '').trim();
+            if (datum.includes('-')) {
+                const p = datum.split('-');
+                if (p.length === 3) {
+                    datum = `${p[0]}-${String(p[1]).padStart(2, '0')}-${String(p[2]).padStart(2, '0')}`;
+                }
             }
+
+            list.push({
+                id: docSnap.id,
+                ...data,
+                Titel: title,
+                Datum: datum,
+                Kategorie: data.Kategorie || data.Art || 'Sonstiges',
+                Ersteller: data.Ersteller || data.ersteller || 'Unbekannt'
+            });
         });
 
         // Benachrichtigung bei neuem oder aktualisiertem Termin (nach initialem Laden)
@@ -380,14 +412,20 @@ function getCountdownInfo(dateStr) {
 }
 
 function formatDateObj(dateStr) {
-    if (!dateStr) return { day: '--', monthShort: '---', weekdayShort: '---', formattedLong: '--' };
+    if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) {
+        return { day: '--', monthShort: '---', weekdayShort: '---', formattedLong: '--' };
+    }
     const parts = dateStr.split('-');
-    const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const year = parseInt(parts[0]) || 2026;
+    const month = (parseInt(parts[1]) || 1) - 1;
+    const day = parseInt(parts[2]) || 1;
+    const dateObj = new Date(year, month, day);
+    
     return {
-        day: String(parts[2]),
+        day: String(day).padStart(2, '0'),
         monthShort: MONTH_NAMES_SHORT[dateObj.getMonth()] || '',
         weekdayShort: WEEKDAY_NAMES_SHORT[dateObj.getDay()] || '',
-        formattedLong: `${WEEKDAY_NAMES_LONG[dateObj.getDay()]}, ${parseInt(parts[2])}. ${MONTH_NAMES_LONG[dateObj.getMonth()]} ${parts[0]}`
+        formattedLong: `${WEEKDAY_NAMES_LONG[dateObj.getDay()] || ''}, ${day}. ${MONTH_NAMES_LONG[dateObj.getMonth()] || ''} ${year}`
     };
 }
 
@@ -423,17 +461,34 @@ function renderEvents(events) {
         
         const rsvp = item.Teilnehmer || {};
         const yesMembers = Object.keys(rsvp).filter(name => rsvp[name] === 'yes');
+        const guests = item.Gäste || { adults: 0, children: 0 };
+        const gAdults = parseInt(guests.adults) || 0;
+        const gChildren = parseInt(guests.children) || 0;
+
+        const adultYesCount = yesMembers.filter(n => !isChild(n)).length + gAdults;
+        const childYesCount = yesMembers.filter(n => isChild(n)).length + gChildren;
+        const totalParticipants = adultYesCount + childYesCount;
+
         let participantStackHtml = '';
-        if (yesMembers.length > 0) {
+        if (totalParticipants > 0) {
             const maxPreview = 3;
             const avatarsHtml = yesMembers.slice(0, maxPreview).map(name => `
                 <img src="avatars/${name}.webp" onerror="this.src='logo.png'" class="participant-mini" alt="${name}">
             `).join('');
-            const remaining = yesMembers.length > maxPreview ? `+${yesMembers.length - maxPreview}` : '';
+            
+            let countLabel = `${totalParticipants} dabei`;
+            if (adultYesCount > 0 && childYesCount > 0) {
+                countLabel = `${totalParticipants} dabei (${adultYesCount}E • ${childYesCount}K)`;
+            } else if (adultYesCount > 0) {
+                countLabel = `${totalParticipants} Erw.`;
+            } else if (childYesCount > 0) {
+                countLabel = `${totalParticipants} Kinder`;
+            }
+
             participantStackHtml = `
                 <div class="participant-stack">
                     ${avatarsHtml}
-                    <span class="participant-count-badge">${yesMembers.length} dabei ${remaining}</span>
+                    <span class="participant-count-badge">${countLabel}</span>
                 </div>
             `;
         }
@@ -472,21 +527,10 @@ function renderCalendarWidget() {
     const gridEl = document.getElementById('calendar-days-grid');
     if (!titleEl || !gridEl) return;
 
-    titleEl.textContent = `${MONTH_NAMES_LONG[calCurrentMonth]} ${calCurrentYear}`;
+    titleEl.textContent = `${MONTH_NAMES_LONG[calCurrentMonth] || ''} ${calCurrentYear}`;
 
     const now = new Date();
-    const todayYear = now.getFullYear();
-    const todayMonth = now.getMonth();
-    const todayDay = now.getDate();
-    const todayStr = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
-
-    // Termine zählen pro Datum
-    const eventDatesMap = {};
-    allEvents.forEach(ev => {
-        if (ev.Datum) {
-            eventDatesMap[ev.Datum] = (eventDatesMap[ev.Datum] || 0) + 1;
-        }
-    });
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     gridEl.innerHTML = '';
 
@@ -501,7 +545,7 @@ function renderCalendarWidget() {
         const d = daysInPrevMonth - i;
         const cell = document.createElement('div');
         cell.className = 'calendar-day-cell other-month';
-        cell.textContent = d;
+        cell.innerHTML = `<span>${d}</span>`;
         gridEl.appendChild(cell);
     }
 
@@ -510,7 +554,7 @@ function renderCalendarWidget() {
         const dateStr = `${calCurrentYear}-${String(calCurrentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isToday = (dateStr === todayStr);
         const isSelected = (dateStr === selectedCalendarDate);
-        const eventsOnDay = allEvents.filter(ev => ev.Datum === dateStr);
+        const eventsOnDay = allEvents.filter(ev => ev && ev.Datum === dateStr);
         const hasEvents = eventsOnDay.length > 0;
 
         const cell = document.createElement('div');
@@ -520,7 +564,7 @@ function renderCalendarWidget() {
         if (hasEvents) classes.push('has-events');
 
         cell.className = classes.join(' ');
-        cell.textContent = d;
+        cell.innerHTML = `<span>${d}</span>`;
         cell.onclick = () => window.selectCalendarDay(dateStr);
 
         if (hasEvents) {
@@ -561,7 +605,7 @@ function renderCalendarWidget() {
     for (let d = 1; d <= nextPadding; d++) {
         const cell = document.createElement('div');
         cell.className = 'calendar-day-cell other-month';
-        cell.textContent = d;
+        cell.innerHTML = `<span>${d}</span>`;
         gridEl.appendChild(cell);
     }
 }
@@ -614,25 +658,25 @@ function filterAndRender() {
     const sortType = sortEl ? sortEl.value : 'upcoming';
 
     const now = new Date();
-    const nowStr = now.toISOString().split('T')[0];
+    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
     // 30 Tage Limit
     const future30 = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
-    const future30Str = future30.toISOString().split('T')[0];
+    const future30Str = `${future30.getFullYear()}-${String(future30.getMonth() + 1).padStart(2, '0')}-${String(future30.getDate()).padStart(2, '0')}`;
 
     let filtered = [];
 
     if (selectedCalendarDate) {
         // Bestimmter Tag im Kalender ausgewählt
-        filtered = allEvents.filter(ev => ev.Datum === selectedCalendarDate);
+        filtered = allEvents.filter(ev => ev && ev.Datum === selectedCalendarDate);
         const formatted = formatDateObj(selectedCalendarDate).formattedLong;
         if (sectionTitleEl) sectionTitleEl.textContent = `Termine am ${formatted}`;
         if (clearBtn) clearBtn.style.display = 'inline-block';
     } else {
-        // Standard: Anstehend in den nächsten 30 Tagen (oder Vollsuche bei Textsuche)
+        // Standard: Anstehend in den nächsten 30 Tagen (oder Vollsuche bei Suchbegriff)
         filtered = allEvents.filter(ev => {
-            if (!ev.Datum) return false;
-            if (query) return true;
+            if (!ev || !ev.Datum) return false;
+            if (query || sortType !== 'upcoming') return true;
             return ev.Datum >= nowStr && ev.Datum <= future30Str;
         });
 
@@ -646,6 +690,7 @@ function filterAndRender() {
 
     // Filter nach Kategorie & Query
     filtered = filtered.filter(ev => {
+        if (!ev) return false;
         const matchesCategory = (selectedCategory === 'Alle') || (ev.Kategorie === selectedCategory);
         const matchesQuery = !query || 
             (ev.Titel && ev.Titel.toLowerCase().includes(query)) ||
@@ -757,11 +802,74 @@ function showEventDetails(data) {
 }
 window.showEventDetails = showEventDetails;
 
+let currentGuestsData = { adults: 0, children: 0 };
+
+window.openGuestsModal = function() {
+    if (!currentDetailData) return;
+    const g = currentDetailData.Gäste || { adults: 0, children: 0 };
+    currentGuestsData = { adults: parseInt(g.adults) || 0, children: parseInt(g.children) || 0 };
+    
+    document.getElementById('guest-adults-count').textContent = currentGuestsData.adults;
+    document.getElementById('guest-children-count').textContent = currentGuestsData.children;
+    document.getElementById('guests-modal-container').style.display = 'flex';
+};
+
+window.closeGuestsModal = function() {
+    document.getElementById('guests-modal-container').style.display = 'none';
+};
+
+window.changeGuestCount = function(type, delta) {
+    if (type === 'adults') {
+        currentGuestsData.adults = Math.max(0, currentGuestsData.adults + delta);
+        document.getElementById('guest-adults-count').textContent = currentGuestsData.adults;
+    } else if (type === 'children') {
+        currentGuestsData.children = Math.max(0, currentGuestsData.children + delta);
+        document.getElementById('guest-children-count').textContent = currentGuestsData.children;
+    }
+};
+
+window.saveGuestsModal = async function() {
+    if (!currentDetailData) return;
+    window.closeGuestsModal();
+    window.showLoading(true, "Gäste werden gespeichert...");
+
+    try {
+        await setDoc(doc(db, "data_termine", currentDetailData.id), {
+            ...currentDetailData,
+            Gäste: currentGuestsData,
+            lastAction: 'update'
+        });
+    } catch (err) {
+        console.error("Fehler beim Speichern der Gäste:", err);
+        window.showAppModal("Fehler", "Konnte Gäste nicht speichern: " + err.message);
+    } finally {
+        window.showLoading(false);
+    }
+};
+
 function renderDetailRSVP(data) {
     const container = document.getElementById('rsvp-members-container');
     container.innerHTML = '';
     const rsvp = data.Teilnehmer || {};
 
+    const guests = data.Gäste || { adults: 0, children: 0 };
+    const gAdults = parseInt(guests.adults) || 0;
+    const gChildren = parseInt(guests.children) || 0;
+
+    const yesMembers = Object.keys(rsvp).filter(name => rsvp[name] === 'yes');
+    const adultYesCount = yesMembers.filter(n => !isChild(n)).length + gAdults;
+    const childYesCount = yesMembers.filter(n => isChild(n)).length + gChildren;
+    const totalYesCount = adultYesCount + childYesCount;
+
+    const totalEl = document.getElementById('rsvp-total-count');
+    const adultsEl = document.getElementById('rsvp-adults-count');
+    const childrenEl = document.getElementById('rsvp-children-count');
+
+    if (totalEl) totalEl.textContent = totalYesCount;
+    if (adultsEl) adultsEl.textContent = adultYesCount;
+    if (childrenEl) childrenEl.textContent = childYesCount;
+
+    // 1. Alle 11 Gruppenmitglieder
     allAuthors.forEach((name) => {
         const status = rsvp[name] || 'none';
         const card = document.createElement('div');
@@ -772,9 +880,15 @@ function renderDetailRSVP(data) {
         else if (status === 'maybe') statusIcon = '❓';
         else if (status === 'no') statusIcon = '❌';
 
+        const child = isChild(name);
+        const roleBadge = child ? '<span class="rsvp-role-badge child">Kind</span>' : '<span class="rsvp-role-badge adult">Erw.</span>';
+
         card.innerHTML = `
             <img src="avatars/${name}.webp" onerror="this.src='logo.png'" class="rsvp-card-avatar" alt="${name}">
-            <span class="rsvp-name">${name}</span>
+            <div class="rsvp-info">
+                <span class="rsvp-name">${name}</span>
+                ${roleBadge}
+            </div>
             <span class="rsvp-badge-icon">${statusIcon}</span>
         `;
 
@@ -802,6 +916,28 @@ function renderDetailRSVP(data) {
 
         container.appendChild(card);
     });
+
+    // 2. Gast-Karte für zusätzliche Gäste
+    const totalGuests = (parseInt(guests.adults) || 0) + (parseInt(guests.children) || 0);
+
+    const guestCard = document.createElement('div');
+    guestCard.className = 'rsvp-card rsvp-card-guest';
+    
+    let guestText = 'Gäste (0)';
+    if (totalGuests > 0) {
+        guestText = `Gäste (${totalGuests})`;
+    }
+
+    guestCard.innerHTML = `
+        <div style="font-size: 1.6rem;">👥</div>
+        <div class="rsvp-info">
+            <span class="rsvp-name" style="color: #f59e0b;">${guestText}</span>
+            <span style="font-size: 0.65rem; color: #cbd5e1;">${guests.adults || 0} Erw. • ${guests.children || 0} Ki.</span>
+        </div>
+        <span class="rsvp-badge-icon">✏️</span>
+    `;
+    guestCard.onclick = () => window.openGuestsModal();
+    container.appendChild(guestCard);
 }
 
 function renderDetailChecklist(data) {
@@ -818,8 +954,8 @@ function renderDetailChecklist(data) {
     container.innerHTML = items.map((item, idx) => `
         <div class="checklist-item-row ${item.checked ? 'checked' : ''}" onclick="window.toggleEventTask(${idx})">
             <div class="checklist-checkbox">✓</div>
-            <span class="checklist-name">${item.name}</span>
-            ${item.assignedTo ? `<span class="checklist-assignee">${item.assignedTo.includes('und') ? '👫' : '👤'} ${item.assignedTo}</span>` : ''}
+            <span class="checklist-name">${item.name || item}</span>
+            <span class="checklist-status-label">${item.checked ? 'Erledigt' : 'Fehlt noch'}</span>
         </div>
     `).join('');
 }
@@ -847,13 +983,14 @@ window.closeEventDetails = function() {
 };
 
 // ==========================================
-// 9. Aufgaben / Mitbringsel Tab
+// 9. Aufgaben / Was fehlt noch? Tab
 // ==========================================
 function renderAllTasks() {
     const container = document.getElementById('all-tasks-container');
     container.innerHTML = '';
 
-    const nowStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const upcomingEvents = allEvents.filter(e => e.Datum >= nowStr && e.Mitbringliste && e.Mitbringliste.length > 0);
 
     if (upcomingEvents.length === 0) {
@@ -861,7 +998,7 @@ function renderAllTasks() {
             <div style="text-align: center; color: var(--text-muted); margin-top: 40px;">
                 <div style="font-size: 2.5rem; margin-bottom: 10px;">🎒</div>
                 <h3 style="color: white; margin: 0 0 6px 0;">Alles erledigt!</h3>
-                <p style="font-size: 0.85rem;">Keine offenen Mitbringsel oder Aufgaben für anstehende Termine.</p>
+                <p style="font-size: 0.85rem;">Keine offenen Punkte für anstehende Termine.</p>
             </div>
         `;
         return;
@@ -877,8 +1014,8 @@ function renderAllTasks() {
         const itemsHtml = ev.Mitbringliste.map((item, idx) => `
             <div class="checklist-item-row ${item.checked ? 'checked' : ''}" onclick="window.toggleGlobalTask('${ev.id}', ${idx})">
                 <div class="checklist-checkbox">✓</div>
-                <span class="checklist-name">${item.name}</span>
-                ${item.assignedTo ? `<span class="checklist-assignee">${item.assignedTo.includes('und') ? '👫' : '👤'} ${item.assignedTo}</span>` : ''}
+                <span class="checklist-name">${item.name || item}</span>
+                <span class="checklist-status-label">${item.checked ? 'Erledigt' : 'Fehlt noch'}</span>
             </div>
         `).join('');
 
@@ -934,32 +1071,14 @@ function updateTasksBadge() {
 // ==========================================
 // 11. Formular Logik (Neu / Bearbeiten)
 // ==========================================
-window.addItemBuilderRow = function(name = '', assignedTo = '') {
+window.addItemBuilderRow = function(name = '') {
     const container = document.getElementById('items-builder-container');
     const row = document.createElement('div');
     row.className = 'item-builder-row';
 
-    const couples = [
-        "Daniela und Daniel",
-        "Simone und Peter",
-        "Tanja und Thorsten"
-    ];
-
-    const coupleOptions = couples.map(c => `<option value="${c}" ${assignedTo === c ? 'selected' : ''}>👫 ${c}</option>`).join('');
-    const singleOptions = allAuthors.map(a => `<option value="${a}" ${assignedTo === a ? 'selected' : ''}>👤 ${a}</option>`).join('');
-
     row.innerHTML = `
-        <input type="text" class="form-control item-name-input" placeholder="z.B. Grillkohle, Salat, Kasten Bier..." value="${name}" style="flex: 2;" required>
-        <select class="form-control item-assignee-select" style="flex: 1.3;">
-            <option value="">Wer bringt's mit?</option>
-            <optgroup label="Paare / Teams">
-                ${coupleOptions}
-            </optgroup>
-            <optgroup label="Einzeln">
-                ${singleOptions}
-            </optgroup>
-        </select>
-        <button type="button" class="btn-remove-item" onclick="this.closest('.item-builder-row').remove()">✕</button>
+        <input type="text" class="form-control item-name-input" placeholder="z.B. Grillkohle, Salat, Kasten Bier, Zelt..." value="${name}" style="flex: 1;" required>
+        <button type="button" class="btn-remove-item" onclick="this.closest('.item-builder-row').remove()" title="Entfernen">✕</button>
     `;
     container.appendChild(row);
 };
@@ -1024,7 +1143,7 @@ window.editEventFromDetail = function() {
     const builder = document.getElementById('items-builder-container');
     builder.innerHTML = '';
     if (data.Mitbringliste && data.Mitbringliste.length > 0) {
-        data.Mitbringliste.forEach(item => addItemBuilderRow(item.name, item.assignedTo));
+        data.Mitbringliste.forEach(item => addItemBuilderRow(item.name || item));
     }
 
     document.getElementById('submit-event-btn').textContent = "Änderungen speichern";
@@ -1084,7 +1203,6 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
     const itemRows = document.querySelectorAll('#items-builder-container .item-builder-row');
     const items = Array.from(itemRows).map(row => ({
         name: row.querySelector('.item-name-input').value.trim(),
-        assignedTo: row.querySelector('.item-assignee-select').value,
         checked: false
     })).filter(i => i.name !== "");
 
@@ -1171,18 +1289,581 @@ if (allDayCheckbox && timeGroup) {
 }
 
 // ==========================================
+// 13. Kasse Logik (Gemeinschaftskasse)
+// ==========================================
+let allKasseBookings = [];
+let selectedKasseFilter = 'alle';
+let editingKasseBookingId = null;
+let currentKasseBookingType = 'einnahme';
+
+function initKasseListener() {
+    const colRef = collection(db, "data_kasse");
+    onSnapshot(colRef, (snapshot) => {
+        const list = [];
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.betrag !== undefined) {
+                list.push({ id: docSnap.id, ...data });
+            }
+        });
+        allKasseBookings = list;
+        renderKasseView();
+    }, (error) => {
+        console.error("Fehler beim Laden der Kasse:", error);
+    });
+}
+
+function formatEuro(amount) {
+    const num = parseFloat(amount) || 0;
+    return num.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function renderKasseView() {
+    const totalBalanceEl = document.getElementById('kasse-total-balance');
+    const totalInEl = document.getElementById('kasse-total-in');
+    const totalOutEl = document.getElementById('kasse-total-out');
+    const container = document.getElementById('kasse-list-container');
+    if (!totalBalanceEl || !container) return;
+
+    let totalIn = 0;
+    let totalOut = 0;
+
+    allKasseBookings.forEach(b => {
+        const amount = parseFloat(b.betrag) || 0;
+        if (b.typ === 'einnahme') {
+            totalIn += amount;
+        } else if (b.typ === 'ausgabe') {
+            totalOut += amount;
+        }
+    });
+
+    const balance = totalIn - totalOut;
+    totalBalanceEl.textContent = (balance >= 0 ? '+' : '') + formatEuro(balance);
+    totalBalanceEl.className = `kasse-balance-amount ${balance < 0 ? 'negative' : ''}`;
+
+    if (totalInEl) totalInEl.textContent = '+' + formatEuro(totalIn);
+    if (totalOutEl) totalOutEl.textContent = '-' + formatEuro(totalOut);
+
+    // Filtern
+    let filtered = [...allKasseBookings];
+    if (selectedKasseFilter === 'einnahme') {
+        filtered = filtered.filter(b => b.typ === 'einnahme');
+    } else if (selectedKasseFilter === 'ausgabe') {
+        filtered = filtered.filter(b => b.typ === 'ausgabe');
+    }
+
+    // Sortieren: Neuestes Datum zuerst
+    filtered.sort((a, b) => {
+        const dateA = a.datum || '1970-01-01';
+        const dateB = b.datum || '1970-01-01';
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+        const tA = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0;
+        const tB = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0;
+        return tB - tA;
+    });
+
+    container.innerHTML = '';
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
+                <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
+                <h3 style="color: white; margin: 0 0 6px 0;">Keine Buchungen vorhanden</h3>
+                <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neue Buchung“ eine Einnahme oder Ausgabe ein!</p>
+            </div>
+        `;
+        return;
+    }
+
+    filtered.forEach(b => {
+        const card = document.createElement('div');
+        card.className = 'kasse-tx-card';
+        const isIncome = (b.typ === 'einnahme');
+        const formattedDate = formatDateObj(b.datum).formattedLong;
+
+        card.innerHTML = `
+            <div class="kasse-tx-icon ${isIncome ? 'positive' : 'negative'}">
+                ${isIncome ? '🟢' : '🔴'}
+            </div>
+            <div class="kasse-tx-info">
+                <div class="kasse-tx-title">${b.zweck || 'Buchung'}</div>
+                <div class="kasse-tx-meta">
+                    <span>📅 ${formattedDate}</span>
+                    ${b.notiz ? `<span>• 📝 ${b.notiz}</span>` : ''}
+                </div>
+            </div>
+            <div class="kasse-tx-right">
+                <span class="kasse-tx-amount ${isIncome ? 'positive' : 'negative'}">
+                    ${isIncome ? '+' : '-'}${formatEuro(b.betrag)}
+                </span>
+                <div class="kasse-tx-actions">
+                    <button class="btn-tx-action" onclick="window.openKasseModalById('${b.id}')" title="Bearbeiten">✏️</button>
+                    <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${b.id}')" title="Löschen">🗑️</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    if (typeof renderPurchasesView === 'function') {
+        renderPurchasesView();
+    }
+}
+window.renderKasseView = renderKasseView;
+
+window.filterKasse = function(filter, el) {
+    selectedKasseFilter = filter;
+    document.querySelectorAll('#kasse-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderKasseView();
+};
+
+window.setKasseBookingType = function(type) {
+    currentKasseBookingType = type;
+    const btnIn = document.getElementById('btn-typ-einnahme');
+    const btnOut = document.getElementById('btn-typ-ausgabe');
+
+    if (type === 'einnahme') {
+        if (btnIn) btnIn.classList.add('active');
+        if (btnOut) btnOut.classList.remove('active');
+    } else {
+        if (btnOut) btnOut.classList.add('active');
+        if (btnIn) btnIn.classList.remove('active');
+    }
+};
+
+window.openKasseModal = function(booking = null) {
+    const modal = document.getElementById('kasse-modal-container');
+    if (!modal) return;
+
+    if (booking) {
+        editingKasseBookingId = booking.id;
+        document.getElementById('kasse-modal-title').textContent = "✏️ Buchung bearbeiten";
+        document.getElementById('kasse-amount').value = parseFloat(booking.betrag) || '';
+        document.getElementById('kasse-purpose').value = booking.zweck || '';
+        document.getElementById('kasse-date').value = booking.datum || '';
+        document.getElementById('kasse-notes').value = booking.notiz || '';
+        window.setKasseBookingType(booking.typ || 'einnahme');
+    } else {
+        editingKasseBookingId = null;
+        document.getElementById('kasse-modal-title').textContent = "💰 Neue Buchung";
+        document.getElementById('kasse-amount').value = '';
+        document.getElementById('kasse-purpose').value = '';
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('kasse-date').value = today;
+        document.getElementById('kasse-notes').value = '';
+        window.setKasseBookingType('einnahme');
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.openKasseModalById = function(id) {
+    const booking = allKasseBookings.find(b => b.id === id);
+    if (booking) window.openKasseModal(booking);
+};
+
+window.closeKasseModal = function() {
+    const modal = document.getElementById('kasse-modal-container');
+    if (modal) modal.style.display = 'none';
+};
+
+window.saveKasseBooking = async function() {
+    const amountVal = parseFloat(document.getElementById('kasse-amount').value);
+    const purposeVal = document.getElementById('kasse-purpose').value.trim();
+    const dateVal = document.getElementById('kasse-date').value;
+    const notesVal = document.getElementById('kasse-notes').value.trim();
+
+    if (isNaN(amountVal) || amountVal <= 0) {
+        window.showAppModal("Angabe fehlt", "Bitte gib einen gültigen Betrag größer als 0 € ein.");
+        return;
+    }
+    if (!purposeVal) {
+        window.showAppModal("Angabe fehlt", "Bitte gib einen Zweck für die Buchung an.");
+        return;
+    }
+    if (!dateVal) {
+        window.showAppModal("Angabe fehlt", "Bitte gib ein Datum an.");
+        return;
+    }
+
+    window.closeKasseModal();
+    window.showLoading(true, "Buchung wird gespeichert...");
+
+    const bookingData = {
+        typ: currentKasseBookingType,
+        betrag: Math.round(amountVal * 100) / 100,
+        zweck: purposeVal,
+        datum: dateVal,
+        notiz: notesVal,
+        createdAt: serverTimestamp(),
+        lastAction: editingKasseBookingId ? 'update' : 'new'
+    };
+
+    try {
+        const docId = editingKasseBookingId || `kasse_${dateVal}_${Date.now()}`;
+        await setDoc(doc(db, "data_kasse", docId), bookingData);
+
+        if (currentKasseBookingType === 'einnahme' && typeof confetti === 'function') {
+            confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.6 },
+                colors: ['#10b981', '#34d399', '#f59e0b'],
+                zIndex: 30000
+            });
+        }
+    } catch (e) {
+        console.error("Fehler beim Speichern der Buchung:", e);
+        window.showAppModal("Fehler", "Konnte Buchung nicht speichern: " + e.message);
+    } finally {
+        window.showLoading(false);
+    }
+};
+
+window.deleteKasseBooking = function(id) {
+    const booking = allKasseBookings.find(b => b.id === id);
+    if (!booking) return;
+
+    document.getElementById('confirm-modal-title').textContent = "Buchung löschen?";
+    document.getElementById('confirm-modal-text').textContent = `Möchtest du die Buchung '${booking.zweck}' (${formatEuro(booking.betrag)}) wirklich löschen?`;
+
+    const confirmBtn = document.getElementById('btn-confirm-action');
+    confirmBtn.onclick = async () => {
+        window.closeConfirmModal();
+        window.showLoading(true, "Buchung wird gelöscht...");
+        try {
+            await deleteDoc(doc(db, "data_kasse", id));
+        } catch (e) {
+            console.error("Fehler beim Löschen:", e);
+            window.showAppModal("Fehler", "Konnte Buchung nicht löschen: " + e.message);
+        } finally {
+            window.showLoading(false);
+        }
+    };
+
+    document.getElementById('confirm-modal-container').style.display = 'flex';
+};
+
+// ==========================================
+// 14. Offene Anschaffungen Logik
+// ==========================================
+let allPurchases = [];
+let selectedPurchaseFilter = 'alle';
+let editingPurchaseId = null;
+let currentPurchasePrio = 'hoch';
+
+function initPurchasesListener() {
+    const colRef = collection(db, "data_anschaffungen");
+    onSnapshot(colRef, (snapshot) => {
+        const list = [];
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.titel) {
+                list.push({ id: docSnap.id, ...data });
+            }
+        });
+        allPurchases = list;
+        renderPurchasesView();
+        updatePurchasesBadge();
+    }, (error) => {
+        console.error("Fehler beim Laden der Anschaffungen:", error);
+    });
+}
+
+function updatePurchasesBadge() {
+    const openCount = allPurchases.filter(p => !p.erledigt).length;
+    const badge = document.getElementById('purchases-badge');
+    if (badge) {
+        badge.textContent = openCount;
+        if (openCount > 0) badge.classList.add('visible');
+        else badge.classList.remove('visible');
+    }
+}
+
+function renderPurchasesView() {
+    const container = document.getElementById('purchases-list-container');
+    if (!container) return;
+
+    // Kassenstand und Budget-Vergleich berechnen
+    let totalIn = 0;
+    let totalOut = 0;
+    allKasseBookings.forEach(b => {
+        const amount = parseFloat(b.betrag) || 0;
+        if (b.typ === 'einnahme') totalIn += amount;
+        else if (b.typ === 'ausgabe') totalOut += amount;
+    });
+    const kassenstand = totalIn - totalOut;
+
+    let totalNeeded = 0;
+    allPurchases.forEach(p => {
+        if (!p.erledigt && p.preis) {
+            totalNeeded += (parseFloat(p.preis) || 0);
+        }
+    });
+
+    const diff = kassenstand - totalNeeded;
+    const diffEl = document.getElementById('purchases-budget-diff');
+    const labelEl = document.getElementById('purchases-budget-status-label');
+    const subEl = document.getElementById('purchases-budget-status-sub');
+    const kasseValEl = document.getElementById('purchases-kassenstand-val');
+    const neededValEl = document.getElementById('purchases-total-needed-val');
+
+    if (diffEl) {
+        if (kasseValEl) kasseValEl.textContent = (kassenstand >= 0 ? '+' : '') + formatEuro(kassenstand);
+        if (neededValEl) neededValEl.textContent = formatEuro(totalNeeded);
+
+        if (totalNeeded === 0) {
+            labelEl.textContent = "Kassen-Deckung";
+            diffEl.textContent = "0,00 €";
+            diffEl.className = "purchases-budget-status-value covered";
+            subEl.textContent = "Keine offenen Wünsche mit Preisangabe 🎉";
+        } else if (diff >= 0) {
+            labelEl.textContent = "Kassen-Deckung";
+            diffEl.textContent = "+" + formatEuro(diff);
+            diffEl.className = "purchases-budget-status-value covered";
+            subEl.textContent = `Kasse deckt alles ab (${formatEuro(diff)} Puffer übrig) 🥳`;
+        } else {
+            const missingAmount = Math.abs(diff);
+            labelEl.textContent = "Fehlender Kassenbetrag";
+            diffEl.textContent = "-" + formatEuro(missingAmount);
+            diffEl.className = "purchases-budget-status-value missing";
+            subEl.textContent = `Es fehlen noch ${formatEuro(missingAmount)} in der Kasse für alle offenen Anschaffungen.`;
+        }
+    }
+
+    let filtered = [...allPurchases];
+    if (selectedPurchaseFilter === 'offen') {
+        filtered = filtered.filter(p => !p.erledigt);
+    } else if (selectedPurchaseFilter === 'erledigt') {
+        filtered = filtered.filter(p => p.erledigt);
+    }
+
+    // Sortierung: Unfertig vor Fertig, dann Prio (hoch > mittel > idee), dann Datum
+    const prioOrder = { 'hoch': 1, 'mittel': 2, 'idee': 3 };
+    filtered.sort((a, b) => {
+        if (!!a.erledigt !== !!b.erledigt) {
+            return a.erledigt ? 1 : -1;
+        }
+        const prioA = prioOrder[a.prio] || 2;
+        const prioB = prioOrder[b.prio] || 2;
+        if (prioA !== prioB) return prioA - prioB;
+        const tA = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : 0;
+        const tB = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : 0;
+        return tB - tA;
+    });
+
+    container.innerHTML = '';
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
+                <div style="font-size: 2.5rem; margin-bottom: 8px;">🛒</div>
+                <h3 style="color: white; margin: 0 0 6px 0;">Keine Anschaffungen</h3>
+                <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neu“ Ausrüstung oder Wünsche für die Gruppe ein!</p>
+            </div>
+        `;
+        return;
+    }
+
+    const prioLabels = {
+        'hoch': '🔥 Dringend',
+        'mittel': '⚡ Wichtig',
+        'idee': '💡 Idee'
+    };
+
+    filtered.forEach(p => {
+        const card = document.createElement('div');
+        card.className = `purchase-card ${p.erledigt ? 'checked' : ''}`;
+        const prioClass = p.prio || 'hoch';
+        const prioText = prioLabels[prioClass] || 'Wichtig';
+
+        card.innerHTML = `
+            <div class="purchase-checkbox" onclick="window.togglePurchaseStatus('${p.id}')" title="${p.erledigt ? 'Als offen markieren' : 'Als angeschafft markieren'}">
+                ✓
+            </div>
+            <div class="purchase-info" onclick="window.togglePurchaseStatus('${p.id}')">
+                <div class="purchase-title">${p.titel}</div>
+                <div class="purchase-meta">
+                    <span class="prio-badge ${prioClass}">${prioText}</span>
+                    ${p.preis ? `<span class="purchase-price-badge">~${formatEuro(p.preis)}</span>` : ''}
+                    ${p.notiz ? `<span>• 📝 ${p.notiz}</span>` : ''}
+                </div>
+            </div>
+            <div class="purchase-right">
+                ${p.link ? `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="btn-purchase-link" title="Weblink öffnen">🔗</a>` : ''}
+                <button class="btn-tx-action" onclick="window.openPurchaseModalById('${p.id}')" title="Bearbeiten">✏️</button>
+                <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deletePurchase('${p.id}')" title="Löschen">🗑️</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+window.renderPurchasesView = renderPurchasesView;
+
+window.filterPurchases = function(filter, el) {
+    selectedPurchaseFilter = filter;
+    document.querySelectorAll('#purchase-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderPurchasesView();
+};
+
+window.setPurchasePrio = function(prio) {
+    currentPurchasePrio = prio;
+    ['hoch', 'mittel', 'idee'].forEach(p => {
+        const btn = document.getElementById(`btn-prio-${p}`);
+        if (btn) {
+            btn.classList.toggle('active', p === prio);
+            if (p === prio) {
+                if (p === 'hoch') btn.style.background = 'rgba(239, 68, 68, 0.25)';
+                else if (p === 'mittel') btn.style.background = 'rgba(245, 158, 11, 0.25)';
+                else if (p === 'idee') btn.style.background = 'rgba(14, 165, 233, 0.25)';
+            } else {
+                btn.style.background = 'transparent';
+            }
+        }
+    });
+};
+
+window.openPurchaseModal = function(item = null) {
+    const modal = document.getElementById('purchase-modal-container');
+    if (!modal) return;
+
+    if (item) {
+        editingPurchaseId = item.id;
+        document.getElementById('purchase-modal-title').textContent = "✏️ Anschaffung bearbeiten";
+        document.getElementById('purchase-title').value = item.titel || '';
+        document.getElementById('purchase-price').value = item.preis ? parseFloat(item.preis) : '';
+        document.getElementById('purchase-link').value = item.link || '';
+        document.getElementById('purchase-notes').value = item.notiz || '';
+        window.setPurchasePrio(item.prio || 'hoch');
+    } else {
+        editingPurchaseId = null;
+        document.getElementById('purchase-modal-title').textContent = "🛒 Neue Anschaffung";
+        document.getElementById('purchase-title').value = '';
+        document.getElementById('purchase-price').value = '';
+        document.getElementById('purchase-link').value = '';
+        document.getElementById('purchase-notes').value = '';
+        window.setPurchasePrio('hoch');
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.openPurchaseModalById = function(id) {
+    const item = allPurchases.find(p => p.id === id);
+    if (item) window.openPurchaseModal(item);
+};
+
+window.closePurchaseModal = function() {
+    const modal = document.getElementById('purchase-modal-container');
+    if (modal) modal.style.display = 'none';
+};
+
+window.savePurchase = async function() {
+    const titleVal = document.getElementById('purchase-title').value.trim();
+    const priceVal = parseFloat(document.getElementById('purchase-price').value);
+    const linkVal = document.getElementById('purchase-link').value.trim();
+    const notesVal = document.getElementById('purchase-notes').value.trim();
+
+    if (!titleVal) {
+        window.showAppModal("Angabe fehlt", "Bitte gib einen Gegenstand / Titel an.");
+        return;
+    }
+
+    window.closePurchaseModal();
+    window.showLoading(true, "Anschaffung wird gespeichert...");
+
+    const purchaseData = {
+        titel: titleVal,
+        preis: isNaN(priceVal) ? null : Math.round(priceVal * 100) / 100,
+        prio: currentPurchasePrio,
+        link: linkVal,
+        notiz: notesVal,
+        erledigt: editingPurchaseId ? (allPurchases.find(p => p.id === editingPurchaseId)?.erledigt || false) : false,
+        createdAt: serverTimestamp(),
+        lastAction: editingPurchaseId ? 'update' : 'new'
+    };
+
+    try {
+        const docId = editingPurchaseId || `anschaffung_${Date.now()}`;
+        await setDoc(doc(db, "data_anschaffungen", docId), purchaseData);
+
+        if (!editingPurchaseId && typeof confetti === 'function') {
+            confetti({
+                particleCount: 70,
+                spread: 50,
+                origin: { y: 0.6 },
+                colors: ['#0ea5e9', '#10b981', '#f59e0b'],
+                zIndex: 30000
+            });
+        }
+    } catch (e) {
+        console.error("Fehler beim Speichern der Anschaffung:", e);
+        window.showAppModal("Fehler", "Konnte Anschaffung nicht speichern: " + e.message);
+    } finally {
+        window.showLoading(false);
+    }
+};
+
+window.togglePurchaseStatus = async function(id) {
+    const item = allPurchases.find(p => p.id === id);
+    if (!item) return;
+
+    try {
+        await setDoc(doc(db, "data_anschaffungen", id), {
+            ...item,
+            erledigt: !item.erledigt,
+            lastAction: 'update'
+        });
+    } catch (e) {
+        console.error("Fehler beim Umschalten des Status:", e);
+    }
+};
+
+window.deletePurchase = function(id) {
+    const item = allPurchases.find(p => p.id === id);
+    if (!item) return;
+
+    document.getElementById('confirm-modal-title').textContent = "Anschaffung löschen?";
+    document.getElementById('confirm-modal-text').textContent = `Möchtest du '${item.titel}' wirklich löschen?`;
+
+    const confirmBtn = document.getElementById('btn-confirm-action');
+    confirmBtn.onclick = async () => {
+        window.closeConfirmModal();
+        window.showLoading(true, "Anschaffung wird gelöscht...");
+        try {
+            await deleteDoc(doc(db, "data_anschaffungen", id));
+        } catch (e) {
+            console.error("Fehler beim Löschen:", e);
+            window.showAppModal("Fehler", "Konnte Anschaffung nicht löschen: " + e.message);
+        } finally {
+            window.showLoading(false);
+        }
+    };
+
+    document.getElementById('confirm-modal-container').style.display = 'flex';
+};
+
+// ==========================================
 // 12. Initialisierung beim Laden
 // ==========================================
+// Sofortiges Rendern der UI
+renderCalendarWidget();
+filterAndRender();
+renderKasseView();
+renderPurchasesView();
+updateNotificationButton();
+
+// Firebase Auth & Realtime Listeners
+initAuthorsListener();
+initCategoriesListener();
+initEventsListener();
+initKasseListener();
+initPurchasesListener();
+
 signInAnonymously(auth).then(() => {
     console.log("Klapsentouren: Anonym bei Firebase angemeldet.");
-    renderCalendarWidget();
-    initAuthorsListener();
-    initCategoriesListener();
-    initEventsListener();
-    updateNotificationButton();
 }).catch((error) => {
-    console.error("Login Fehler:", error);
-    window.firebaseDataReceived = true;
-    if (typeof window.attemptHideSplash === 'function') window.attemptHideSplash();
-    window.showAppModal("Offline-Modus", "Anmeldung bei Firebase nicht möglich. Offline-Daten werden geladen.");
+    console.warn("Anonymer Login Hinweis:", error);
 });

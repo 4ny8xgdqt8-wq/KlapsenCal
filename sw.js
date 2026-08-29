@@ -1,4 +1,4 @@
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -20,7 +20,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching app shell & assets...');
+      console.log('[SW] Pre-caching core assets...');
       return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
         console.warn('[SW] Some assets could not be pre-cached:', err);
       });
@@ -54,31 +54,37 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first strategy for static assets, network-fallback
+  // Network-First for HTML, JS and CSS so app updates are always instant
+  if (event.request.mode === 'navigate' || 
+      url.pathname.endsWith('.html') || 
+      url.pathname.endsWith('.js') || 
+      url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-First for static assets (images, avatars, fonts)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
       return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+        if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
         }
         const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         return networkResponse;
       });
-    }).catch(() => {
-      if (event.request.mode === 'navigate') {
-        return caches.match('./index.html');
-      }
     })
   );
 });
