@@ -1,5 +1,5 @@
-const VERSION = '1.0.1';
-const CACHE_NAME = `klapsencal-cache-${VERSION}`;
+const VERSION = '1.0.2';
+const CACHE_NAME = `klapsenwanderung-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
   './',

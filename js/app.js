@@ -61,7 +61,7 @@ window.requestNotificationPermission = async function() {
         if (permission === 'granted') {
             window.showAppModal("Aktiviert! 🔔", "Du erhältst nun Benachrichtigungen, wenn Termine eingetragen oder geändert werden.");
             updateNotificationButton();
-            sendLocalNotification("KlapsenCal 🔔", "Benachrichtigungen sind erfolgreich aktiviert!");
+            sendLocalNotification("Klapsenwanderung 🔔", "Benachrichtigungen sind erfolgreich aktiviert!");
         } else if (permission === 'denied') {
             window.showAppModal("Deaktiviert", "Benachrichtigungen wurden blockiert. Du kannst sie in den Browser-Einstellungen freigeben.");
             updateNotificationButton();
@@ -577,7 +577,7 @@ window.exportToICS = function() {
     const icsContent = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//KlapsenCal//DE',
+        'PRODID:-//Klapsenwanderung//DE',
         'CALSCALE:GREGORIAN',
         'BEGIN:VEVENT',
         `SUMMARY:${ev.Titel || 'Klapsen-Termin'}`,
@@ -884,7 +884,7 @@ document.getElementById('event-author').addEventListener('change', (e) => {
 // 12. Initialisierung beim Laden
 // ==========================================
 signInAnonymously(auth).then(() => {
-    console.log("KlapsenCal: Anonym bei Firebase angemeldet.");
+    console.log("Klapsenwanderung: Anonym bei Firebase angemeldet.");
     loadAuthors();
     loadCategories();
     initEventsListener();
