@@ -228,7 +228,7 @@ header {
 
 .calendar-weekdays {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: 28px repeat(7, 1fr);
     text-align: center;
     font-size: 0.65rem;
     font-weight: 800;
@@ -236,12 +236,32 @@ header {
     margin-bottom: 3px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
+    align-items: center;
+}
+
+.kw-header-col {
+    color: #475569;
+    font-size: 0.6rem;
+    font-weight: 900;
 }
 
 .calendar-days-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: 28px repeat(7, 1fr);
     gap: 3px;
+}
+
+.calendar-kw-cell {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    user-select: none;
 }
 
 .calendar-day-cell {
@@ -1189,6 +1209,12 @@ select.form-control {
 }
 .rsvp-card:active {
     transform: scale(0.95);
+}
+.rsvp-card.rsvp-card-readonly {
+    cursor: default;
+}
+.rsvp-card.rsvp-card-readonly:active {
+    transform: none;
 }
 .rsvp-card-avatar {
     width: 34px;

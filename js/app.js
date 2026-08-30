@@ -104,6 +104,8 @@ let formParticipants = {};
 let editingEventId = null;
 let currentDetailData = null;
 let isInitialLoad = true;
+let initialEventsLoaded = false;
+let knownEventDocIds = new Set();
 
 let calCurrentYear = new Date().getFullYear();
 let calCurrentMonth = new Date().getMonth();
@@ -496,24 +498,41 @@ function initEventsListener() {
             });
         });
 
-        // Benachrichtigung bei neuem oder aktualisiertem Termin (nach initialem Laden)
-        if (!isInitialLoad) {
-            snapshot.docChanges().forEach((change) => {
-                const item = change.doc.data();
-                if (change.doc.id === "Ersteller" || change.doc.id === "Art" || !item.Titel) return;
+        // Benachrichtigung bei echten Live-Änderungen (kein Fluten beim Start oder Cache-Wechsel)
+        if (!initialEventsLoaded) {
+            snapshot.forEach(docSnap => knownEventDocIds.add(docSnap.id));
+            if (!snapshot.metadata.fromCache) {
+                initialEventsLoaded = true;
+            }
+        } else {
+            if (!snapshot.metadata.hasPendingWrites && !snapshot.metadata.fromCache) {
+                snapshot.docChanges().forEach((change) => {
+                    const item = change.doc.data();
+                    if (change.doc.id === "Ersteller" || change.doc.id === "Art" || !item.Titel) return;
 
-                if (change.type === "added") {
-                    sendLocalNotification(
-                        `Neuer Termin! 📅`,
-                        `${item.Ersteller || 'Jemand'} hat '${item.Titel}' (${item.Datum}) eingetragen.`
-                    );
-                } else if (change.type === "modified" && item.lastAction === "update") {
-                    sendLocalNotification(
-                        `Termin aktualisiert 🔄`,
-                        `'${item.Titel}' wurde aktualisiert.`
-                    );
-                }
-            });
+                    const createdMs = (item.createdAt && item.createdAt.toMillis) ? item.createdAt.toMillis() : Date.now();
+                    const isRecent = (Date.now() - createdMs) < (3 * 60 * 1000);
+
+                    if (change.type === "added" && !knownEventDocIds.has(change.doc.id)) {
+                        knownEventDocIds.add(change.doc.id);
+                        if (isRecent) {
+                            sendLocalNotification(
+                                `Neuer Termin! 📅`,
+                                `${item.Ersteller || 'Jemand'} hat '${item.Titel}' (${item.Datum}) eingetragen.`
+                            );
+                        }
+                    } else if (change.type === "modified" && item.lastAction === "update") {
+                        if (isRecent) {
+                            sendLocalNotification(
+                                `Termin aktualisiert 🔄`,
+                                `'${item.Titel}' wurde aktualisiert.`
+                            );
+                        }
+                    } else if (change.type === "removed") {
+                        knownEventDocIds.delete(change.doc.id);
+                    }
+                });
+            }
         }
 
         isInitialLoad = false;
@@ -697,9 +716,14 @@ function renderEvents(events) {
     });
 }
 
-// ==========================================
-// 7.1 Monats-Kalender Widget Logik
-// ==========================================
+function getISOWeekNumber(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
 function renderCalendarWidget() {
     const titleEl = document.getElementById('calendar-month-year');
     const gridEl = document.getElementById('calendar-days-grid');
@@ -712,79 +736,111 @@ function renderCalendarWidget() {
 
     gridEl.innerHTML = '';
 
-    // Erster Tag des Monats (Montag = 0, Sonntag = 6)
+    // Alle Tage der Monatsansicht vorbereiten
     const firstDay = new Date(calCurrentYear, calCurrentMonth, 1);
     const startDayOfWeek = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
     const daysInPrevMonth = new Date(calCurrentYear, calCurrentMonth, 0).getDate();
 
-    // Tage des vorherigen Monats (ausgegraut)
+    const allGridDays = [];
+
+    // Tage des vorherigen Monats
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
         const d = daysInPrevMonth - i;
-        const cell = document.createElement('div');
-        cell.className = 'calendar-day-cell other-month';
-        cell.innerHTML = `<span>${d}</span>`;
-        gridEl.appendChild(cell);
+        allGridDays.push({
+            dateObj: new Date(calCurrentYear, calCurrentMonth - 1, d),
+            dayNum: d,
+            isCurrentMonth: false
+        });
     }
 
     // Tage des aktuellen Monats
     for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${calCurrentYear}-${String(calCurrentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const isToday = (dateStr === todayStr);
-        const isSelected = (dateStr === selectedCalendarDate);
-        const eventsOnDay = allEvents.filter(ev => ev && ev.Datum === dateStr);
-        const hasEvents = eventsOnDay.length > 0;
-
-        const cell = document.createElement('div');
-        let classes = ['calendar-day-cell'];
-        if (isToday) classes.push('today');
-        if (isSelected) classes.push('selected');
-        if (hasEvents) classes.push('has-events');
-
-        cell.className = classes.join(' ');
-        cell.innerHTML = `<span>${d}</span>`;
-        cell.onclick = () => window.selectCalendarDay(dateStr);
-
-        if (hasEvents) {
-            const dayCats = [...new Set(eventsOnDay.map(ev => ev.Kategorie || 'Sonstiges'))];
-            const primaryCatColor = getCategoryColor(dayCats[0]);
-
-            if (!isSelected) {
-                cell.style.background = primaryCatColor.bg;
-            }
-
-            const dotsRow = document.createElement('div');
-            dotsRow.className = 'event-dots-row';
-
-            // Für jedes Event an diesem Tag einen farbigen Punkt anzeigen (bis zu 4)
-            eventsOnDay.slice(0, 4).forEach(ev => {
-                const catStyle = getCategoryColor(ev.Kategorie);
-                const dot = document.createElement('span');
-                dot.className = 'event-dot';
-                if (isSelected) {
-                    dot.style.background = '#064e3b';
-                    dot.style.boxShadow = 'none';
-                } else {
-                    dot.style.background = catStyle.color;
-                    dot.style.boxShadow = `0 0 3px ${catStyle.color}`;
-                }
-                dotsRow.appendChild(dot);
-            });
-
-            cell.appendChild(dotsRow);
-        }
-
-        gridEl.appendChild(cell);
+        allGridDays.push({
+            dateObj: new Date(calCurrentYear, calCurrentMonth, d),
+            dayNum: d,
+            isCurrentMonth: true
+        });
     }
 
-    // Tage des nächsten Monats auffüllen
-    const totalCellsSoFar = startDayOfWeek + daysInMonth;
-    const nextPadding = totalCellsSoFar % 7 === 0 ? 0 : 7 - (totalCellsSoFar % 7);
+    // Tage des nächsten Monats
+    const nextPadding = allGridDays.length % 7 === 0 ? 0 : 7 - (allGridDays.length % 7);
     for (let d = 1; d <= nextPadding; d++) {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-day-cell other-month';
-        cell.innerHTML = `<span>${d}</span>`;
-        gridEl.appendChild(cell);
+        allGridDays.push({
+            dateObj: new Date(calCurrentYear, calCurrentMonth + 1, d),
+            dayNum: d,
+            isCurrentMonth: false
+        });
+    }
+
+    // Wochenweise rendern (KW-Spalte links + 7 Wochentage)
+    for (let w = 0; w < allGridDays.length; w += 7) {
+        const mondayDay = allGridDays[w];
+        const kwNum = getISOWeekNumber(mondayDay.dateObj);
+
+        // KW-Zelle
+        const kwCell = document.createElement('div');
+        kwCell.className = 'calendar-kw-cell';
+        kwCell.title = `Kalenderwoche ${kwNum}`;
+        kwCell.textContent = kwNum;
+        gridEl.appendChild(kwCell);
+
+        // 7 Wochentags-Zellen
+        for (let dIdx = 0; dIdx < 7; dIdx++) {
+            const dayInfo = allGridDays[w + dIdx];
+            const dateStr = `${dayInfo.dateObj.getFullYear()}-${String(dayInfo.dateObj.getMonth() + 1).padStart(2, '0')}-${String(dayInfo.dayNum).padStart(2, '0')}`;
+            
+            const cell = document.createElement('div');
+
+            if (!dayInfo.isCurrentMonth) {
+                cell.className = 'calendar-day-cell other-month';
+                cell.innerHTML = `<span>${dayInfo.dayNum}</span>`;
+            } else {
+                const isToday = (dateStr === todayStr);
+                const isSelected = (dateStr === selectedCalendarDate);
+                const eventsOnDay = allEvents.filter(ev => ev && ev.Datum === dateStr);
+                const hasEvents = eventsOnDay.length > 0;
+
+                let classes = ['calendar-day-cell'];
+                if (isToday) classes.push('today');
+                if (isSelected) classes.push('selected');
+                if (hasEvents) classes.push('has-events');
+
+                cell.className = classes.join(' ');
+                cell.innerHTML = `<span>${dayInfo.dayNum}</span>`;
+                cell.onclick = () => window.selectCalendarDay(dateStr);
+
+                if (hasEvents) {
+                    const dayCats = [...new Set(eventsOnDay.map(ev => ev.Kategorie || 'Sonstiges'))];
+                    const primaryCatColor = getCategoryColor(dayCats[0]);
+
+                    if (!isSelected) {
+                        cell.style.background = primaryCatColor.bg;
+                    }
+
+                    const dotsRow = document.createElement('div');
+                    dotsRow.className = 'event-dots-row';
+
+                    eventsOnDay.slice(0, 4).forEach(ev => {
+                        const catStyle = getCategoryColor(ev.Kategorie);
+                        const dot = document.createElement('span');
+                        dot.className = 'event-dot';
+                        if (isSelected) {
+                            dot.style.background = '#064e3b';
+                            dot.style.boxShadow = 'none';
+                        } else {
+                            dot.style.background = catStyle.color;
+                            dot.style.boxShadow = `0 0 3px ${catStyle.color}`;
+                        }
+                        dotsRow.appendChild(dot);
+                    });
+
+                    cell.appendChild(dotsRow);
+                }
+            }
+
+            gridEl.appendChild(cell);
+        }
     }
 }
 window.renderCalendarWidget = renderCalendarWidget;
@@ -1125,17 +1181,20 @@ function renderDetailRSVP(data) {
     if (adultsEl) adultsEl.textContent = adultYesCount;
     if (childrenEl) childrenEl.textContent = childYesCount;
 
-    // 1. Alle 11 Gruppenmitglieder
-    allAuthors.forEach((name) => {
-        const status = rsvp[name] || 'none';
-        const card = document.createElement('div');
-        card.className = `rsvp-card status-${status}`;
-        
-        let statusIcon = '❔';
-        if (status === 'yes') statusIcon = '✅';
-        else if (status === 'maybe') statusIcon = '❓';
-        else if (status === 'no') statusIcon = '❌';
+    // Nur tatsächlich teilnehmende Gruppenmitglieder auflisten (Read-Only)
+    if (yesMembers.length === 0 && (gAdults + gChildren) === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; color: #94a3b8; font-size: 0.82rem; font-style: italic; padding: 4px 0;">
+                Noch keine Teilnehmer ausgewählt. (Über ✏️ Bearbeiten anpassen)
+            </div>
+        `;
+        return;
+    }
 
+    yesMembers.forEach((name) => {
+        const card = document.createElement('div');
+        card.className = 'rsvp-card status-yes rsvp-card-readonly';
+        
         const child = isChild(name);
         const roleBadge = child ? '<span class="rsvp-role-badge child">Kind</span>' : '<span class="rsvp-role-badge adult">Erw.</span>';
 
@@ -1145,58 +1204,26 @@ function renderDetailRSVP(data) {
                 <span class="rsvp-name">${name}</span>
                 ${roleBadge}
             </div>
-            <span class="rsvp-badge-icon">${statusIcon}</span>
+            <span class="rsvp-badge-icon">✓</span>
         `;
-
-        card.onclick = async () => {
-            const nextStatus = {
-                'none': 'yes',
-                'yes': 'maybe',
-                'maybe': 'no',
-                'no': 'none'
-            }[status];
-
-            const updatedRsvp = { ...rsvp, [name]: nextStatus };
-            if (nextStatus === 'none') delete updatedRsvp[name];
-
-            const targetDocId = data.baseId || data.id;
-            try {
-                await ensureAuth();
-                await setDoc(doc(db, "data_termine", targetDocId), {
-                    ...data,
-                    id: targetDocId,
-                    Teilnehmer: updatedRsvp,
-                    lastAction: 'update'
-                });
-            } catch (err) {
-                console.error("Fehler beim Aktualisieren des RSVP:", err);
-            }
-        };
-
         container.appendChild(card);
     });
 
-    // 2. Gast-Karte für zusätzliche Gäste
-    const totalGuests = (parseInt(guests.adults) || 0) + (parseInt(guests.children) || 0);
-
-    const guestCard = document.createElement('div');
-    guestCard.className = 'rsvp-card rsvp-card-guest';
-    
-    let guestText = 'Gäste (0)';
+    // Gast-Karte für zusätzliche Gäste (Read-Only)
+    const totalGuests = gAdults + gChildren;
     if (totalGuests > 0) {
-        guestText = `Gäste (${totalGuests})`;
+        const guestCard = document.createElement('div');
+        guestCard.className = 'rsvp-card rsvp-card-guest rsvp-card-readonly';
+        guestCard.innerHTML = `
+            <div style="font-size: 1.5rem;">🎉</div>
+            <div class="rsvp-info">
+                <span class="rsvp-name" style="color: #34d399;">Gäste (${totalGuests})</span>
+                <span style="font-size: 0.68rem; color: #cbd5e1;">${gAdults} Erw. • ${gChildren} Ki.</span>
+            </div>
+            <span class="rsvp-badge-icon">✓</span>
+        `;
+        container.appendChild(guestCard);
     }
-
-    guestCard.innerHTML = `
-        <div style="font-size: 1.6rem;">👥</div>
-        <div class="rsvp-info">
-            <span class="rsvp-name" style="color: #f59e0b;">${guestText}</span>
-            <span style="font-size: 0.65rem; color: #cbd5e1;">${guests.adults || 0} Erw. • ${guests.children || 0} Ki.</span>
-        </div>
-        <span class="rsvp-badge-icon">✏️</span>
-    `;
-    guestCard.onclick = () => window.openGuestsModal();
-    container.appendChild(guestCard);
 }
 
 function renderDetailChecklist(data) {
