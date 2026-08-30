@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=2.4.0">
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=2.6.0">
+    <link rel="stylesheet" href="css/style.css?v=2.6.2">
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -132,6 +132,18 @@
                 <input type="text" id="event-title" class="form-control" placeholder="z.B. Sommerfest & Grillen, Wanderung..." required>
             </div>
 
+            <!-- Kategorie / Art -->
+            <div class="form-group">
+                <label>Kategorie</label>
+                <div class="chip-selection-group" id="event-type-chips"></div>
+            </div>
+
+            <!-- Geburtsjahr (erscheint dynamisch nur bei Kategorie Geburtstag) -->
+            <div class="form-group" id="birth-year-group" style="display: none; width: 100%;">
+                <label>🎂 Geburtsjahr (für Altersanzeige)</label>
+                <input type="number" id="event-birth-year" class="form-control" placeholder="z.B. 1985" min="1900" max="2099" step="1" style="width: 100%; font-size: 1.05rem;">
+            </div>
+
             <!-- Datum & Uhrzeit -->
             <div class="form-row">
                 <div class="form-group" style="flex: 1.2;">
@@ -169,18 +181,6 @@
                         <option value="3m">3 Monate</option>
                     </select>
                 </div>
-            </div>
-
-            <!-- Kategorie / Art -->
-            <div class="form-group">
-                <label>Kategorie</label>
-                <div class="chip-selection-group" id="event-type-chips"></div>
-            </div>
-
-            <!-- Geburtsjahr (erscheint dynamisch nur bei Kategorie Geburtstag) -->
-            <div class="form-group" id="birth-year-group" style="display: none; width: 100%;">
-                <label>🎂 Geburtsjahr (für Altersanzeige)</label>
-                <input type="number" id="event-birth-year" class="form-control" placeholder="z.B. 1985" min="1900" max="2099" step="1" style="width: 100%; font-size: 1.05rem;">
             </div>
 
             <!-- Wer ist dabei? (Teilnehmer-Auswahl) -->
@@ -778,7 +778,7 @@
 </script>
 
 <!-- Firebase SDK Module -->
-<script type="module" src="js/app.js?v=2.6.0"></script>
+<script type="module" src="js/app.js?v=2.6.2"></script>
 
 </body>
 </html>

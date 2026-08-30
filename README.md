@@ -1,7 +1,3 @@
-# KlapsenCal – Eventkalender & Gruppen-App „Klapse hat Wandertag“ 🌲📅
-
----
-
 ## 🚀 Aktueller Walkthrough & Feature-Übersicht
 
 ### 1. ⏳ Zeitraum-Filter (Schnelle zeitliche Übersicht)

@@ -18,6 +18,42 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Helper: Sicherstellen, dass stets eine gültige Firebase Auth Session aktiv ist
+async function ensureAuth() {
+    if (!auth.currentUser) {
+        try {
+            const cred = await signInAnonymously(auth);
+            console.log("Firebase Auth erfolgreich verbunden:", cred.user.uid);
+        } catch (e) {
+            console.warn("Auth Initialisierungs-Hinweis:", e);
+        }
+    }
+    return auth.currentUser;
+}
+window.ensureAuth = ensureAuth;
+
+// Sofort beim Start anmelden
+ensureAuth();
+
+// Automatische Re-Synchronisation beim Aufwachen der App (Handy entsperrt / Tab gewechselt)
+document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+        console.log('App wieder im Vordergrund – prüfe Verbindung & synchronisiere Termine...');
+        await ensureAuth();
+        filterAndRender();
+        renderCalendarWidget();
+        updateTasksBadge();
+    }
+});
+
+// Automatische Re-Synchronisation bei Rückkehr der Internetverbindung
+window.addEventListener('online', async () => {
+    console.log('Internetverbindung wiederhergestellt – synchronisiere...');
+    await ensureAuth();
+    filterAndRender();
+    renderCalendarWidget();
+});
+
 // Offline-Persistence aktivieren
 try {
     enableIndexedDbPersistence(db).catch((err) => {
@@ -276,29 +312,6 @@ function renderFormParticipants() {
         };
         container.appendChild(chip);
     });
-
-    // Gast-Button direkt in der Teilnehmer-Leiste
-    const totalGuests = (parseInt(formGuests.adults) || 0) + (parseInt(formGuests.children) || 0);
-    const guestChip = document.createElement('button');
-    guestChip.type = 'button';
-    guestChip.className = `form-participant-chip form-guest-chip ${totalGuests > 0 ? 'selected' : ''}`;
-    guestChip.innerHTML = `
-        <span style="font-size: 1rem; line-height: 1;">🎉</span>
-        <span class="form-participant-name">${totalGuests > 0 ? `Gäste (${totalGuests})` : '+ Gast'}</span>
-        ${totalGuests > 0 ? '<span class="form-participant-check">✓</span>' : ''}
-    `;
-    guestChip.onclick = () => {
-        const guestsSection = document.getElementById('form-guests-section');
-        if (totalGuests === 0) {
-            formGuests.adults = 1;
-            renderFormGuests();
-            renderFormParticipants();
-        }
-        if (guestsSection) {
-            guestsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    };
-    container.appendChild(guestChip);
 }
 window.renderFormParticipants = renderFormParticipants;
 
@@ -327,7 +340,6 @@ window.changeFormGuests = function(type, delta) {
     if (!formGuests[type]) formGuests[type] = 0;
     formGuests[type] = Math.max(0, formGuests[type] + delta);
     renderFormGuests();
-    renderFormParticipants();
 };
 
 function renderFormGuests() {
@@ -1076,6 +1088,7 @@ window.saveGuestsModal = async function() {
 
     const targetDocId = currentDetailData.baseId || currentDetailData.id;
     try {
+        await ensureAuth();
         await setDoc(doc(db, "data_termine", targetDocId), {
             ...currentDetailData,
             id: targetDocId,
@@ -1148,6 +1161,7 @@ function renderDetailRSVP(data) {
 
             const targetDocId = data.baseId || data.id;
             try {
+                await ensureAuth();
                 await setDoc(doc(db, "data_termine", targetDocId), {
                     ...data,
                     id: targetDocId,
@@ -1213,6 +1227,7 @@ window.toggleEventTask = async function(idx) {
     items[idx].checked = !items[idx].checked;
     const targetDocId = currentDetailData.baseId || currentDetailData.id;
     try {
+        await ensureAuth();
         await setDoc(doc(db, "data_termine", targetDocId), {
             ...currentDetailData,
             id: targetDocId,
@@ -1625,6 +1640,7 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
     };
 
     try {
+        await ensureAuth();
         const docId = editingEventId || `${date}_${title.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '-') || 'Termin'}_${Date.now().toString().slice(-4)}`;
 
         await setDoc(doc(db, "data_termine", docId), {
@@ -1910,6 +1926,7 @@ window.saveKasseBooking = async function() {
     };
 
     try {
+        await ensureAuth();
         const docId = editingKasseBookingId || `kasse_${dateVal}_${Date.now()}`;
         await setDoc(doc(db, "data_kasse", docId), bookingData);
 
@@ -2195,6 +2212,7 @@ window.savePurchase = async function() {
     };
 
     try {
+        await ensureAuth();
         const docId = editingPurchaseId || `anschaffung_${Date.now()}`;
         await setDoc(doc(db, "data_anschaffungen", docId), purchaseData);
 
@@ -2220,6 +2238,7 @@ window.togglePurchaseStatus = async function(id) {
     if (!item) return;
 
     try {
+        await ensureAuth();
         await setDoc(doc(db, "data_anschaffungen", id), {
             ...item,
             erledigt: !item.erledigt,
