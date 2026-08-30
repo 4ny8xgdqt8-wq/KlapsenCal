@@ -99,7 +99,7 @@
         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
             <div class="search-container" style="flex: 1; margin: 0;">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="event-search" class="search-input" placeholder="Suchen...">
+                <input type="text" id="event-search" class="search-input" placeholder="Suchen..." oninput="filterAndRender()">
             </div>
             <select id="event-sort" class="sort-select" style="margin: 0; width: auto; max-width: 140px; font-size: 0.8rem; padding: 0 10px;" onchange="filterAndRender()">
                 <option value="upcoming">🗓️ Chronologisch</option>

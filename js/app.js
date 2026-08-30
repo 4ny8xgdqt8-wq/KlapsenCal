@@ -300,7 +300,7 @@ function renderFormParticipants() {
         chip.type = 'button';
         chip.className = `form-participant-chip ${isSelected ? 'selected' : ''}`;
         chip.innerHTML = `
-            <img src="avatars/${name}.webp" onerror="this.src='logo.png'" class="form-participant-avatar" alt="${name}">
+            <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="form-participant-avatar" alt="${name}">
             <span class="form-participant-name">${name}</span>
             ${isSelected ? '<span class="form-participant-check">✓</span>' : ''}
         `;
@@ -657,7 +657,7 @@ function renderEvents(events) {
         if (totalParticipants > 0) {
             const maxPreview = 3;
             const avatarsHtml = yesMembers.slice(0, maxPreview).map(name => `
-                <img src="avatars/${name}.webp" onerror="this.src='logo.png'" class="participant-mini" alt="${name}">
+                <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="participant-mini" alt="${name}">
             `).join('');
             
             let countLabel = `${totalParticipants} dabei`;
@@ -708,7 +708,7 @@ function renderEvents(events) {
                 </div>
             </div>
             <div class="event-card-right">
-                <img src="avatars/${item.Ersteller}.webp" onerror="this.src='logo.png'" class="author-avatar-img" alt="${item.Ersteller}">
+                <img src="avatars/${item.Ersteller}.webp" onerror="this.onerror=null; this.src='logo.png';" class="author-avatar-img" alt="${item.Ersteller}">
                 ${participantStackHtml}
             </div>
         `;
@@ -1199,7 +1199,7 @@ function renderDetailRSVP(data) {
         const roleBadge = child ? '<span class="rsvp-role-badge child">Kind</span>' : '<span class="rsvp-role-badge adult">Erw.</span>';
 
         card.innerHTML = `
-            <img src="avatars/${name}.webp" onerror="this.src='logo.png'" class="rsvp-card-avatar" alt="${name}">
+            <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="rsvp-card-avatar" alt="${name}">
             <div class="rsvp-info">
                 <span class="rsvp-name">${name}</span>
                 ${roleBadge}
