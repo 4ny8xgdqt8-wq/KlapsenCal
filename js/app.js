@@ -62,6 +62,7 @@ let allAuthors = [...DEFAULT_AUTHORS];
 let allCategories = [...DEFAULT_CATEGORIES];
 let allEvents = [];
 let selectedCategory = 'Alle';
+let selectedTimeframe = '30d';
 let selectedType = 'Essen';
 let formParticipants = {};
 let editingEventId = null;
@@ -813,6 +814,15 @@ window.selectCalendarDay = function(dateStr) {
     filterAndRender();
 };
 
+window.setTimeframeFilter = function(timeframeKey, el) {
+    selectedTimeframe = timeframeKey;
+    document.querySelectorAll('#timeframe-container .timeframe-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    selectedCalendarDate = null;
+    renderCalendarWidget();
+    filterAndRender();
+};
+
 function filterAndRender() {
     const searchEl = document.getElementById('event-search');
     const sortEl = document.getElementById('event-sort');
@@ -823,11 +833,20 @@ function filterAndRender() {
     const sortType = sortEl ? sortEl.value : 'upcoming';
 
     const now = new Date();
-    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const currentYear = now.getFullYear();
+    const nowStr = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
-    // 30 Tage Limit
+    // Bounds Berechnungen für Zeiträume
     const future30 = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
     const future30Str = `${future30.getFullYear()}-${String(future30.getMonth() + 1).padStart(2, '0')}-${String(future30.getDate()).padStart(2, '0')}`;
+
+    const future60 = new Date(now.getTime() + (60 * 24 * 60 * 60 * 1000));
+    const future60Str = `${future60.getFullYear()}-${String(future60.getMonth() + 1).padStart(2, '0')}-${String(future60.getDate()).padStart(2, '0')}`;
+
+    const endOfYearStr = `${currentYear}-12-31`;
+    const nextYear = currentYear + 1;
+    const startNextYearStr = `${nextYear}-01-01`;
+    const endNextYearStr = `${nextYear}-12-31`;
 
     let filtered = [];
 
@@ -836,19 +855,41 @@ function filterAndRender() {
         filtered = allEvents.filter(ev => ev && ev.Datum === selectedCalendarDate);
         const formatted = formatDateObj(selectedCalendarDate).formattedLong;
         if (sectionTitleEl) sectionTitleEl.textContent = `Termine am ${formatted}`;
-        if (clearBtn) clearBtn.style.display = 'inline-block';
+        if (clearBtn) {
+            clearBtn.style.display = 'inline-block';
+            clearBtn.textContent = '✕ Filter zurücksetzen';
+        }
     } else {
-        // Standard: Anstehend in den nächsten 30 Tagen (oder Vollsuche bei Suchbegriff)
+        // Zeitraum-Filterung (oder Vollsuche bei Query/Sortierung)
         filtered = allEvents.filter(ev => {
             if (!ev || !ev.Datum) return false;
-            if (query || sortType !== 'upcoming') return true;
-            return ev.Datum >= nowStr && ev.Datum <= future30Str;
+            if (query || (sortType !== 'upcoming' && selectedTimeframe === 'all')) return true;
+
+            if (selectedTimeframe === '30d') {
+                return ev.Datum >= nowStr && ev.Datum <= future30Str;
+            } else if (selectedTimeframe === '60d') {
+                return ev.Datum >= nowStr && ev.Datum <= future60Str;
+            } else if (selectedTimeframe === 'this_year') {
+                return ev.Datum >= nowStr && ev.Datum <= endOfYearStr;
+            } else if (selectedTimeframe === 'next_year') {
+                return ev.Datum >= startNextYearStr && ev.Datum <= endNextYearStr;
+            } else { // 'all'
+                return ev.Datum >= nowStr;
+            }
         });
 
         if (sectionTitleEl) {
+            const timeframeLabels = {
+                '30d': 'nächste 30 Tage',
+                '60d': 'nächste 60 Tage',
+                'this_year': `dieses Jahr ${currentYear}`,
+                'next_year': `nächstes Jahr ${nextYear}`,
+                'all': 'alle anstehenden'
+            };
+            const tfText = timeframeLabels[selectedTimeframe] || 'anstehend';
             sectionTitleEl.textContent = query 
                 ? `Suchergebnisse (${filtered.length})` 
-                : `Anstehend (nächste 30 Tage • ${filtered.length})`;
+                : `Anstehend (${tfText} • ${filtered.length})`;
         }
         if (clearBtn) clearBtn.style.display = 'none';
     }
@@ -923,7 +964,7 @@ function showEventDetails(data) {
             if (evYear && bYear && evYear >= bYear) {
                 const age = evYear - bYear;
                 const isRound = (age % 10 === 0 || age === 18 || age === 25 || age === 75 || age === 85 || age === 95);
-                ageTag.textContent = isRound ? `🎉 ${age}. Geburtstag (Runder Jubeltag!)` : `🎂 ${age}. Geburtstag (${age} Jahre)`;
+                ageTag.textContent = isRound ? `🎉 ${age}. Geburtstag (Runder Jubeltag!)` : `🎂 ${age}. Geburtstag (Geb. ${bYear})`;
                 ageTag.className = `age-badge ${isRound ? 'round-jubilee' : ''}`;
                 ageTag.style.display = 'inline-flex';
             } else {

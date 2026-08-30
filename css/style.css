@@ -402,6 +402,47 @@ header {
     background-size: 14px;
 }
 
+.timeframe-filter-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.timeframe-filter-bar::-webkit-scrollbar {
+    display: none;
+}
+.timeframe-chip {
+    padding: 5px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    color: #94a3b8;
+    font-size: 0.74rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    user-select: none;
+}
+.timeframe-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+.timeframe-chip.active {
+    background: rgba(16, 185, 129, 0.22);
+    color: #ffffff;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+    font-weight: 800;
+}
+.timeframe-chip:active {
+    transform: scale(0.95);
+}
+
 .filter-chips {
     display: flex;
     gap: 8px;
@@ -914,50 +955,68 @@ select.form-control {
     box-shadow: 0 2px 8px var(--primary-glow);
 }
 
-/* Detail Overlay Modal */
+/* Detail Overlay Modal as Centered Popup */
 #event-detail-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    z-index: 10000;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 35000;
     display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 14px calc(env(safe-area-inset-bottom) + 16px) 14px;
+    box-sizing: border-box;
+    animation: fadeIn 0.2s ease;
+}
+
+.detail-modal-card {
+    background: #131c18;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 540px;
+    max-height: 85vh;
+    display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 60px;
-    animation: fadeIn 0.25s ease;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+    box-sizing: border-box;
+    animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .detail-header {
     position: relative;
-    padding: calc(env(safe-area-inset-top) + 20px) 20px 24px 20px;
-    background: linear-gradient(180deg, rgba(16, 185, 129, 0.3) 0%, rgba(12, 18, 16, 0.95) 100%);
-    border-bottom: 1px solid var(--border-color);
+    padding: 16px 18px 14px 18px;
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.25) 0%, rgba(19, 28, 24, 0.95) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 .detail-header-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 8px;
     position: absolute;
-    top: calc(env(safe-area-inset-top) + 16px);
-    right: 16px;
+    top: 14px;
+    right: 14px;
 }
 .btn-detail-icon {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: white;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
     backdrop-filter: blur(8px);
     transition: all 0.2s;
@@ -967,10 +1026,13 @@ select.form-control {
 }
 
 .detail-body {
-    padding: 20px 18px;
+    padding: 16px 16px 20px 16px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
 }
 
 .detail-title-section h1 {

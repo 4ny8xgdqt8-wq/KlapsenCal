@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=2.4.0">
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=2.5.6">
+    <link rel="stylesheet" href="css/style.css?v=2.6.0">
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -79,6 +79,15 @@
         <div class="section-header-row">
             <div id="events-section-title" class="section-title">Anstehend (nächste 30 Tage)</div>
             <button id="btn-clear-date-filter" class="btn-clear-filter" style="display:none;" onclick="window.clearDateFilter()">✕ 30 Tage anzeigen</button>
+        </div>
+
+        <!-- Zeitraum Filter Chips -->
+        <div class="timeframe-filter-bar" id="timeframe-container">
+            <button type="button" class="timeframe-chip active" onclick="window.setTimeframeFilter('30d', this)">30 Tage</button>
+            <button type="button" class="timeframe-chip" onclick="window.setTimeframeFilter('60d', this)">60 Tage</button>
+            <button type="button" class="timeframe-chip" onclick="window.setTimeframeFilter('this_year', this)">Dieses Jahr</button>
+            <button type="button" class="timeframe-chip" onclick="window.setTimeframeFilter('next_year', this)">Nächstes Jahr</button>
+            <button type="button" class="timeframe-chip" onclick="window.setTimeframeFilter('all', this)">Alle</button>
         </div>
 
         <!-- Kategorien Filter Chips -->
@@ -351,101 +360,103 @@
 </div>
 
 <!-- Event Detail Overlay Modal -->
-<div id="event-detail-overlay">
-    <div class="detail-header">
-        <div class="detail-header-actions">
-            <button class="btn-detail-icon" id="btn-detail-edit" onclick="editEventFromDetail()" title="Bearbeiten">✏️</button>
-            <button class="btn-detail-icon" id="btn-detail-delete" onclick="deleteCurrentEvent()" title="Löschen" style="color: #ef4444;">🗑️</button>
-            <button class="btn-detail-icon" onclick="closeEventDetails()" title="Schließen">✕</button>
-        </div>
-        <div class="detail-title-section" style="padding-right: 130px;">
-            <div id="detail-countdown" style="margin-bottom: 6px;"></div>
-            <h1 id="detail-title">Termin Titel</h1>
-            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                <div id="detail-category-tag" class="event-tag" style="display: inline-block;">Kategorie</div>
-                <div id="detail-age-tag" class="age-badge" style="display: none;">🎂 Alter</div>
-                <div id="detail-recurrence-tag" class="recurrence-tag" style="display: none;">🔁 Wöchentlich</div>
+<div id="event-detail-overlay" onclick="if(event.target === this) closeEventDetails()">
+    <div class="detail-modal-card" onclick="event.stopPropagation()">
+        <div class="detail-header">
+            <div class="detail-header-actions">
+                <button class="btn-detail-icon" id="btn-detail-edit" onclick="editEventFromDetail()" title="Bearbeiten">✏️</button>
+                <button class="btn-detail-icon" id="btn-detail-delete" onclick="deleteCurrentEvent()" title="Löschen" style="color: #ef4444;">🗑️</button>
+                <button class="btn-detail-icon" onclick="closeEventDetails()" title="Schließen">✕</button>
             </div>
-        </div>
-    </div>
-
-    <div class="detail-body">
-        <!-- Meta Info Box (Datum, Uhrzeit, Ort, Ersteller) -->
-        <div class="detail-meta-box">
-            <div class="meta-item">
-                <span class="meta-icon">🗓️</span>
-                <div class="meta-text-stack">
-                    <span class="meta-label">Wann</span>
-                    <span class="meta-value" id="detail-date-str">--.--.----</span>
-                </div>
-            </div>
-            <div class="meta-item">
-                <span class="meta-icon">⏰</span>
-                <div class="meta-text-stack">
-                    <span class="meta-label">Uhrzeit</span>
-                    <span class="meta-value" id="detail-time-str">--:-- Uhr</span>
-                </div>
-            </div>
-            <div class="meta-item">
-                <span class="meta-icon">📍</span>
-                <div class="meta-text-stack">
-                    <span class="meta-label">Ort</span>
-                    <span class="meta-value" id="detail-location-str">Nicht angegeben</span>
-                </div>
-            </div>
-            <div class="meta-item">
-                <img id="detail-author-avatar" src="logo.png" class="author-avatar-img" style="width: 36px; height: 36px; border: 2px solid var(--primary-color);" alt="Avatar">
-                <div class="meta-text-stack">
-                    <span class="meta-label">Erstellt von</span>
-                    <span class="meta-value" id="detail-author-str">Admin</span>
+            <div class="detail-title-section" style="padding-right: 120px;">
+                <div id="detail-countdown" style="margin-bottom: 6px;"></div>
+                <h1 id="detail-title">Termin Titel</h1>
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <div id="detail-category-tag" class="event-tag" style="display: inline-block;">Kategorie</div>
+                    <div id="detail-age-tag" class="age-badge" style="display: none;">🎂 Alter</div>
+                    <div id="detail-recurrence-tag" class="recurrence-tag" style="display: none;">🔁 Wöchentlich</div>
                 </div>
             </div>
         </div>
 
-        <!-- Action Buttons (Web-Link) -->
-        <div class="detail-action-buttons" id="detail-actions-container" style="display: none;">
-            <a id="btn-open-link" href="#" target="_blank" class="btn-action-tile">
-                <span>🔗</span> <span>Weblink / Info öffnen</span>
-            </a>
-        </div>
-
-        <!-- Interaktive Teilnehmer-Runde (Wer ist dabei?) -->
-        <div class="rsvp-section">
-            <div class="rsvp-header">
-                <h4 class="rsvp-title">👥 Wer ist dabei? (Klick für Status)</h4>
+        <div class="detail-body">
+            <!-- Meta Info Box (Datum, Uhrzeit, Ort, Ersteller) -->
+            <div class="detail-meta-box">
+                <div class="meta-item">
+                    <span class="meta-icon">🗓️</span>
+                    <div class="meta-text-stack">
+                        <span class="meta-label">Wann</span>
+                        <span class="meta-value" id="detail-date-str">--.--.----</span>
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">⏰</span>
+                    <div class="meta-text-stack">
+                        <span class="meta-label">Uhrzeit</span>
+                        <span class="meta-value" id="detail-time-str">--:-- Uhr</span>
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📍</span>
+                    <div class="meta-text-stack">
+                        <span class="meta-label">Ort</span>
+                        <span class="meta-value" id="detail-location-str">Nicht angegeben</span>
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <img id="detail-author-avatar" src="logo.png" class="author-avatar-img" style="width: 36px; height: 36px; border: 2px solid var(--primary-color);" alt="Avatar">
+                    <div class="meta-text-stack">
+                        <span class="meta-label">Erstellt von</span>
+                        <span class="meta-value" id="detail-author-str">Admin</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Summen-Übersicht (Gesamt, Erwachsene, Kinder) -->
-            <div class="rsvp-summary-bar">
-                <div class="rsvp-summary-item">
-                    <span class="rsvp-summary-count" id="rsvp-total-count">0</span>
-                    <span class="rsvp-summary-label">Gesamt</span>
-                </div>
-                <div class="rsvp-summary-divider"></div>
-                <div class="rsvp-summary-item">
-                    <span class="rsvp-summary-count adult" id="rsvp-adults-count">0</span>
-                    <span class="rsvp-summary-label">👤 Erwachsene</span>
-                </div>
-                <div class="rsvp-summary-divider"></div>
-                <div class="rsvp-summary-item">
-                    <span class="rsvp-summary-count child" id="rsvp-children-count">0</span>
-                    <span class="rsvp-summary-label">🧒 Kinder</span>
-                </div>
+            <!-- Action Buttons (Web-Link) -->
+            <div class="detail-action-buttons" id="detail-actions-container" style="display: none;">
+                <a id="btn-open-link" href="#" target="_blank" class="btn-action-tile">
+                    <span>🔗</span> <span>Weblink / Info öffnen</span>
+                </a>
             </div>
 
-            <div id="rsvp-members-container" class="rsvp-member-list"></div>
-        </div>
+            <!-- Interaktive Teilnehmer-Runde (Wer ist dabei?) -->
+            <div class="rsvp-section">
+                <div class="rsvp-header">
+                    <h4 class="rsvp-title">👥 Wer ist dabei? (Klick für Status)</h4>
+                </div>
 
-        <!-- Was fehlt noch? / Mitbringliste -->
-        <div class="detail-checklist-card" id="detail-checklist-section">
-            <h4 class="rsvp-title" style="margin-bottom: 10px;">📋 Was fehlt noch?</h4>
-            <div id="detail-checklist-items"></div>
-        </div>
+                <!-- Summen-Übersicht (Gesamt, Erwachsene, Kinder) -->
+                <div class="rsvp-summary-bar">
+                    <div class="rsvp-summary-item">
+                        <span class="rsvp-summary-count" id="rsvp-total-count">0</span>
+                        <span class="rsvp-summary-label">Gesamt</span>
+                    </div>
+                    <div class="rsvp-summary-divider"></div>
+                    <div class="rsvp-summary-item">
+                        <span class="rsvp-summary-count adult" id="rsvp-adults-count">0</span>
+                        <span class="rsvp-summary-label">👤 Erwachsene</span>
+                    </div>
+                    <div class="rsvp-summary-divider"></div>
+                    <div class="rsvp-summary-item">
+                        <span class="rsvp-summary-count child" id="rsvp-children-count">0</span>
+                        <span class="rsvp-summary-label">🧒 Kinder</span>
+                    </div>
+                </div>
 
-        <!-- Beschreibung & Notizen -->
-        <div class="detail-checklist-card" id="detail-notes-section">
-            <h4 class="rsvp-title" style="margin-bottom: 8px;">📝 Details & Infos</h4>
-            <p id="detail-notes" style="color: #e2e8f0; font-size: 0.92rem; line-height: 1.5; margin: 0; white-space: pre-line;"></p>
+                <div id="rsvp-members-container" class="rsvp-member-list"></div>
+            </div>
+
+            <!-- Was fehlt noch? / Mitbringliste -->
+            <div class="detail-checklist-card" id="detail-checklist-section">
+                <h4 class="rsvp-title" style="margin-bottom: 10px;">📋 Was fehlt noch?</h4>
+                <div id="detail-checklist-items"></div>
+            </div>
+
+            <!-- Beschreibung & Notizen -->
+            <div class="detail-checklist-card" id="detail-notes-section">
+                <h4 class="rsvp-title" style="margin-bottom: 8px;">📝 Details & Infos</h4>
+                <p id="detail-notes" style="color: #e2e8f0; font-size: 0.92rem; line-height: 1.5; margin: 0; white-space: pre-line;"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -767,7 +778,7 @@
 </script>
 
 <!-- Firebase SDK Module -->
-<script type="module" src="js/app.js?v=2.5.6"></script>
+<script type="module" src="js/app.js?v=2.6.0"></script>
 
 </body>
 </html>
