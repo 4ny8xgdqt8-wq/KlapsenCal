@@ -1,10 +1,11 @@
-const VERSION = '2.4.0';
+const VERSION = '2.5.6';
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './README.md',
   './css/style.css',
   './js/app.js',
   './logo.png',

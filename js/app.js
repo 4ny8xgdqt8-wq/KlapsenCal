@@ -63,6 +63,7 @@ let allCategories = [...DEFAULT_CATEGORIES];
 let allEvents = [];
 let selectedCategory = 'Alle';
 let selectedType = 'Essen';
+let formParticipants = {};
 let editingEventId = null;
 let currentDetailData = null;
 let isInitialLoad = true;
@@ -242,10 +243,99 @@ function initAuthorsListener() {
         if (currentVal && allAuthors.includes(currentVal)) {
             select.value = currentVal;
         }
+
+        renderFormParticipants();
     }, (e) => {
         console.warn("Ersteller Listener Fehler:", e);
     });
 }
+
+function renderFormParticipants() {
+    const container = document.getElementById('form-participants-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    allAuthors.forEach(name => {
+        const isSelected = formParticipants[name] === 'yes';
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `form-participant-chip ${isSelected ? 'selected' : ''}`;
+        chip.innerHTML = `
+            <img src="avatars/${name}.webp" onerror="this.src='logo.png'" class="form-participant-avatar" alt="${name}">
+            <span class="form-participant-name">${name}</span>
+            ${isSelected ? '<span class="form-participant-check">✓</span>' : ''}
+        `;
+        chip.onclick = () => {
+            if (formParticipants[name] === 'yes') {
+                delete formParticipants[name];
+            } else {
+                formParticipants[name] = 'yes';
+            }
+            renderFormParticipants();
+        };
+        container.appendChild(chip);
+    });
+
+    // Gast-Button direkt in der Teilnehmer-Leiste
+    const totalGuests = (parseInt(formGuests.adults) || 0) + (parseInt(formGuests.children) || 0);
+    const guestChip = document.createElement('button');
+    guestChip.type = 'button';
+    guestChip.className = `form-participant-chip form-guest-chip ${totalGuests > 0 ? 'selected' : ''}`;
+    guestChip.innerHTML = `
+        <span style="font-size: 1rem; line-height: 1;">🎉</span>
+        <span class="form-participant-name">${totalGuests > 0 ? `Gäste (${totalGuests})` : '+ Gast'}</span>
+        ${totalGuests > 0 ? '<span class="form-participant-check">✓</span>' : ''}
+    `;
+    guestChip.onclick = () => {
+        const guestsSection = document.getElementById('form-guests-section');
+        if (totalGuests === 0) {
+            formGuests.adults = 1;
+            renderFormGuests();
+            renderFormParticipants();
+        }
+        if (guestsSection) {
+            guestsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    };
+    container.appendChild(guestChip);
+}
+window.renderFormParticipants = renderFormParticipants;
+
+window.selectAllParticipants = function(selectAll = true) {
+    if (selectAll) {
+        allAuthors.forEach(n => { formParticipants[n] = 'yes'; });
+    } else {
+        formParticipants = {};
+        const currentAuthor = document.getElementById('event-author')?.value;
+        if (currentAuthor) formParticipants[currentAuthor] = 'yes';
+    }
+    renderFormParticipants();
+};
+
+window.selectAdultsParticipants = function() {
+    formParticipants = {};
+    allAuthors.filter(n => !isChild(n)).forEach(n => { formParticipants[n] = 'yes'; });
+    const currentAuthor = document.getElementById('event-author')?.value;
+    if (currentAuthor) formParticipants[currentAuthor] = 'yes';
+    renderFormParticipants();
+};
+
+let formGuests = { adults: 0, children: 0 };
+
+window.changeFormGuests = function(type, delta) {
+    if (!formGuests[type]) formGuests[type] = 0;
+    formGuests[type] = Math.max(0, formGuests[type] + delta);
+    renderFormGuests();
+    renderFormParticipants();
+};
+
+function renderFormGuests() {
+    const adultsEl = document.getElementById('form-guest-adults-count');
+    const childrenEl = document.getElementById('form-guest-children-count');
+    if (adultsEl) adultsEl.textContent = formGuests.adults || 0;
+    if (childrenEl) childrenEl.textContent = formGuests.children || 0;
+}
+window.renderFormGuests = renderFormGuests;
 
 function initCategoriesListener() {
     const docRef = doc(db, "data_termine", "Art");
@@ -288,6 +378,19 @@ function initCategoriesListener() {
                 selectedType = cat;
                 document.querySelectorAll('#event-type-chips .selectable-chip').forEach(c => c.classList.remove('selected'));
                 sChip.classList.add('selected');
+                updateCategoryDependentFields();
+                if (cat === 'Geburtstag' && !editingEventId) {
+                    const allDayCheckbox = document.getElementById('event-all-day');
+                    if (allDayCheckbox && !allDayCheckbox.checked) {
+                        allDayCheckbox.checked = true;
+                        allDayCheckbox.dispatchEvent(new Event('change'));
+                    }
+                    const recSelect = document.getElementById('event-recurrence');
+                    if (recSelect && recSelect.value === 'none') {
+                        recSelect.value = 'yearly';
+                        recSelect.dispatchEvent(new Event('change'));
+                    }
+                }
             };
             formChipsCont.appendChild(sChip);
         });
@@ -295,6 +398,7 @@ function initCategoriesListener() {
         if (!allCategories.includes(selectedType)) {
             selectedType = allCategories[0] || 'Essen';
         }
+        updateCategoryDependentFields();
 
         filterAndRender();
     }, (e) => {
@@ -302,9 +406,54 @@ function initCategoriesListener() {
     });
 }
 
+function updateCategoryDependentFields() {
+    const birthYearGroup = document.getElementById('birth-year-group');
+    if (!birthYearGroup) return;
+
+    if (selectedType === 'Geburtstag') {
+        birthYearGroup.style.display = 'block';
+    } else {
+        birthYearGroup.style.display = 'none';
+        const birthYearInput = document.getElementById('event-birth-year');
+        if (birthYearInput && !editingEventId) birthYearInput.value = '';
+    }
+}
+window.updateCategoryDependentFields = updateCategoryDependentFields;
+
 // ==========================================
-// 5. Firestore Realtime Listener
+// 5. Firestore Realtime Listener & Serientermine
 // ==========================================
+let rawEvents = [];
+
+function expandEventInstances(rawEventsList) {
+    const expanded = [];
+    rawEventsList.forEach(rawDoc => {
+        if (!rawDoc.Wiederholung || rawDoc.Wiederholung === 'none') {
+            expanded.push({
+                ...rawDoc,
+                baseId: rawDoc.id
+            });
+            return;
+        }
+
+        const recurrence = rawDoc.Wiederholung;
+        const duration = rawDoc.WiederholungDauer || 'forever';
+        const recurringDates = calculateRecurrenceDates(rawDoc.Datum, recurrence, duration);
+
+        recurringDates.forEach((recDate, idx) => {
+            expanded.push({
+                ...rawDoc,
+                id: idx === 0 ? rawDoc.id : `${rawDoc.id}_occ_${idx}`,
+                baseId: rawDoc.id,
+                Datum: recDate,
+                occurrenceIndex: idx,
+                isRecurringOccurrence: idx > 0
+            });
+        });
+    });
+    return expanded;
+}
+
 function initEventsListener() {
     const colRef = collection(db, "data_termine");
     onSnapshot(colRef, (snapshot) => {
@@ -325,6 +474,7 @@ function initEventsListener() {
 
             list.push({
                 id: docSnap.id,
+                baseId: docSnap.id,
                 ...data,
                 Titel: title,
                 Datum: datum,
@@ -354,14 +504,16 @@ function initEventsListener() {
         }
 
         isInitialLoad = false;
-        allEvents = list;
+        rawEvents = list;
+        allEvents = expandEventInstances(rawEvents);
+
         renderCalendarWidget();
         filterAndRender();
         updateTasksBadge();
         checkUpcomingReminders();
         
         if (currentDetailData) {
-            const refreshed = allEvents.find(e => e.id === currentDetailData.id);
+            const refreshed = allEvents.find(e => e.id === currentDetailData.id || e.baseId === currentDetailData.baseId);
             if (refreshed) {
                 currentDetailData = refreshed;
                 showEventDetails(refreshed);
@@ -493,6 +645,17 @@ function renderEvents(events) {
             `;
         }
 
+        let birthdayBadgeHtml = '';
+        if (item.Kategorie === 'Geburtstag' && item.Geburtsjahr) {
+            const evYear = parseInt(item.Datum ? item.Datum.split('-')[0] : new Date().getFullYear());
+            const bYear = parseInt(item.Geburtsjahr);
+            if (evYear && bYear && evYear >= bYear) {
+                const age = evYear - bYear;
+                const isRound = (age % 10 === 0 || age === 18 || age === 25 || age === 75 || age === 85 || age === 95);
+                birthdayBadgeHtml = `<span class="birthday-age-pill ${isRound ? 'round-jubilee' : ''}" title="${age}. Geburtstag (Geb. ${bYear})">🎂 ${age}. Geb.</span>`;
+            }
+        }
+
         card.innerHTML = `
             <div class="event-date-box">
                 <span class="event-date-weekday">${dateParts.weekdayShort}</span>
@@ -506,6 +669,7 @@ function renderEvents(events) {
                 </div>
                 <div class="event-meta">
                     <span class="event-tag" style="color: ${getCategoryColor(item.Kategorie).color}; background: ${getCategoryColor(item.Kategorie).bg}; border: 1px solid ${getCategoryColor(item.Kategorie).border}; font-weight: 700;">${item.Kategorie || 'Essen'}</span>
+                    ${birthdayBadgeHtml}
                     ${item.Wiederholung && item.Wiederholung !== 'none' ? '<span class="event-recurrence-icon" title="Serientermin">🔁</span>' : ''}
                     ${locationStr}
                     <span>${timeStr}</span>
@@ -751,6 +915,25 @@ function showEventDetails(data) {
     catTag.style.borderColor = catColor.border;
     catTag.style.fontWeight = '700';
 
+    const ageTag = document.getElementById('detail-age-tag');
+    if (ageTag) {
+        if (data.Kategorie === 'Geburtstag' && data.Geburtsjahr) {
+            const evYear = parseInt(data.Datum ? data.Datum.split('-')[0] : new Date().getFullYear());
+            const bYear = parseInt(data.Geburtsjahr);
+            if (evYear && bYear && evYear >= bYear) {
+                const age = evYear - bYear;
+                const isRound = (age % 10 === 0 || age === 18 || age === 25 || age === 75 || age === 85 || age === 95);
+                ageTag.textContent = isRound ? `🎉 ${age}. Geburtstag (Runder Jubeltag!)` : `🎂 ${age}. Geburtstag (${age} Jahre)`;
+                ageTag.className = `age-badge ${isRound ? 'round-jubilee' : ''}`;
+                ageTag.style.display = 'inline-flex';
+            } else {
+                ageTag.style.display = 'none';
+            }
+        } else {
+            ageTag.style.display = 'none';
+        }
+    }
+
     const recTag = document.getElementById('detail-recurrence-tag');
     if (recTag) {
         const recLabels = {
@@ -850,9 +1033,11 @@ window.saveGuestsModal = async function() {
     window.closeGuestsModal();
     window.showLoading(true, "Gäste werden gespeichert...");
 
+    const targetDocId = currentDetailData.baseId || currentDetailData.id;
     try {
-        await setDoc(doc(db, "data_termine", currentDetailData.id), {
+        await setDoc(doc(db, "data_termine", targetDocId), {
             ...currentDetailData,
+            id: targetDocId,
             Gäste: currentGuestsData,
             lastAction: 'update'
         });
@@ -920,9 +1105,11 @@ function renderDetailRSVP(data) {
             const updatedRsvp = { ...rsvp, [name]: nextStatus };
             if (nextStatus === 'none') delete updatedRsvp[name];
 
+            const targetDocId = data.baseId || data.id;
             try {
-                await setDoc(doc(db, "data_termine", data.id), {
+                await setDoc(doc(db, "data_termine", targetDocId), {
                     ...data,
+                    id: targetDocId,
                     Teilnehmer: updatedRsvp,
                     lastAction: 'update'
                 });
@@ -983,9 +1170,11 @@ window.toggleEventTask = async function(idx) {
     if (!items[idx]) return;
 
     items[idx].checked = !items[idx].checked;
+    const targetDocId = currentDetailData.baseId || currentDetailData.id;
     try {
-        await setDoc(doc(db, "data_termine", currentDetailData.id), {
+        await setDoc(doc(db, "data_termine", targetDocId), {
             ...currentDetailData,
+            id: targetDocId,
             Mitbringliste: items,
             lastAction: 'update'
         });
@@ -1008,7 +1197,18 @@ function renderAllTasks() {
 
     const now = new Date();
     const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const upcomingEvents = allEvents.filter(e => e.Datum >= nowStr && e.Mitbringliste && e.Mitbringliste.length > 0);
+    
+    const seenBaseIds = new Set();
+    const upcomingEvents = [];
+    allEvents.filter(e => e.Datum >= nowStr && e.Mitbringliste && e.Mitbringliste.length > 0)
+        .sort((a, b) => a.Datum.localeCompare(b.Datum))
+        .forEach(ev => {
+            const bId = ev.baseId || ev.id;
+            if (!seenBaseIds.has(bId)) {
+                seenBaseIds.add(bId);
+                upcomingEvents.push(ev);
+            }
+        });
 
     if (upcomingEvents.length === 0) {
         container.innerHTML = `
@@ -1029,7 +1229,7 @@ function renderAllTasks() {
         card.style.cursor = 'default';
 
         const itemsHtml = ev.Mitbringliste.map((item, idx) => `
-            <div class="checklist-item-row ${item.checked ? 'checked' : ''}" onclick="window.toggleGlobalTask('${ev.id}', ${idx})">
+            <div class="checklist-item-row ${item.checked ? 'checked' : ''}" onclick="window.toggleGlobalTask('${ev.baseId || ev.id}', ${idx})">
                 <div class="checklist-checkbox">✓</div>
                 <span class="checklist-name">${item.name || item}</span>
                 <span class="checklist-status-label">${item.checked ? 'Erledigt' : 'Fehlt noch'}</span>
@@ -1042,7 +1242,7 @@ function renderAllTasks() {
                 <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${formatDateObj(ev.Datum).formattedLong}</span>
             </div>
             <div>${itemsHtml}</div>
-            <button type="button" class="btn-add-item" onclick="window.editEventById('${ev.id}', true)" style="margin-top: 8px; padding: 8px 12px; font-size: 0.82rem; width: 100%; justify-content: center;">
+            <button type="button" class="btn-add-item" onclick="window.editEventById('${ev.baseId || ev.id}', true)" style="margin-top: 8px; padding: 8px 12px; font-size: 0.82rem; width: 100%; justify-content: center;">
                 ➕ Weiteren Punkt hinzufügen
             </button>
         `;
@@ -1052,9 +1252,9 @@ function renderAllTasks() {
 window.renderAllTasks = renderAllTasks;
 
 window.editEventById = function(eventId, autoAddNewItem = false) {
-    const data = allEvents.find(e => e.id === eventId);
+    const data = allEvents.find(e => e.id === eventId || e.baseId === eventId);
     if (!data) return;
-    editingEventId = data.id;
+    editingEventId = data.baseId || data.id;
 
     window.switchTab('neu', document.querySelector('.tab-item[onclick*="neu"]'));
 
@@ -1082,12 +1282,26 @@ window.editEventById = function(eventId, autoAddNewItem = false) {
         c.classList.toggle('selected', c.dataset.name === selectedType);
     });
 
+    const birthYearInput = document.getElementById('event-birth-year');
+    if (birthYearInput) birthYearInput.value = data.Geburtsjahr || '';
+    updateCategoryDependentFields();
+
+    formParticipants = { ...(data.Teilnehmer || {}) };
+    renderFormParticipants();
+
+    formGuests = {
+        adults: data.Gäste?.adults || 0,
+        children: data.Gäste?.children || 0
+    };
+    renderFormGuests();
+
     const recSelect = document.getElementById('event-recurrence');
     if (recSelect) {
         recSelect.value = data.Wiederholung || 'none';
-        const recGroup = document.getElementById('recurrence-duration-group');
-        if (recGroup) {
-            recGroup.style.display = (recSelect.value !== 'none') ? 'block' : 'none';
+        const recDuration = document.getElementById('event-recurrence-duration');
+        if (recDuration) {
+            recDuration.value = data.WiederholungDauer || 'forever';
+            recDuration.style.display = (recSelect.value !== 'none') ? 'block' : 'none';
         }
     }
 
@@ -1116,15 +1330,17 @@ window.editEventById = function(eventId, autoAddNewItem = false) {
 };
 
 window.toggleGlobalTask = async function(eventId, itemIdx) {
-    const ev = allEvents.find(e => e.id === eventId);
+    const ev = allEvents.find(e => e.id === eventId || e.baseId === eventId);
     if (!ev || !ev.Mitbringliste || !ev.Mitbringliste[itemIdx]) return;
 
     const items = [...ev.Mitbringliste];
     items[itemIdx].checked = !items[itemIdx].checked;
 
+    const targetDocId = ev.baseId || ev.id;
     try {
-        await setDoc(doc(db, "data_termine", eventId), {
+        await setDoc(doc(db, "data_termine", targetDocId), {
             ...ev,
+            id: targetDocId,
             Mitbringliste: items,
             lastAction: 'update'
         });
@@ -1138,10 +1354,15 @@ window.toggleGlobalTask = async function(eventId, itemIdx) {
 function updateTasksBadge() {
     const nowStr = new Date().toISOString().split('T')[0];
     let unfinishedCount = 0;
-    allEvents.filter(e => e.Datum >= nowStr).forEach(ev => {
-        (ev.Mitbringliste || []).forEach(item => {
-            if (!item.checked) unfinishedCount++;
-        });
+    const seenBaseIds = new Set();
+    allEvents.filter(e => e.Datum >= nowStr && e.Mitbringliste).forEach(ev => {
+        const bId = ev.baseId || ev.id;
+        if (!seenBaseIds.has(bId)) {
+            seenBaseIds.add(bId);
+            (ev.Mitbringliste || []).forEach(item => {
+                if (!item.checked) unfinishedCount++;
+            });
+        }
     });
 
     const badge = document.getElementById('tasks-badge');
@@ -1163,7 +1384,7 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
     const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
     const startDate = new Date(startYear, startMonth - 1, startDay, 12, 0, 0);
 
-    let maxMonths = 60;
+    let maxMonths = 36;
     if (durationType === '3m') maxMonths = 3;
     else if (durationType === '6m') maxMonths = 6;
     else if (durationType === '1y') maxMonths = 12;
@@ -1195,7 +1416,7 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
     } else if (recurrenceType === 'monthly') {
         let step = 0;
         while (step <= maxMonths) {
-            const targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + step, startDay, 12, 0, 0);
+            const targetDate = new Date(startYear, startMonth - 1 + step, startDay, 12, 0, 0);
             if (targetDate <= endDate) {
                 const y = targetDate.getFullYear();
                 const m = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -1251,10 +1472,22 @@ function resetForm() {
     const recDuration = document.getElementById('event-recurrence-duration');
     if (recDuration) recDuration.style.display = 'none';
 
+    const birthYearInput = document.getElementById('event-birth-year');
+    if (birthYearInput) birthYearInput.value = '';
+
+    formParticipants = {};
+    const currentAuthor = document.getElementById('event-author')?.value;
+    if (currentAuthor) formParticipants[currentAuthor] = 'yes';
+    renderFormParticipants();
+
+    formGuests = { adults: 0, children: 0 };
+    renderFormGuests();
+
     selectedType = allCategories[0] || 'Essen';
     document.querySelectorAll('#event-type-chips .selectable-chip').forEach((c, idx) => {
         c.classList.toggle('selected', idx === 0);
     });
+    updateCategoryDependentFields();
 
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('event-date').value = today;
@@ -1263,7 +1496,7 @@ window.resetForm = resetForm;
 
 window.editEventFromDetail = function() {
     if (!currentDetailData) return;
-    window.editEventById(currentDetailData.id);
+    window.editEventById(currentDetailData.baseId || currentDetailData.id);
 };
 
 window.cancelEdit = function() {
@@ -1274,6 +1507,7 @@ window.cancelEdit = function() {
 window.deleteCurrentEvent = function() {
     if (!currentDetailData) return;
     const ev = currentDetailData;
+    const targetDocId = ev.baseId || ev.id;
     
     document.getElementById('confirm-modal-title').textContent = "Termin löschen?";
     document.getElementById('confirm-modal-text').textContent = `Möchtest du '${ev.Titel}' wirklich unwiderruflich löschen?`;
@@ -1283,7 +1517,7 @@ window.deleteCurrentEvent = function() {
         window.closeConfirmModal();
         window.showLoading(true, "Termin wird gelöscht...");
         try {
-            await deleteDoc(doc(db, "data_termine", ev.id));
+            await deleteDoc(doc(db, "data_termine", targetDocId));
             window.closeEventDetails();
             window.showAppModal("Gelöscht", "Der Termin wurde erfolgreich entfernt.");
         } catch (err) {
@@ -1309,6 +1543,8 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
     const description = document.getElementById('event-description').value.trim();
     const recurrence = document.getElementById('event-recurrence')?.value || 'none';
     const recurrenceDuration = document.getElementById('event-recurrence-duration')?.value || 'forever';
+    const birthYearVal = document.getElementById('event-birth-year')?.value;
+    const birthYear = birthYearVal ? parseInt(birthYearVal) : null;
 
     if (!author || !title || !date) {
         window.showAppModal("Angaben fehlen", "Bitte fülle Ersteller, Titel und Datum aus!");
@@ -1323,11 +1559,8 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
 
     window.showLoading(true, "Termin wird gespeichert...");
 
-    let existingRsvp = {};
-    if (editingEventId) {
-        const current = allEvents.find(ev => ev.id === editingEventId);
-        if (current && current.Teilnehmer) existingRsvp = current.Teilnehmer;
-    } else {
+    let existingRsvp = { ...formParticipants };
+    if (author && !existingRsvp[author]) {
         existingRsvp[author] = 'yes';
     }
 
@@ -1341,44 +1574,27 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
         Ort: location || '',
         OrtLink: link || '',
         Kategorie: selectedType || 'Essen',
+        Geburtsjahr: (selectedType === 'Geburtstag' && birthYear) ? birthYear : null,
         Beschreibung: description || '',
         Mitbringliste: items,
         Wiederholung: recurrence,
+        WiederholungDauer: recurrenceDuration,
         createdAt: serverTimestamp(),
         lastAction: editingEventId ? 'update' : 'new'
     };
 
     try {
-        if (editingEventId) {
-            const current = allEvents.find(ev => ev.id === editingEventId);
-            await setDoc(doc(db, "data_termine", editingEventId), {
-                ...baseEventData,
-                Datum: date,
-                Teilnehmer: existingRsvp,
-                Gäste: (current && current.Gäste) ? current.Gäste : { adults: 0, children: 0 }
-            });
-        } else {
-            const recurringDates = calculateRecurrenceDates(date, recurrence, recurrenceDuration);
-            const recurringGroupId = (recurrence !== 'none') ? `rec_${Date.now()}` : null;
+        const docId = editingEventId || `${date}_${title.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '-') || 'Termin'}_${Date.now().toString().slice(-4)}`;
 
-            for (let i = 0; i < recurringDates.length; i++) {
-                const curDate = recurringDates[i];
-                const sanitizedTitle = title.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '-');
-                const docId = `${curDate}_${sanitizedTitle || 'Termin'}_${Date.now().toString().slice(-4)}_${i}`;
+        await setDoc(doc(db, "data_termine", docId), {
+            ...baseEventData,
+            Datum: date,
+            Teilnehmer: existingRsvp,
+            Gäste: { adults: formGuests.adults || 0, children: formGuests.children || 0 }
+        });
 
-                await setDoc(doc(db, "data_termine", docId), {
-                    ...baseEventData,
-                    Datum: curDate,
-                    recurringGroupId: recurringGroupId,
-                    recurringIndex: i,
-                    Teilnehmer: existingRsvp,
-                    Gäste: { adults: 0, children: 0 }
-                });
-            }
-        }
-
-        const successMsg = (recurrence !== 'none' && !editingEventId)
-            ? "Die Termine der Serie wurden erfolgreich im Kalender gespeichert!"
+        const successMsg = editingEventId
+            ? "Termin wurde erfolgreich aktualisiert!"
             : "Termin wurde erfolgreich im Kalender gespeichert!";
         window.showAppModal("Erfolg", successMsg);
 
@@ -1388,19 +1604,15 @@ document.getElementById('event-form').addEventListener('submit', async (e) => {
                 spread: 70,
                 origin: { y: 0.6 },
                 colors: ['#10b981', '#34d399', '#ffffff', '#f59e0b'],
-                zIndex: 30000
+                disableForReducedMotion: true
             });
         }
 
         resetForm();
-
-        setTimeout(() => {
-            window.switchTab('termine', document.querySelector('.tab-item[onclick*="termine"]'));
-        }, 1200);
-
-    } catch (error) {
-        console.error("Fehler beim Speichern:", error);
-        window.showAppModal("Fehler", "Speichern fehlgeschlagen: " + error.message);
+        window.switchTab('termine', document.querySelector('.tab-item[onclick*="termine"]'));
+    } catch (err) {
+        console.error("Fehler beim Speichern:", err);
+        window.showAppModal("Fehler", "Konnte nicht gespeichert werden: " + err.message);
     } finally {
         window.showLoading(false);
     }
@@ -1423,6 +1635,10 @@ document.getElementById('event-author').addEventListener('change', (e) => {
     const img = document.getElementById('author-avatar');
     img.src = `avatars/${name}.webp`;
     img.onerror = () => { img.src = 'logo.png'; };
+    if (name) {
+        formParticipants[name] = 'yes';
+        renderFormParticipants();
+    }
 });
 
 const allDayCheckbox = document.getElementById('event-all-day');
@@ -2006,6 +2222,8 @@ filterAndRender();
 renderKasseView();
 renderPurchasesView();
 updateNotificationButton();
+renderFormParticipants();
+renderFormGuests();
 
 // Firebase Auth & Realtime Listeners
 initAuthorsListener();
@@ -2013,6 +2231,55 @@ initCategoriesListener();
 initEventsListener();
 initKasseListener();
 initPurchasesListener();
+
+// ==========================================
+// 16. Readme & Info Modal Logik
+// ==========================================
+function parseMarkdownToHtml(md) {
+    if (!md) return '';
+    let html = md
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/^### (.*$)/gim, '<h4 style="color: #34d399; font-size: 0.95rem; font-weight: 800; margin: 14px 0 6px 0;">$1</h4>')
+        .replace(/^## (.*$)/gim, '<h3 style="color: #6ee7b7; font-size: 1.05rem; font-weight: 800; margin: 18px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">$1</h3>')
+        .replace(/^# (.*$)/gim, '<h2 style="color: #ffffff; font-size: 1.15rem; font-weight: 900; margin: 0 0 10px 0;">$1</h2>')
+        .replace(/\*\*(.*?)\*\*/gim, '<strong style="color: #ffffff;">$1</strong>')
+        .replace(/\*(.*?)\*/gim, '<span style="color: #a7f3d0;">$1</span>')
+        .replace(/^---$/gim, '<hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0;">')
+        .replace(/^\* (.*$)/gim, '<li style="margin-bottom: 5px; margin-left: 18px;">$1</li>')
+        .replace(/`([^`]+)`/gim, '<code style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 4px; color: #a7f3d0; font-size: 0.8rem;">$1</code>');
+
+    return html;
+}
+
+window.openReadmeModal = async function() {
+    const modal = document.getElementById('readme-modal-container');
+    const body = document.getElementById('readme-content-body');
+    const verEl = document.getElementById('readme-modal-version');
+    if (!modal || !body) return;
+
+    modal.style.display = 'flex';
+    if (verEl) {
+        const appVer = document.getElementById('app-version')?.textContent || 'Version 2.5.0';
+        verEl.textContent = appVer;
+    }
+
+    try {
+        const res = await fetch('README.md?t=' + Date.now());
+        if (!res.ok) throw new Error('README.md konnte nicht geladen werden');
+        const text = await res.text();
+        body.innerHTML = parseMarkdownToHtml(text);
+    } catch (e) {
+        body.innerHTML = `<div style="color: #f87171; text-align: center; padding: 20px;">Fehler beim Laden der Anleitung: ${e.message}</div>`;
+    }
+};
+
+window.closeReadmeModal = function() {
+    const modal = document.getElementById('readme-modal-container');
+    if (modal) modal.style.display = 'none';
+};
+
 
 signInAnonymously(auth).then(() => {
     console.log("Klapsentouren: Anonym bei Firebase angemeldet.");

@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=2.4.0">
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=2.4.0">
+    <link rel="stylesheet" href="css/style.css?v=2.5.6">
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -49,6 +49,7 @@
     </div>
     <div class="header-side right" style="gap: 6px;">
         <button class="btn-header-action" id="btn-toggle-notifications" onclick="window.requestNotificationPermission()" title="Benachrichtigungen aktivieren">🔔</button>
+        <button class="btn-header-action" id="btn-open-readme" onclick="window.openReadmeModal()" title="App-Info & Anleitung">ℹ️</button>
         <button class="btn-header-action" onclick="window.forceUpdate()" title="Update suchen">🔄</button>
     </div>
 </header>
@@ -161,6 +162,54 @@
                 </div>
             </div>
 
+            <!-- Kategorie / Art -->
+            <div class="form-group">
+                <label>Kategorie</label>
+                <div class="chip-selection-group" id="event-type-chips"></div>
+            </div>
+
+            <!-- Geburtsjahr (erscheint dynamisch nur bei Kategorie Geburtstag) -->
+            <div class="form-group" id="birth-year-group" style="display: none; width: 100%;">
+                <label>🎂 Geburtsjahr (für Altersanzeige)</label>
+                <input type="number" id="event-birth-year" class="form-control" placeholder="z.B. 1985" min="1900" max="2099" step="1" style="width: 100%; font-size: 1.05rem;">
+            </div>
+
+            <!-- Wer ist dabei? (Teilnehmer-Auswahl) -->
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <label style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #cbd5e1;">👥 Wer ist dabei? (Teilnehmer)</label>
+                    <div class="rsvp-quick-actions-bar">
+                        <button type="button" class="btn-rsvp-quick-action" onclick="window.selectAllParticipants(true)">👥 Alle</button>
+                        <button type="button" class="btn-rsvp-quick-action" onclick="window.selectAdultsParticipants()">✨ Nur Erw.</button>
+                        <button type="button" class="btn-rsvp-quick-action" onclick="window.selectAllParticipants(false)">🧹 Keine</button>
+                    </div>
+                </div>
+                <div class="form-participants-grid" id="form-participants-container"></div>
+            </div>
+
+            <!-- Zusätzliche Gäste (Erwachsene & Kinder) -->
+            <div class="form-group" id="form-guests-section" style="margin-top: 4px;">
+                <label style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 6px; display: block;">🎉 Zusätzliche Gäste</label>
+                <div class="form-guests-row">
+                    <div class="form-guest-stepper-card">
+                        <span class="form-guest-label">👤 Erwachsene</span>
+                        <div class="form-stepper-control">
+                            <button type="button" class="stepper-btn" onclick="window.changeFormGuests('adults', -1)">−</button>
+                            <span id="form-guest-adults-count" class="form-guest-count-val">0</span>
+                            <button type="button" class="stepper-btn" onclick="window.changeFormGuests('adults', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="form-guest-stepper-card">
+                        <span class="form-guest-label">🧒 Kinder</span>
+                        <div class="form-stepper-control">
+                            <button type="button" class="stepper-btn" onclick="window.changeFormGuests('children', -1)">−</button>
+                            <span id="form-guest-children-count" class="form-guest-count-val">0</span>
+                            <button type="button" class="stepper-btn" onclick="window.changeFormGuests('children', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Ort & Treffpunkt -->
             <div class="form-group">
                 <label>Ort / Treffpunkt</label>
@@ -171,12 +220,6 @@
             <div class="form-group">
                 <label>Link (Google Maps, Komoot, Info-Website)</label>
                 <input type="url" id="event-link" class="form-control" placeholder="https://maps.google.com/...">
-            </div>
-
-            <!-- Kategorie / Art -->
-            <div class="form-group">
-                <label>Kategorie</label>
-                <div class="chip-selection-group" id="event-type-chips"></div>
             </div>
 
             <!-- Beschreibung / Infos -->
@@ -320,6 +363,7 @@
             <h1 id="detail-title">Termin Titel</h1>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                 <div id="detail-category-tag" class="event-tag" style="display: inline-block;">Kategorie</div>
+                <div id="detail-age-tag" class="age-badge" style="display: none;">🎂 Alter</div>
                 <div id="detail-recurrence-tag" class="recurrence-tag" style="display: none;">🔁 Wöchentlich</div>
             </div>
         </div>
@@ -548,6 +592,30 @@
     </div>
 </div>
 
+<!-- Readme & Info Popup Modal -->
+<div id="readme-modal-container" class="custom-modal-overlay" style="display: none;" onclick="if(event.target === this) window.closeReadmeModal()">
+    <div class="custom-modal" style="max-width: 540px; width: 100%; max-height: 75vh; display: flex; flex-direction: column; padding: 18px 20px; text-align: left;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 12px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.3rem;">📖</span>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.05rem; color: #ffffff; text-align: left;">KlapsenCal Info & Anleitung</h3>
+                    <span style="font-size: 0.72rem; color: #94a3b8;" id="readme-modal-version">Lade Version...</span>
+                </div>
+            </div>
+            <button type="button" class="btn-detail-icon" onclick="window.closeReadmeModal()" title="Schließen" style="width: 28px; height: 28px; font-size: 0.9rem; margin-right: -4px;">✕</button>
+        </div>
+        
+        <div id="readme-content-body" style="overflow-y: auto; flex: 1; padding-right: 6px; font-size: 0.86rem; line-height: 1.55; color: #cbd5e1; -webkit-overflow-scrolling: touch;">
+            <div style="text-align: center; padding: 20px; color: #94a3b8;">Lade Anleitung...</div>
+        </div>
+
+        <div style="margin-top: 14px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;">
+            <button type="button" class="btn-modal-close" style="width: 100%; background: var(--primary-color);" onclick="window.closeReadmeModal()">Schließen</button>
+        </div>
+    </div>
+</div>
+
 <!-- Loading Overlay -->
 <div id="loading-overlay">
     <div class="spinner"></div>
@@ -699,7 +767,7 @@
 </script>
 
 <!-- Firebase SDK Module -->
-<script type="module" src="js/app.js?v=2.4.0"></script>
+<script type="module" src="js/app.js?v=2.5.6"></script>
 
 </body>
 </html>
