@@ -1261,7 +1261,24 @@ function renderCalendarWidget() {
           const primaryCatColor = getCategoryColor(dayCats[0]);
 
           if (!isSelected) {
-            cell.style.background = primaryCatColor.bg;
+            if (dayCats.length === 1) {
+              cell.style.background = primaryCatColor.bg;
+            } else {
+              const step = 100 / dayCats.length;
+              const gradientStops = dayCats
+                .map((cat, idx) => {
+                  const bg = getCategoryColor(cat).bg;
+                  const start =
+                    idx === 0 ? "0%" : `${(idx * step + 1).toFixed(1)}%`;
+                  const end =
+                    idx === dayCats.length - 1
+                      ? "100%"
+                      : `${((idx + 1) * step - 1).toFixed(1)}%`;
+                  return `${bg} ${start}, ${bg} ${end}`;
+                })
+                .join(", ");
+              cell.style.background = `linear-gradient(135deg, ${gradientStops})`;
+            }
           }
 
           const iconsRow = document.createElement("div");
