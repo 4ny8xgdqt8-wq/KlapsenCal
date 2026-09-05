@@ -1822,12 +1822,10 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
         0,
         0,
       );
-      if (targetDate <= endDate) {
-        const y = targetDate.getFullYear();
-        const m = String(targetDate.getMonth() + 1).padStart(2, "0");
-        const d = String(targetDate.getDate()).padStart(2, "0");
-        dates.push(`${y}-${m}-${d}`);
-      }
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const d = String(targetDate.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
       step++;
     }
   } else if (
@@ -1836,9 +1834,7 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
   ) {
     const stepSize = recurrenceType === "every2months" ? 2 : 3;
     const targetWeekday = startDate.getDay(); // 0 = So, 1 = Mo, ..., 5 = Fr, 6 = Sa
-    const nth = Math.floor((startDay - 1) / 7) + 1;
-    const daysInStartMonth = new Date(startYear, startMonth, 0).getDate();
-    const isLast = startDay + 7 > daysInStartMonth;
+    const nth = Math.floor((startDay - 1) / 7) + 1; // 1., 2., 3., 4. oder 5. Wochentag im Monat
 
     let step = 0;
     while (step <= maxMonths) {
@@ -1851,20 +1847,17 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
       let day = 1 + dayOffset + (nth - 1) * 7;
 
       const daysInTargetMonth = new Date(tempYear, tempMonth + 1, 0).getDate();
-      if (isLast && day + 7 <= daysInTargetMonth) {
-        day += 7;
-      }
+      // Falls ein Monat ausnahmsweise keinen 5. Wochentag hat, auf den letzten (4.) fallen
       if (day > daysInTargetMonth) {
         day -= 7;
       }
 
       const targetDate = new Date(tempYear, tempMonth, day, 12, 0, 0);
-      if (targetDate <= endDate) {
-        const y = targetDate.getFullYear();
-        const m = String(targetDate.getMonth() + 1).padStart(2, "0");
-        const d = String(targetDate.getDate()).padStart(2, "0");
-        dates.push(`${y}-${m}-${d}`);
-      }
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const d = String(targetDate.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
+
       step += stepSize;
     }
   } else if (recurrenceType === "yearly") {
