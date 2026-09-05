@@ -135,6 +135,11 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
   - ✨ **Sauberkeit & Ambiente** (1–5 Sterne)
   - 💶 **Preis-Leistung** (1–5 Sterne)
   - **Automatische Gesamtnote & neutrale Vorbelegung**: Alle 4 Kriterien starten beim Anlegen standardmäßig bei soliden **3 von 5 Sternen** (`3.0 ⭐`). Die App errechnet aus euren Eingaben automatisch die exakte Ø Durchschnittsnote (z. B. `4.3 ⭐`) und sortiert die besuchten Lokale übersichtlich nach dieser Bewertung.
+- **Modernes Gastro-Kartendesign**:
+  - Prominente Gesamtnote-Plakette oben rechts (z. B. `4.8 ★`) bei besuchten Lokalen bzw. Saphir-Plakette (`📌 Wunschliste`) bei geplanten Ausflugszielen.
+  - **Interaktiver Orts-Pin**: Ein Klick oder Tippen auf `📍 [Ort]` öffnet den Standort direkt in Google Maps zur einfachen Routenplanung.
+  - **Farbcodierte Kriterien-Pills**: Jedes der 4 Bewertungskriterien wird mit dynamischer Farbcodierung dargestellt (Smaragdgrün für Top-Werte ab 4 Sternen, Gold für solide 3 Sterne, sanftes Rot für Verbesserungspotenzial).
+  - Übersichtliche Notizenbox im Zitat-Stil sowie dezente Glas-Aktionsbuttons zum Bearbeiten und Löschen.
 - **Teilnehmer-Tracking („Wer war dabei?“)**:
   - **Dabei waren**: Auf jeder Karte seht ihr sofort die Avatare und Namen aller Personen, die beim Besuch mit am Tisch saßen.
 - **📌 Geplante Lokale (Wunschliste)**:
@@ -144,7 +149,7 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
   - Schnellumschaltung zwischen _🌐 Alle_, _🍽️ Besucht_ und _📌 Geplant / Wunschliste_.
   - Umfassende Filter nach 13 Kategorien: _🍽️ Deutsche Küche_, _🍕 Italienisch_, _🥩 Steak & Burger_, _🇬🇷 Griechisch_, _🍺 Brauhaus / Biergarten_, _🥢 Asiatisch_, _🍻 Kneipe / Bar_, _☕ Café & Brunch_, _🍔 Imbiss & Fast Food_, _🥘 Spanisch / Tapas_, _🌮 Mexikanisch_, _🍦 Eisdiele_, _🌐 International / Sonstiges_.
 - **Live-Suche**: Findet Lokale blitzschnell nach Name, Stadt/Ort, Küche oder Notizen.
-- **Schnellzugriff auf Speisekarten**: Direkter Button zu hinterlegten Online-Speisekarten und Websites (`📋 Speisekarte / Website`).
+- **Schnellzugriff auf Speisekarten**: Direkter Button zu hinterlegten Online-Speisekarten und Websites (`📋 Speisekarte / Website ↗`).
 - **Direkt aus dem Termin heraus bewerten**: Bei jedem Termin mit Ortsangabe gibt es im Detailfenster den Button **`🍽️ Restaurant / Lokal bewerten`** – Name, Ort, Link und alle Termin-Teilnehmer werden automatisch ins Formular übernommen!
 - **Schutz gegen Datenverlust beim Eintragen**: Ein versehentlicher Klick oder Wischen neben das Bewertungsfenster schließt den Dialog nicht mehr – eure Eingaben bleiben sicher erhalten, bis ihr bewusst auf Speichern, Abbrechen oder das Schließen-Kreuz tippt.
 
@@ -154,4 +159,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`).
-- **Service Worker**: PWA Cache v3.0.7 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v3.1.0 mit Network-First Strategie für App-Ressourcen.

@@ -2664,24 +2664,51 @@ select.form-control {
 /* Lokal / Restaurant Card Styles */
 .lokal-card,
 .einkehr-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.055) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
-  padding: 16px;
+  padding: 16px 18px;
   margin-bottom: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  transition: all 0.25s ease;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 13px;
+  overflow: hidden;
 }
 
 .lokal-card:hover,
 .einkehr-card:hover {
-  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-3px);
+  border-color: rgba(16, 185, 129, 0.45);
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 15px rgba(16, 185, 129, 0.12);
+    0 16px 36px rgba(0, 0, 0, 0.55),
+    0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.lokal-card.geplant {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 58, 138, 0.18) 0%,
+    rgba(15, 23, 42, 0.45) 100%
+  );
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-left: 4px solid #3b82f6;
+}
+
+.lokal-card.geplant:hover {
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(59, 130, 246, 0.22);
 }
 
 .lokal-card-header,
@@ -2689,148 +2716,227 @@ select.form-control {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 8px;
+  gap: 12px;
 }
 
 .lokal-card-title-group,
 .einkehr-card-title-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lokal-card-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .lokal-card-name,
 .einkehr-card-name {
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: #ffffff;
   margin: 0;
-  line-height: 1.3;
-}
-
-.lokal-card-badges,
-.einkehr-card-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  word-break: break-word;
 }
 
 .badge-lokal-cat,
 .badge-einkehr-cat {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   color: #cbd5e1;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.badge-fazit {
-  font-size: 0.72rem;
+.lokal-location-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 2px 8px;
+  border-radius: 7px;
+  transition: all 0.2s ease;
+}
+
+.lokal-location-link:hover {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.12);
+  transform: translateY(-1px);
+}
+
+.lokal-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Prominentes Score-Badge oben rechts */
+.lokal-score-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.22) 0%,
+    rgba(245, 158, 11, 0.22) 100%
+  );
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+  padding: 5px 11px;
+  border-radius: 12px;
+}
+
+.lokal-score-val {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #fef08a;
+  letter-spacing: -0.4px;
+  line-height: 1;
+}
+
+.lokal-score-star {
+  font-size: 0.95rem;
+  color: #fbbf24;
+  line-height: 1;
+}
+
+.lokal-planned-badge {
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 8px;
+  padding: 5px 10px;
+  border-radius: 10px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.lokal-card-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.btn-card-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #cbd5e1;
 }
 
-.badge-fazit.top,
-.badge-fazit.empfehlung {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fde68a;
-  border: 1px solid rgba(245, 158, 11, 0.5);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+.btn-card-action:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(1.08);
 }
 
-.badge-fazit.gut,
-.badge-fazit.solide {
-  background: rgba(14, 165, 233, 0.18);
-  color: #7dd3fc;
-  border: 1px solid rgba(14, 165, 233, 0.45);
-}
-
-.badge-fazit.mittel {
-  background: rgba(234, 179, 8, 0.18);
-  color: #fef08a;
-  border: 1px solid rgba(234, 179, 8, 0.45);
-}
-
-.badge-fazit.schlecht,
-.badge-fazit.naja {
-  background: rgba(239, 68, 68, 0.16);
+.btn-card-action.btn-card-action-del:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
   color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-}
-
-/* Gesamtnote Badge auf der Karte */
-.overall-rating-card-badge {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #34d399;
-  font-size: 1.05rem;
-  font-weight: 900;
-  padding: 4px 10px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 /* 4 Teilnoten Grid auf der Karte */
 .lokal-criteria-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 6px;
+  gap: 7px;
 }
 
 .criterion-pill {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 10px;
-  padding: 5px 8px;
+  padding: 6px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  transition: all 0.15s ease;
 }
 
 .criterion-pill-name {
-  color: #94a3b8;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .criterion-pill-stars {
-  color: #fbbf24;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
-.lokal-location-row,
-.einkehr-location-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #94a3b8;
-  font-size: 0.88rem;
+.criterion-pill.score-high {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #a7f3d0;
+}
+.criterion-pill.score-high .criterion-pill-stars {
+  color: #34d399;
+}
+
+.criterion-pill.score-mid {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #fde68a;
+}
+.criterion-pill.score-mid .criterion-pill-stars {
+  color: #fbbf24;
+}
+
+.criterion-pill.score-low {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #fca5a5;
+}
+.criterion-pill.score-low .criterion-pill-stars {
+  color: #f87171;
 }
 
 .lokal-notes-box,
 .einkehr-notes-box {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 9px 12px;
-  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.28);
+  border-left: 3px solid var(--accent-color);
+  border-radius: 0 12px 12px 0;
+  padding: 10px 14px;
+  font-size: 0.86rem;
   color: #e2e8f0;
-  line-height: 1.45;
+  line-height: 1.5;
   white-space: pre-line;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.lokal-notes-box .notes-icon {
+  font-size: 1rem;
+  line-height: 1.4;
+  flex-shrink: 0;
 }
 
 .lokal-card-footer,
@@ -2838,11 +2944,11 @@ select.form-control {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 4px;
-  padding-top: 8px;
+  margin-top: 2px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.78rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: #94a3b8;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -2858,13 +2964,17 @@ select.form-control {
 .btn-einkehr-link {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  gap: 6px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.82rem;
   font-weight: 700;
   text-decoration: none;
   transition: all 0.2s ease;
@@ -2872,9 +2982,15 @@ select.form-control {
 
 .btn-lokal-link:hover,
 .btn-einkehr-link:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.25) 0%,
+    rgba(5, 150, 105, 0.25) 100%
+  );
   border-color: #10b981;
   color: #ffffff;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
 }
 
 /* Status-Umschalter im Modal (Besucht vs Geplant) */
@@ -2937,10 +3053,6 @@ select.form-control {
   color: #93c5fd;
   border: 1px solid rgba(59, 130, 246, 0.5);
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
-}
-
-.lokal-card.geplant {
-  border-left: 3px solid #3b82f6;
 }
 
 /* Teilnehmer-Bereich auf den Karten */

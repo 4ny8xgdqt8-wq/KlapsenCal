@@ -3478,12 +3478,25 @@ function renderLokaleView() {
 
     let linksHtml = "";
     if (item.webLink) {
-      linksHtml += `<a href="${item.webLink}" target="_blank" rel="noopener noreferrer" class="btn-lokal-link">📋 Speisekarte / Website</a>`;
+      linksHtml += `<a href="${item.webLink}" target="_blank" rel="noopener noreferrer" class="btn-lokal-link">📋 Speisekarte / Website ↗</a>`;
     }
 
     const authorAvatar = item.author
       ? `avatars/${item.author}.webp`
       : "logo.png";
+
+    // Google Maps Link für Standort
+    let locationLinkHtml = "";
+    if (item.ort) {
+      const mapsQuery = encodeURIComponent(
+        (item.name ? item.name + " " : "") + item.ort,
+      );
+      locationLinkHtml = `
+        <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer" class="lokal-location-link" title="In Google Maps öffnen">
+          <span>📍</span><span>${escapeLokalHtml(item.ort)}</span>
+        </a>
+      `;
+    }
 
     // Teilnehmer ermitteln
     const tMap = item.teilnehmer || {};
@@ -3495,7 +3508,7 @@ function renderLokaleView() {
       let attendedChips = "";
       attendedAuthors.forEach((name) => {
         attendedChips += `
-          <span class="lokal-user-chip" title="${name} war dabei">
+          <span class="lokal-user-chip" title="${name} ${isGeplant ? "möchte mit" : "war dabei"}">
             <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" alt="${name}" />
             <span>${name}</span>
           </span>
@@ -3514,7 +3527,7 @@ function renderLokaleView() {
       `;
     }
 
-    // Kriterien-Pills bei besuchten Lokalen
+    // Kriterien-Pills bei besuchten Lokalen mit dynamischer Farbkodierung
     let criteriaPillsHtml = "";
     if (!isGeplant) {
       const rEssen = item.ratingEssen || item.rating || 5;
@@ -3522,12 +3535,30 @@ function renderLokaleView() {
       const rSauberkeit = item.ratingSauberkeit || item.rating || 5;
       const rPreis = item.ratingPreis || 4;
 
+      const getScoreClass = (val) => {
+        if (val >= 4) return "score-high";
+        if (val >= 3) return "score-mid";
+        return "score-low";
+      };
+
       criteriaPillsHtml = `
         <div class="lokal-criteria-grid">
-          <span class="criterion-pill" title="Essen & Trinken">🍽️ ${rEssen} ⭐</span>
-          <span class="criterion-pill" title="Service & Freundlichkeit">😊 ${rService} ⭐</span>
-          <span class="criterion-pill" title="Sauberkeit & Ambiente">✨ ${rSauberkeit} ⭐</span>
-          <span class="criterion-pill" title="Preis-Leistung">💶 ${rPreis} ⭐</span>
+          <div class="criterion-pill ${getScoreClass(rEssen)}" title="Essen & Trinken: ${rEssen} von 5">
+            <span class="criterion-pill-name">🍽️ Essen</span>
+            <span class="criterion-pill-stars">${rEssen} ★</span>
+          </div>
+          <div class="criterion-pill ${getScoreClass(rService)}" title="Service & Freundlichkeit: ${rService} von 5">
+            <span class="criterion-pill-name">😊 Service</span>
+            <span class="criterion-pill-stars">${rService} ★</span>
+          </div>
+          <div class="criterion-pill ${getScoreClass(rSauberkeit)}" title="Sauberkeit & Ambiente: ${rSauberkeit} von 5">
+            <span class="criterion-pill-name">✨ Sauberkeit</span>
+            <span class="criterion-pill-stars">${rSauberkeit} ★</span>
+          </div>
+          <div class="criterion-pill ${getScoreClass(rPreis)}" title="Preis-Leistung: ${rPreis} von 5">
+            <span class="criterion-pill-name">💶 Preis/Leist.</span>
+            <span class="criterion-pill-stars">${rPreis} ★</span>
+          </div>
         </div>
       `;
     }
@@ -3535,19 +3566,31 @@ function renderLokaleView() {
     card.innerHTML = `
       <div class="lokal-card-header">
         <div class="lokal-card-title-group">
-          <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
-          <div class="lokal-card-badges">
+          <div class="lokal-card-meta-top">
             <span class="badge-lokal-cat">${catBadgeText}</span>
-            ${
-              isGeplant
-                ? '<span class="badge-status-geplant">📌 Geplant / Wunschliste</span>'
-                : `<span class="badge-lokal-cat" style="color: #34d399; font-weight: 800;">⭐ ${overallScore}</span>`
-            }
+            ${locationLinkHtml}
           </div>
+          <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
         </div>
-        <div style="display: flex; gap: 4px; align-items: center;">
-          <button class="btn-tx-action" onclick="window.openLokalModal('${item.id}')" title="Bearbeiten">✏️</button>
-          <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteLokal('${item.id}')" title="Löschen">🗑️</button>
+        <div class="lokal-card-header-right">
+          ${
+            !isGeplant
+              ? `
+            <div class="lokal-score-badge" title="Gesamtnote: ${overallScore} von 5 Sternen">
+              <span class="lokal-score-val">${overallScore}</span>
+              <span class="lokal-score-star">★</span>
+            </div>
+          `
+              : `
+            <div class="lokal-planned-badge">
+              <span>📌 Wunschliste</span>
+            </div>
+          `
+          }
+          <div class="lokal-card-actions">
+            <button class="btn-card-action" onclick="window.openLokalModal('${item.id}')" title="Lokal bearbeiten">✏️</button>
+            <button class="btn-card-action btn-card-action-del" onclick="window.deleteLokal('${item.id}')" title="Lokal löschen">🗑️</button>
+          </div>
         </div>
       </div>
 
@@ -3558,38 +3601,34 @@ function renderLokaleView() {
         <div class="lokal-stars-display" title="${overallScore} von 5 Sternen">
           ${starsHtml}
         </div>
-        ${
-          item.ort
-            ? `<div class="lokal-location-row"><span>📍</span><span>${escapeLokalHtml(item.ort)}</span></div>`
-            : ""
-        }
+        <span style="font-size: 0.78rem; font-weight: 700; color: #94a3b8;">4 Kriterien im Schnitt</span>
       </div>
       ${criteriaPillsHtml}
       `
           : `
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <span style="font-size: 0.85rem; color: #93c5fd; font-weight: 700;">🌟 Vormerkung auf der Wunschliste</span>
-        ${
-          item.ort
-            ? `<div class="lokal-location-row"><span>📍</span><span>${escapeLokalHtml(item.ort)}</span></div>`
-            : ""
-        }
+      <div style="display: flex; align-items: center; gap: 6px; color: #93c5fd; font-size: 0.85rem; font-weight: 700;">
+        <span>🌟</span><span>Geplante Einkehr / Vormerkung</span>
       </div>
       `
       }
 
       ${
         item.notizen
-          ? `<div class="lokal-notes-box">💡 ${escapeLokalHtml(item.notizen)}</div>`
+          ? `
+      <div class="lokal-notes-box">
+        <span class="notes-icon">💬</span>
+        <div style="flex: 1;">${escapeLokalHtml(item.notizen)}</div>
+      </div>
+      `
           : ""
       }
 
       ${participantsHtml}
 
       <div class="lokal-card-footer">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <img src="${authorAvatar}" onerror="this.src='logo.png'" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" alt="${escapeLokalHtml(item.author || "Anonym")}" />
-          <span>${escapeLokalHtml(item.author || "Anonym")}</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <img src="${authorAvatar}" onerror="this.src='logo.png'" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);" alt="${escapeLokalHtml(item.author || "Anonym")}" />
+          <span>Eingetragen von <strong>${escapeLokalHtml(item.author || "Anonym")}</strong></span>
         </div>
         <div class="lokal-card-links">
           ${linksHtml}
