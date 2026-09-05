@@ -643,7 +643,7 @@ function updateCategoryDependentFields() {
 
   if (selectedType === "Urlaub / Abwesend") {
     // 1. Bis-Datum einblenden & Label anpassen
-    if (endDateGroup) endDateGroup.style.display = "block";
+    if (endDateGroup) endDateGroup.style.display = "flex";
     if (dateLabel) dateLabel.textContent = "Startdatum";
     if (participantsLabel)
       participantsLabel.textContent = "🏖️ Wer ist abwesend? (Personen)";
@@ -676,7 +676,7 @@ function updateCategoryDependentFields() {
   } else {
     // Standard-Felder wieder einblenden
     if (endDateGroup) endDateGroup.style.display = "none";
-    if (timeGroup) timeGroup.style.display = "block";
+    if (timeGroup) timeGroup.style.display = "flex";
     if (allDayToggleGroup) allDayToggleGroup.style.display = "flex";
     if (locationGroup) locationGroup.style.display = "block";
     if (linkGroup) linkGroup.style.display = "block";
@@ -1251,7 +1251,7 @@ function renderCalendarWidget() {
         if (hasEvents) classes.push("has-events");
 
         cell.className = classes.join(" ");
-        cell.innerHTML = `<span>${dayInfo.dayNum}</span>`;
+        cell.innerHTML = `<span class="cal-day-num">${dayInfo.dayNum}</span>`;
         cell.onclick = () => window.selectCalendarDay(dateStr);
 
         if (hasEvents) {
@@ -1264,24 +1264,31 @@ function renderCalendarWidget() {
             cell.style.background = primaryCatColor.bg;
           }
 
-          const dotsRow = document.createElement("div");
-          dotsRow.className = "event-dots-row";
+          const iconsRow = document.createElement("div");
+          iconsRow.className = "calendar-day-icons";
 
-          eventsOnDay.slice(0, 4).forEach((ev) => {
+          const uniqueIcons = [];
+          eventsOnDay.forEach((ev) => {
             const catStyle = getCategoryColor(ev.Kategorie);
-            const dot = document.createElement("span");
-            dot.className = "event-dot";
-            if (isSelected) {
-              dot.style.background = "#064e3b";
-              dot.style.boxShadow = "none";
-            } else {
-              dot.style.background = catStyle.color;
-              dot.style.boxShadow = `0 0 3px ${catStyle.color}`;
-            }
-            dotsRow.appendChild(dot);
+            const icon = catStyle.icon || "📌";
+            if (!uniqueIcons.includes(icon)) uniqueIcons.push(icon);
           });
 
-          cell.appendChild(dotsRow);
+          uniqueIcons.slice(0, 2).forEach((icon) => {
+            const iconSpan = document.createElement("span");
+            iconSpan.className = "cal-day-icon";
+            iconSpan.textContent = icon;
+            iconsRow.appendChild(iconSpan);
+          });
+
+          if (uniqueIcons.length > 2) {
+            const moreSpan = document.createElement("span");
+            moreSpan.className = "cal-day-more";
+            moreSpan.textContent = `+${uniqueIcons.length - 2}`;
+            iconsRow.appendChild(moreSpan);
+          }
+
+          cell.appendChild(iconsRow);
         }
       }
 
