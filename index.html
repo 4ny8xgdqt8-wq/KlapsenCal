@@ -54,7 +54,7 @@
     />
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=3.0.5" />
+    <link rel="stylesheet" href="css/style.css?v=3.0.7" />
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -359,6 +359,45 @@
             onclick="window.filterLokale('Asiatisch', this)"
           >
             🥢 Asiatisch
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Kneipe', this)"
+          >
+            🍻 Kneipe / Bar
+          </div>
+          <div class="filter-chip" onclick="window.filterLokale('Café', this)">
+            ☕ Café &amp; Brunch
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Fast Food', this)"
+          >
+            🍔 Imbiss &amp; Fast Food
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Spanisch', this)"
+          >
+            🥘 Spanisch / Tapas
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Mexikanisch', this)"
+          >
+            🌮 Mexikanisch
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Eisdiele', this)"
+          >
+            🍦 Eisdiele
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('International', this)"
+          >
+            🌐 International / Sonstiges
           </div>
         </div>
 
@@ -1328,8 +1367,14 @@
                 <option value="Griechisch">🇬🇷 Griechisch / Mediterran</option>
                 <option value="Brauhaus">🍺 Brauhaus / Biergarten</option>
                 <option value="Asiatisch">🥢 Asiatisch / Sushi</option>
+                <option value="Kneipe">🍻 Kneipe / Bar / Pub</option>
+                <option value="Café">☕ Café / Frühstück / Brunch</option>
+                <option value="Fast Food">🍔 Imbiss / Döner / Fast Food</option>
+                <option value="Spanisch">🥘 Spanisch / Tapas</option>
+                <option value="Mexikanisch">🌮 Mexikanisch / Tex-Mex</option>
+                <option value="Eisdiele">🍦 Eisdiele / Dessert</option>
                 <option value="International">
-                  🌮 International / Sonstiges
+                  🌐 International / Sonstiges
                 </option>
               </select>
             </div>
@@ -2389,6 +2434,6 @@
     </script>
 
     <!-- Firebase SDK Module -->
-    <script type="module" src="js/app.js?v=3.0.5"></script>
+    <script type="module" src="js/app.js?v=3.0.7"></script>
   </body>
 </html>

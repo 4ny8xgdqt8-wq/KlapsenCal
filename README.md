@@ -142,7 +142,7 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
   - Kriterien werden bei Wunschlisten-Einträgen ausgeblendet; stattdessen stehen Notizen, Speisekarte und wer Interesse hat im Fokus.
 - **Kategorien & Schnellfilter**:
   - Schnellumschaltung zwischen _🌐 Alle_, _🍽️ Besucht_ und _📌 Geplant / Wunschliste_.
-  - Filter nach Küchen: _🍽️ Deutsche Küche_, _🍕 Italienisch_, _🥩 Steak & Burger_, _🇬🇷 Griechisch_, _🍺 Brauhaus / Biergarten_, _🥢 Asiatisch_.
+  - Umfassende Filter nach 13 Kategorien: _🍽️ Deutsche Küche_, _🍕 Italienisch_, _🥩 Steak & Burger_, _🇬🇷 Griechisch_, _🍺 Brauhaus / Biergarten_, _🥢 Asiatisch_, _🍻 Kneipe / Bar_, _☕ Café & Brunch_, _🍔 Imbiss & Fast Food_, _🥘 Spanisch / Tapas_, _🌮 Mexikanisch_, _🍦 Eisdiele_, _🌐 International / Sonstiges_.
 - **Live-Suche**: Findet Lokale blitzschnell nach Name, Stadt/Ort, Küche oder Notizen.
 - **Schnellzugriff auf Speisekarten**: Direkter Button zu hinterlegten Online-Speisekarten und Websites (`📋 Speisekarte / Website`).
 - **Direkt aus dem Termin heraus bewerten**: Bei jedem Termin mit Ortsangabe gibt es im Detailfenster den Button **`🍽️ Restaurant / Lokal bewerten`** – Name, Ort, Link und alle Termin-Teilnehmer werden automatisch ins Formular übernommen!
@@ -154,4 +154,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`).
-- **Service Worker**: PWA Cache v3.0.5 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v3.0.7 mit Network-First Strategie für App-Ressourcen.

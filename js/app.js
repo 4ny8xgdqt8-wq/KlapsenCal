@@ -3191,13 +3191,17 @@ const lokalCatLabels = {
   Griechisch: "🇬🇷 Griechisch",
   Brauhaus: "🍺 Brauhaus / Biergarten",
   Asiatisch: "🥢 Asiatisch",
-  International: "🌮 International",
+  Kneipe: "🍻 Kneipe / Bar",
+  Café: "☕ Café & Brunch",
+  "Fast Food": "🍔 Imbiss & Fast Food",
+  Spanisch: "🥘 Spanisch / Tapas",
+  Mexikanisch: "🌮 Mexikanisch",
+  Eisdiele: "🍦 Eisdiele",
+  International: "🌐 International / Sonstiges",
   // Kompatibilität mit alten Einträgen
   Biergarten: "🍺 Brauhaus / Biergarten",
-  Kneipe: "🍻 Kneipe",
   Restaurant: "🍽️ Restaurant",
   Spiele: "🎯 Dart & Billard",
-  Café: "☕ Café & Snack",
   Event: "🎪 Fest & Event",
 };
 
