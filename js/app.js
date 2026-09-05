@@ -451,7 +451,28 @@ function initAuthorsListener() {
         select.value = currentVal;
       }
 
+      const lokalSelect =
+        document.getElementById("lokal-author") ||
+        document.getElementById("einkehr-author");
+      if (lokalSelect) {
+        const lokalVal = lokalSelect.value;
+        lokalSelect.innerHTML =
+          '<option value="" disabled selected>Wähle Ersteller...</option>';
+        allAuthors.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          lokalSelect.appendChild(opt);
+        });
+        if (lokalVal && allAuthors.includes(lokalVal)) {
+          lokalSelect.value = lokalVal;
+        }
+      }
+
       renderFormParticipants();
+      if (typeof renderLokalParticipants === "function") {
+        renderLokalParticipants();
+      }
     },
     (e) => {
       console.warn("Ersteller Listener Fehler:", e);
@@ -1644,14 +1665,34 @@ function showEventDetails(data) {
   }
 
   const linkBtn = document.getElementById("btn-open-link");
+  const einkehrBtn = document.getElementById("btn-open-einkehr-rating");
   const actionsCont = document.getElementById("detail-actions-container");
   const targetLink = data.OrtLink || data.Link;
 
-  if (targetLink) {
+  let hasAction = false;
+  if (targetLink && linkBtn) {
     linkBtn.href = targetLink;
-    if (actionsCont) actionsCont.style.display = "flex";
-  } else {
-    if (actionsCont) actionsCont.style.display = "none";
+    linkBtn.style.display = "flex";
+    hasAction = true;
+  } else if (linkBtn) {
+    linkBtn.style.display = "none";
+  }
+
+  const lokalBtn =
+    document.getElementById("btn-open-lokal-rating") ||
+    document.getElementById("btn-open-einkehr-rating");
+
+  if (lokalBtn) {
+    if (data.Ort || data.Titel) {
+      lokalBtn.style.display = "flex";
+      hasAction = true;
+    } else {
+      lokalBtn.style.display = "none";
+    }
+  }
+
+  if (actionsCont) {
+    actionsCont.style.display = hasAction ? "flex" : "none";
   }
 
   renderDetailRSVP(data);
@@ -1669,6 +1710,26 @@ function showEventDetails(data) {
   overlay.style.display = "flex";
 }
 window.showEventDetails = showEventDetails;
+
+window.rateCurrentEventLocation = function () {
+  if (!currentDetailData) return;
+  const ev = currentDetailData;
+  window.closeEventDetails();
+  const lokalTabBtn =
+    document.querySelector(".tab-item[onclick*='lokale']") ||
+    document.querySelector(".tab-item[onclick*='einkehr']");
+  if (lokalTabBtn && typeof window.switchTab === "function") {
+    window.switchTab("lokale", lokalTabBtn);
+  }
+  window.openLokalModal(null, {
+    name: ev.Ort || ev.Titel || "",
+    ort: ev.Ort || "",
+    datum: ev.Datum || "",
+    link: ev.OrtLink || ev.Link || "",
+    author: ev.Ersteller || "",
+    teilnehmer: ev.Teilnehmer || {},
+  });
+};
 
 let currentGuestsData = { adults: 0, children: 0 };
 
@@ -2464,6 +2525,24 @@ document.getElementById("event-author").addEventListener("change", (e) => {
   }
 });
 
+const lokalAuthorEl =
+  document.getElementById("lokal-author") ||
+  document.getElementById("einkehr-author");
+if (lokalAuthorEl) {
+  lokalAuthorEl.addEventListener("change", (e) => {
+    const name = e.target.value;
+    const img =
+      document.getElementById("lokal-author-avatar") ||
+      document.getElementById("einkehr-author-avatar");
+    if (img) {
+      img.src = `avatars/${name}.webp`;
+      img.onerror = () => {
+        img.src = "logo.png";
+      };
+    }
+  });
+}
+
 const allDayCheckbox = document.getElementById("event-all-day");
 const timeGroup = document.getElementById("time-group");
 if (allDayCheckbox && timeGroup) {
@@ -3098,6 +3177,700 @@ window.deletePurchase = function (id) {
 };
 
 // ==========================================
+// 15. Restaurant- & Lokal-Guide Logik („Wo wir waren“ & „Geplant“)
+// ==========================================
+let allLokale = [];
+let selectedLokalFilter = "alle";
+let editingLokalId = null;
+let lokalParticipants = {}; // { [name]: "yes" }
+
+const lokalCatLabels = {
+  Deutsch: "🍽️ Deutsche Küche",
+  Italienisch: "🍕 Italienisch",
+  "Steak & Burger": "🥩 Steak & Burger",
+  Griechisch: "🇬🇷 Griechisch",
+  Brauhaus: "🍺 Brauhaus / Biergarten",
+  Asiatisch: "🥢 Asiatisch",
+  International: "🌮 International",
+  // Kompatibilität mit alten Einträgen
+  Biergarten: "🍺 Brauhaus / Biergarten",
+  Kneipe: "🍻 Kneipe",
+  Restaurant: "🍽️ Restaurant",
+  Spiele: "🎯 Dart & Billard",
+  Café: "☕ Café & Snack",
+  Event: "🎪 Fest & Event",
+};
+
+function escapeLokalHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function initLokaleListener() {
+  const colRef = collection(db, "data_einkehr");
+  onSnapshot(
+    colRef,
+    (snapshot) => {
+      const list = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.name) {
+          list.push({ id: docSnap.id, ...data });
+        }
+      });
+      allLokale = list;
+      updateLokaleStats();
+      renderLokaleView();
+    },
+    (error) => {
+      console.error("Fehler beim Laden der Lokal-Einträge:", error);
+    },
+  );
+}
+
+function updateLokaleStats() {
+  const visited = allLokale.filter((e) => e.status !== "geplant");
+  const planned = allLokale.filter((e) => e.status === "geplant");
+
+  const totalVisited = visited.length;
+  const totalPlanned = planned.length;
+
+  let avg = "0.0";
+  if (totalVisited > 0) {
+    const sum = visited.reduce((acc, curr) => {
+      const score = Number(curr.gesamtRating) || Number(curr.rating) || 0;
+      return acc + score;
+    }, 0);
+    avg = (sum / totalVisited).toFixed(1);
+  }
+
+  const totalEl =
+    document.getElementById("lokal-stat-total") ||
+    document.getElementById("einkehr-stat-total");
+  const plannedEl = document.getElementById("lokal-stat-planned");
+  const avgEl =
+    document.getElementById("lokal-stat-avg-rating") ||
+    document.getElementById("einkehr-stat-avg-rating");
+
+  if (totalEl) totalEl.textContent = totalVisited;
+  if (plannedEl) plannedEl.textContent = totalPlanned;
+  if (avgEl) avgEl.textContent = `${avg} ⭐`;
+}
+
+function renderStarsString(rating) {
+  const r = Math.round(Number(rating) || 0);
+  let str = "";
+  for (let i = 1; i <= 5; i++) {
+    str +=
+      i <= r
+        ? "⭐"
+        : '<span style="filter: grayscale(1) opacity(0.25); display: inline-block;">⭐</span>';
+  }
+  return str;
+}
+
+// ------------------------------------------
+// Kriterien Interaktionen
+// ------------------------------------------
+function calculateOverallLokalScore() {
+  const essen =
+    parseInt(document.getElementById("lokal-rating-essen")?.value) || 3;
+  const service =
+    parseInt(document.getElementById("lokal-rating-service")?.value) || 3;
+  const sauberkeit =
+    parseInt(document.getElementById("lokal-rating-sauberkeit")?.value) || 3;
+  const preis =
+    parseInt(document.getElementById("lokal-rating-preis")?.value) || 3;
+
+  const avg = ((essen + service + sauberkeit + preis) / 4).toFixed(1);
+  const preview = document.getElementById("lokal-overall-preview");
+  if (preview) preview.textContent = `${avg} ⭐`;
+  return parseFloat(avg);
+}
+
+window.setLokalCriterion = function (criterion, val) {
+  const hiddenInput = document.getElementById(`lokal-rating-${criterion}`);
+  if (hiddenInput) hiddenInput.value = val;
+
+  document
+    .querySelectorAll(`.star-btn-crit[data-crit="${criterion}"]`)
+    .forEach((btn) => {
+      const starVal = parseInt(btn.getAttribute("data-val") || "0");
+      btn.classList.toggle("active", starVal <= val);
+    });
+
+  const badge = document.getElementById(`score-badge-${criterion}`);
+  if (badge) badge.textContent = `${val} / 5`;
+
+  calculateOverallLokalScore();
+};
+
+window.setLokalStatus = function (status) {
+  const statusInput = document.getElementById("lokal-status");
+  if (statusInput) statusInput.value = status;
+
+  const btnBesucht = document.getElementById("status-btn-besucht");
+  const btnGeplant = document.getElementById("status-btn-geplant");
+  if (btnBesucht) btnBesucht.classList.toggle("active", status === "besucht");
+  if (btnGeplant) btnGeplant.classList.toggle("active", status === "geplant");
+
+  const ratingsSection = document.getElementById("lokal-ratings-section");
+  if (ratingsSection) {
+    ratingsSection.style.display = status === "besucht" ? "block" : "none";
+  }
+
+  const pLabel = document.getElementById("lokal-participants-label");
+  if (pLabel) {
+    pLabel.textContent =
+      status === "besucht"
+        ? "👥 Wer war alles dabei?"
+        : "🙋 Wer möchte alles mit? / Interesse";
+  }
+
+  const modalTitle = document.getElementById("lokal-modal-title");
+  if (modalTitle) {
+    modalTitle.textContent =
+      status === "besucht"
+        ? editingLokalId
+          ? "✏️ Lokal bearbeiten"
+          : "🍽️ Restaurant / Lokal bewerten"
+        : editingLokalId
+          ? "✏️ Geplantes Lokal bearbeiten"
+          : "📌 Geplantes Lokal vormerken";
+  }
+
+  const submitBtn = document.getElementById("submit-lokal-btn");
+  if (submitBtn) {
+    submitBtn.textContent =
+      status === "besucht"
+        ? "Lokal & Bewertung speichern"
+        : "📌 Auf Wunschliste speichern";
+  }
+};
+
+// ------------------------------------------
+// Teilnehmer-Auswahl im Modal
+// ------------------------------------------
+function renderLokalParticipants() {
+  const container = document.getElementById("lokal-participants-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  allAuthors.forEach((name) => {
+    const isSelected = lokalParticipants[name] === "yes";
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = `form-participant-chip ${isSelected ? "selected" : ""}`;
+    chip.innerHTML = `
+      <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="form-participant-avatar" alt="${name}">
+      <span class="form-participant-name">${name}</span>
+      ${isSelected ? '<span class="form-participant-check">✓</span>' : ""}
+    `;
+    chip.onclick = () => {
+      if (lokalParticipants[name] === "yes") {
+        delete lokalParticipants[name];
+      } else {
+        lokalParticipants[name] = "yes";
+      }
+      renderLokalParticipants();
+    };
+    container.appendChild(chip);
+  });
+}
+window.renderLokalParticipants = renderLokalParticipants;
+
+window.selectAllLokalParticipants = function (selectAll = true) {
+  if (selectAll) {
+    allAuthors.forEach((n) => {
+      lokalParticipants[n] = "yes";
+    });
+  } else {
+    lokalParticipants = {};
+    const currentAuthor = document.getElementById("lokal-author")?.value;
+    if (currentAuthor) lokalParticipants[currentAuthor] = "yes";
+  }
+  renderLokalParticipants();
+};
+
+// ------------------------------------------
+// View Rendering & Filter
+// ------------------------------------------
+function renderLokaleView() {
+  const container =
+    document.getElementById("lokal-list-container") ||
+    document.getElementById("einkehr-list-container");
+  if (!container) return;
+
+  const searchInput =
+    document.getElementById("lokal-search") ||
+    document.getElementById("einkehr-search");
+  const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+  let filtered = [...allLokale];
+
+  // Filter nach Chip
+  if (selectedLokalFilter === "besucht") {
+    filtered = filtered.filter((e) => e.status !== "geplant");
+  } else if (selectedLokalFilter === "geplant") {
+    filtered = filtered.filter((e) => e.status === "geplant");
+  } else if (selectedLokalFilter !== "alle") {
+    filtered = filtered.filter((e) => e.kategorie === selectedLokalFilter);
+  }
+
+  // Textsuche
+  if (searchTerm) {
+    filtered = filtered.filter(
+      (e) =>
+        (e.name && e.name.toLowerCase().includes(searchTerm)) ||
+        (e.ort && e.ort.toLowerCase().includes(searchTerm)) ||
+        (e.kategorie && e.kategorie.toLowerCase().includes(searchTerm)) ||
+        (e.notizen && e.notizen.toLowerCase().includes(searchTerm)),
+    );
+  }
+
+  // Sortierung:
+  // 1. Besuchte vor Geplanten
+  // 2. Besuchte rein nach höchster Gesamtnote, dann alphabetisch
+  // 3. Geplante nach Name
+  filtered.sort((a, b) => {
+    const isPlanA = a.status === "geplant" ? 1 : 0;
+    const isPlanB = b.status === "geplant" ? 1 : 0;
+    if (isPlanA !== isPlanB) return isPlanA - isPlanB;
+
+    const rateA = Number(a.gesamtRating) || Number(a.rating) || 0;
+    const rateB = Number(b.gesamtRating) || Number(b.rating) || 0;
+    if (rateA !== rateB) return rateB - rateA;
+
+    return (a.name || "").localeCompare(b.name || "");
+  });
+
+  container.innerHTML = "";
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">🍽️</div>
+        <h3 style="color: white; margin: 0 0 6px 0;">Keine Lokale gefunden</h3>
+        <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neues Restaurant / Lokal eintragen“ den ersten Tipp ein!</p>
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach((item) => {
+    const card = document.createElement("div");
+    const isGeplant = item.status === "geplant";
+    card.className = `lokal-card ${isGeplant ? "geplant" : ""}`;
+
+    const catBadgeText =
+      lokalCatLabels[item.kategorie] || item.kategorie || "🍽️ Restaurant";
+    const overallScore = item.gesamtRating || item.rating || "4.5";
+    const starsHtml = renderStarsString(overallScore);
+
+    let linksHtml = "";
+    if (item.webLink) {
+      linksHtml += `<a href="${item.webLink}" target="_blank" rel="noopener noreferrer" class="btn-lokal-link">📋 Speisekarte / Website</a>`;
+    }
+
+    const authorAvatar = item.author
+      ? `avatars/${item.author}.webp`
+      : "logo.png";
+
+    // Teilnehmer ermitteln
+    const tMap = item.teilnehmer || {};
+    const attendedAuthors = allAuthors.filter((name) => tMap[name] === "yes");
+
+    // HTML für Teilnehmer-Chips
+    let participantsHtml = "";
+    if (attendedAuthors.length > 0) {
+      let attendedChips = "";
+      attendedAuthors.forEach((name) => {
+        attendedChips += `
+          <span class="lokal-user-chip" title="${name} war dabei">
+            <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" alt="${name}" />
+            <span>${name}</span>
+          </span>
+        `;
+      });
+
+      participantsHtml = `
+        <div class="lokal-participants-box">
+          <div class="lokal-participants-section">
+            <span class="lokal-participants-label">${isGeplant ? "🙋 Möchten mit:" : "👥 Dabei waren:"}</span>
+            <div class="lokal-avatars-row">
+              ${attendedChips}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Kriterien-Pills bei besuchten Lokalen
+    let criteriaPillsHtml = "";
+    if (!isGeplant) {
+      const rEssen = item.ratingEssen || item.rating || 5;
+      const rService = item.ratingService || item.rating || 5;
+      const rSauberkeit = item.ratingSauberkeit || item.rating || 5;
+      const rPreis = item.ratingPreis || 4;
+
+      criteriaPillsHtml = `
+        <div class="lokal-criteria-grid">
+          <span class="criterion-pill" title="Essen & Trinken">🍽️ ${rEssen} ⭐</span>
+          <span class="criterion-pill" title="Service & Freundlichkeit">😊 ${rService} ⭐</span>
+          <span class="criterion-pill" title="Sauberkeit & Ambiente">✨ ${rSauberkeit} ⭐</span>
+          <span class="criterion-pill" title="Preis-Leistung">💶 ${rPreis} ⭐</span>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="lokal-card-header">
+        <div class="lokal-card-title-group">
+          <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
+          <div class="lokal-card-badges">
+            <span class="badge-lokal-cat">${catBadgeText}</span>
+            ${
+              isGeplant
+                ? '<span class="badge-status-geplant">📌 Geplant / Wunschliste</span>'
+                : `<span class="badge-lokal-cat" style="color: #34d399; font-weight: 800;">⭐ ${overallScore}</span>`
+            }
+          </div>
+        </div>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button class="btn-tx-action" onclick="window.openLokalModal('${item.id}')" title="Bearbeiten">✏️</button>
+          <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteLokal('${item.id}')" title="Löschen">🗑️</button>
+        </div>
+      </div>
+
+      ${
+        !isGeplant
+          ? `
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <div class="lokal-stars-display" title="${overallScore} von 5 Sternen">
+          ${starsHtml}
+        </div>
+        ${
+          item.ort
+            ? `<div class="lokal-location-row"><span>📍</span><span>${escapeLokalHtml(item.ort)}</span></div>`
+            : ""
+        }
+      </div>
+      ${criteriaPillsHtml}
+      `
+          : `
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <span style="font-size: 0.85rem; color: #93c5fd; font-weight: 700;">🌟 Vormerkung auf der Wunschliste</span>
+        ${
+          item.ort
+            ? `<div class="lokal-location-row"><span>📍</span><span>${escapeLokalHtml(item.ort)}</span></div>`
+            : ""
+        }
+      </div>
+      `
+      }
+
+      ${
+        item.notizen
+          ? `<div class="lokal-notes-box">💡 ${escapeLokalHtml(item.notizen)}</div>`
+          : ""
+      }
+
+      ${participantsHtml}
+
+      <div class="lokal-card-footer">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <img src="${authorAvatar}" onerror="this.src='logo.png'" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" alt="${escapeLokalHtml(item.author || "Anonym")}" />
+          <span>${escapeLokalHtml(item.author || "Anonym")}</span>
+        </div>
+        <div class="lokal-card-links">
+          ${linksHtml}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+window.renderLokaleView = renderLokaleView;
+
+window.filterLokale = function (filter, el) {
+  selectedLokalFilter = filter;
+  const chipContainer =
+    document.getElementById("lokal-filter-chips") ||
+    document.getElementById("einkehr-filter-chips");
+  if (chipContainer) {
+    chipContainer
+      .querySelectorAll(".filter-chip")
+      .forEach((c) => c.classList.remove("active"));
+  }
+  if (el) el.classList.add("active");
+  renderLokaleView();
+};
+
+window.filterAndRenderLokale = function () {
+  renderLokaleView();
+};
+
+// ------------------------------------------
+// Modal öffnen / schließen / speichern / löschen
+// ------------------------------------------
+window.openLokalModal = function (id = null, prefill = null) {
+  const modal =
+    document.getElementById("lokal-modal-container") ||
+    document.getElementById("einkehr-modal-container");
+  if (!modal) return;
+
+  editingLokalId = id;
+  const submitBtn = document.getElementById("submit-lokal-btn");
+
+  if (id) {
+    const item = allLokale.find((e) => e.id === id);
+    if (!item) return;
+
+    const isGeplant = item.status === "geplant";
+    window.setLokalStatus(isGeplant ? "geplant" : "besucht");
+
+    document.getElementById("lokal-id").value = item.id;
+    document.getElementById("lokal-name").value = item.name || "";
+    document.getElementById("lokal-kategorie").value =
+      item.kategorie || "Italienisch";
+    document.getElementById("lokal-ort").value = item.ort || "";
+    document.getElementById("lokal-web-link").value = item.webLink || "";
+    document.getElementById("lokal-notizen").value = item.notizen || "";
+
+    // Kriterien setzen
+    window.setLokalCriterion("essen", item.ratingEssen || item.rating || 5);
+    window.setLokalCriterion("service", item.ratingService || item.rating || 5);
+    window.setLokalCriterion(
+      "sauberkeit",
+      item.ratingSauberkeit || item.rating || 5,
+    );
+    window.setLokalCriterion("preis", item.ratingPreis || 4);
+
+    // Ersteller
+    const authorSelect = document.getElementById("lokal-author");
+    if (authorSelect && item.author) {
+      authorSelect.value = item.author;
+      const img = document.getElementById("lokal-author-avatar");
+      if (img) {
+        img.src = `avatars/${item.author}.webp`;
+        img.onerror = () => {
+          img.src = "logo.png";
+        };
+      }
+    }
+
+    // Teilnehmer
+    lokalParticipants = { ...(item.teilnehmer || {}) };
+    renderLokalParticipants();
+
+    if (submitBtn) {
+      submitBtn.textContent = "Änderungen speichern";
+    }
+  } else if (prefill) {
+    window.setLokalStatus("besucht");
+
+    document.getElementById("lokal-id").value = "";
+    document.getElementById("lokal-name").value = prefill.name || "";
+    document.getElementById("lokal-kategorie").value = "Italienisch";
+    document.getElementById("lokal-ort").value = prefill.ort || "";
+
+    document.getElementById("lokal-web-link").value = prefill.link || "";
+    document.getElementById("lokal-notizen").value = "";
+
+    window.setLokalCriterion("essen", 3);
+    window.setLokalCriterion("service", 3);
+    window.setLokalCriterion("sauberkeit", 3);
+    window.setLokalCriterion("preis", 3);
+
+    const authorSelect = document.getElementById("lokal-author");
+    if (authorSelect && prefill.author) {
+      authorSelect.value = prefill.author;
+      const img = document.getElementById("lokal-author-avatar");
+      if (img) {
+        img.src = `avatars/${prefill.author}.webp`;
+        img.onerror = () => {
+          img.src = "logo.png";
+        };
+      }
+    }
+
+    lokalParticipants =
+      prefill.teilnehmer && Object.keys(prefill.teilnehmer).length > 0
+        ? { ...prefill.teilnehmer }
+        : prefill.author
+          ? { [prefill.author]: "yes" }
+          : {};
+    renderLokalParticipants();
+
+    if (submitBtn) {
+      submitBtn.textContent = "Lokal & Bewertung speichern";
+    }
+  } else {
+    window.setLokalStatus("besucht");
+
+    document.getElementById("lokal-id").value = "";
+    document.getElementById("lokal-name").value = "";
+    document.getElementById("lokal-kategorie").value = "Italienisch";
+    document.getElementById("lokal-ort").value = "";
+    document.getElementById("lokal-web-link").value = "";
+    document.getElementById("lokal-notizen").value = "";
+
+    window.setLokalCriterion("essen", 3);
+    window.setLokalCriterion("service", 3);
+    window.setLokalCriterion("sauberkeit", 3);
+    window.setLokalCriterion("preis", 3);
+
+    lokalParticipants = {};
+    const authorSelect = document.getElementById("lokal-author");
+    if (authorSelect && authorSelect.value) {
+      lokalParticipants[authorSelect.value] = "yes";
+    }
+    renderLokalParticipants();
+
+    if (submitBtn) {
+      submitBtn.textContent = "Lokal & Bewertung speichern";
+    }
+  }
+
+  modal.style.display = "flex";
+};
+
+window.closeLokalModal = function () {
+  const modal =
+    document.getElementById("lokal-modal-container") ||
+    document.getElementById("einkehr-modal-container");
+  if (!modal) return;
+  editingLokalId = null;
+  modal.style.display = "none";
+};
+
+window.saveLokalEntry = async function () {
+  const id = document.getElementById("lokal-id").value;
+  const status = document.getElementById("lokal-status")?.value || "besucht";
+  const author = document.getElementById("lokal-author").value;
+  const name = document.getElementById("lokal-name").value.trim();
+  const kategorie = document.getElementById("lokal-kategorie").value;
+  const ort = document.getElementById("lokal-ort").value.trim();
+  const webLink = document.getElementById("lokal-web-link").value.trim();
+  const notizen = document.getElementById("lokal-notizen").value.trim();
+
+  if (!name) {
+    window.showAppModal("Hinweis", "Bitte gib den Namen des Lokals an.");
+    return;
+  }
+  if (!author) {
+    window.showAppModal("Hinweis", "Bitte wähle deinen Namen / Ersteller aus.");
+    return;
+  }
+
+  const ratingEssen =
+    parseInt(document.getElementById("lokal-rating-essen")?.value) || 3;
+  const ratingService =
+    parseInt(document.getElementById("lokal-rating-service")?.value) || 3;
+  const ratingSauberkeit =
+    parseInt(document.getElementById("lokal-rating-sauberkeit")?.value) || 3;
+  const ratingPreis =
+    parseInt(document.getElementById("lokal-rating-preis")?.value) || 3;
+  const gesamtRating = (
+    (ratingEssen + ratingService + ratingSauberkeit + ratingPreis) /
+    4
+  ).toFixed(1);
+
+  window.showLoading(true, "Lokal wird gespeichert...");
+  const docId = id || "lokal_" + Date.now();
+  const lokalData = {
+    id: docId,
+    status,
+    name,
+    kategorie,
+    ort,
+    webLink,
+    notizen,
+    author,
+    teilnehmer: { ...lokalParticipants },
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (status === "besucht") {
+    lokalData.ratingEssen = ratingEssen;
+    lokalData.ratingService = ratingService;
+    lokalData.ratingSauberkeit = ratingSauberkeit;
+    lokalData.ratingPreis = ratingPreis;
+    lokalData.gesamtRating = parseFloat(gesamtRating);
+    lokalData.rating = Math.round(parseFloat(gesamtRating)); // Backward-compatibility
+  }
+
+  if (!id) {
+    lokalData.createdAt = new Date().toISOString();
+  }
+
+  try {
+    await ensureAuth();
+    await setDoc(doc(db, "data_einkehr", docId), lokalData, {
+      merge: true,
+    });
+    window.closeLokalModal();
+    window.showAppModal(
+      "Erfolg",
+      status === "geplant"
+        ? id
+          ? "Geplantes Lokal wurde aktualisiert! 📌"
+          : "Lokal wurde auf die Wunschliste gesetzt! 📌"
+        : id
+          ? "Lokal & Bewertung wurden erfolgreich aktualisiert! 🍽️"
+          : "Neues Lokal wurde erfolgreich im Guide gespeichert! 🍽️",
+    );
+  } catch (err) {
+    console.error("Fehler beim Speichern des Lokals:", err);
+    window.showAppModal(
+      "Fehler",
+      "Konnte Lokal nicht speichern: " + err.message,
+    );
+  } finally {
+    window.showLoading(false);
+  }
+};
+
+window.deleteLokal = function (id) {
+  const item = allLokale.find((e) => e.id === id);
+  const name = item ? item.name : "dieses Lokal";
+  const confirmBtn = document.getElementById("btn-confirm-action");
+  document.getElementById("confirm-modal-title").textContent = "Lokal löschen?";
+  document.getElementById("confirm-modal-text").textContent =
+    `Möchtest du "${name}" wirklich aus dem Guide entfernen?`;
+  confirmBtn.textContent = "Löschen";
+  confirmBtn.onclick = async () => {
+    window.closeConfirmModal();
+    window.showLoading(true, "Lokal wird gelöscht...");
+    try {
+      await deleteDoc(doc(db, "data_einkehr", id));
+    } catch (e) {
+      console.error("Fehler beim Löschen:", e);
+      window.showAppModal("Fehler", "Konnte Lokal nicht löschen: " + e.message);
+    } finally {
+      window.showLoading(false);
+    }
+  };
+  document.getElementById("confirm-modal-container").style.display = "flex";
+};
+
+// Aliase für Abwärtskompatibilität
+window.openEinkehrModal = window.openLokalModal;
+window.closeEinkehrModal = window.closeLokalModal;
+window.saveEinkehrEntry = window.saveLokalEntry;
+window.deleteEinkehr = window.deleteLokal;
+window.renderEinkehrView = window.renderLokaleView;
+window.filterEinkehr = window.filterLokale;
+window.filterAndRenderEinkehr = window.filterAndRenderLokale;
+window.initEinkehrListener = initLokaleListener;
+
+// ==========================================
 // 12. Initialisierung beim Laden
 // ==========================================
 // Sofortiges Rendern der UI
@@ -3105,8 +3878,10 @@ renderCalendarWidget();
 filterAndRender();
 renderKasseView();
 renderPurchasesView();
+renderLokaleView();
 updateNotificationButton();
 renderFormParticipants();
+renderLokalParticipants();
 renderFormGuests();
 
 // Firebase Auth & Realtime Listeners
@@ -3115,6 +3890,7 @@ initCategoriesListener();
 initEventsListener();
 initKasseListener();
 initPurchasesListener();
+initLokaleListener();
 
 // ==========================================
 // 16. Readme & Info Modal Logik

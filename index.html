@@ -54,7 +54,7 @@
     />
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=2.8.0" />
+    <link rel="stylesheet" href="css/style.css?v=3.0.5" />
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -246,7 +246,127 @@
         <div id="event-list-container" class="event-list"></div>
       </div>
 
-      <!-- TAB 2: Was fehlt noch für die Termine -->
+      <!-- TAB 2: Restaurant- & Lokal-Guide -->
+      <div id="lokale" class="tab-content">
+        <!-- Dashboard / Stats Bar -->
+        <div class="lokal-stats-card">
+          <div class="lokal-stat-item">
+            <span class="lokal-stat-val" id="lokal-stat-total">0</span>
+            <span class="lokal-stat-lbl">Getestet</span>
+          </div>
+          <div class="lokal-stat-divider"></div>
+          <div class="lokal-stat-item">
+            <span
+              class="lokal-stat-val"
+              id="lokal-stat-planned"
+              style="color: #60a5fa"
+              >0</span
+            >
+            <span class="lokal-stat-lbl">📌 Geplant</span>
+          </div>
+          <div class="lokal-stat-divider"></div>
+          <div class="lokal-stat-item">
+            <span
+              class="lokal-stat-val"
+              id="lokal-stat-avg-rating"
+              style="color: #34d399"
+              >0.0 ⭐</span
+            >
+            <span class="lokal-stat-lbl">Ø Gesamtnote</span>
+          </div>
+        </div>
+
+        <!-- Aktions-Button: Neues Lokal anlegen -->
+        <button
+          type="button"
+          class="btn-submit"
+          style="
+            margin-bottom: 14px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          "
+          onclick="window.openLokalModal()"
+        >
+          ➕ Neues Restaurant / Lokal eintragen
+        </button>
+
+        <!-- Suchfeld & Filter -->
+        <div class="search-sort-bar" style="margin-bottom: 10px">
+          <input
+            type="text"
+            id="lokal-search"
+            class="search-input"
+            placeholder="🔍 Lokal, Küche oder Ort suchen..."
+            oninput="window.filterAndRenderLokale()"
+          />
+        </div>
+
+        <!-- Filter Chips -->
+        <div
+          class="filter-chips"
+          id="lokal-filter-chips"
+          style="margin-bottom: 14px; padding: 0"
+        >
+          <div
+            class="filter-chip active"
+            onclick="window.filterLokale('alle', this)"
+          >
+            🌐 Alle
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('besucht', this)"
+          >
+            🍽️ Besucht
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('geplant', this)"
+          >
+            📌 Geplant / Wunschliste
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Deutsch', this)"
+          >
+            🍽️ Deutsche Küche
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Italienisch', this)"
+          >
+            🍕 Italienisch
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Steak & Burger', this)"
+          >
+            🥩 Steak &amp; Burger
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Griechisch', this)"
+          >
+            🇬🇷 Griechisch
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Brauhaus', this)"
+          >
+            🍺 Brauhaus / Biergarten
+          </div>
+          <div
+            class="filter-chip"
+            onclick="window.filterLokale('Asiatisch', this)"
+          >
+            🥢 Asiatisch
+          </div>
+        </div>
+
+        <!-- Liste der Lokale -->
+        <div id="lokal-list-container" class="event-list"></div>
+      </div>
+
+      <!-- TAB 3: Was fehlt noch für die Termine -->
       <div id="aufgaben" class="tab-content">
         <div
           style="
@@ -443,6 +563,10 @@
         <span class="tab-icon">📅</span>
         <span>Termine</span>
       </div>
+      <div class="tab-item" onclick="switchTab('lokale', this)">
+        <span class="tab-icon">🍽️</span>
+        <span>Lokale</span>
+      </div>
       <div class="tab-item" onclick="switchTab('aufgaben', this)">
         <span class="tab-icon">📋</span>
         <span>Was fehlt?</span>
@@ -581,7 +705,7 @@
             </div>
           </div>
 
-          <!-- Action Buttons (Web-Link) -->
+          <!-- Action Buttons (Web-Link & Einkehr-Bewertung) -->
           <div
             class="detail-action-buttons"
             id="detail-actions-container"
@@ -595,6 +719,20 @@
             >
               <span>🔗</span> <span>Weblink / Info öffnen</span>
             </a>
+            <button
+              id="btn-open-lokal-rating"
+              type="button"
+              class="btn-action-tile"
+              onclick="window.rateCurrentEventLocation()"
+              style="
+                display: none;
+                background: rgba(245, 158, 11, 0.15);
+                color: #f59e0b;
+                border: 1px solid rgba(245, 158, 11, 0.3);
+              "
+            >
+              <span>🍽️</span> <span>Restaurant / Lokal bewerten</span>
+            </button>
           </div>
 
           <!-- Teilnehmer-Runde (Wer ist dabei?) -->
@@ -1052,6 +1190,459 @@
                 style="flex: 1.5"
               >
                 Termin speichern
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Restaurant- & Lokal-Guide Modal (Neues Lokal / Bearbeiten) -->
+    <div
+      id="lokal-modal-container"
+      class="custom-modal-overlay"
+      style="display: none"
+    >
+      <div class="event-modal-card" onclick="event.stopPropagation()">
+        <div
+          class="detail-header"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <h2
+            id="lokal-modal-title"
+            style="
+              margin: 0;
+              font-size: 1.25rem;
+              color: var(--accent-color);
+              font-weight: 800;
+            "
+          >
+            🍽️ Restaurant / Lokal bewerten
+          </h2>
+          <button
+            type="button"
+            class="btn-detail-icon"
+            onclick="window.closeLokalModal()"
+            title="Schließen"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="event-modal-body">
+          <form
+            id="lokal-form"
+            class="event-form"
+            onsubmit="
+              event.preventDefault();
+              window.saveLokalEntry();
+            "
+          >
+            <input type="hidden" id="lokal-id" value="" />
+            <input type="hidden" id="lokal-status" value="besucht" />
+            <input type="hidden" id="lokal-rating-essen" value="5" />
+            <input type="hidden" id="lokal-rating-service" value="5" />
+            <input type="hidden" id="lokal-rating-sauberkeit" value="5" />
+            <input type="hidden" id="lokal-rating-preis" value="4" />
+            <input type="hidden" id="lokal-rating-essen" value="3" />
+            <input type="hidden" id="lokal-rating-service" value="3" />
+            <input type="hidden" id="lokal-rating-sauberkeit" value="3" />
+            <input type="hidden" id="lokal-rating-preis" value="3" />
+
+            <!-- Status Umschalter: Besucht vs Geplant -->
+            <div class="form-group" style="margin-bottom: 16px">
+              <label style="font-weight: 800">Status des Lokals</label>
+              <div class="lokal-status-switch">
+                <button
+                  type="button"
+                  id="status-btn-besucht"
+                  class="btn-status-option active"
+                  onclick="window.setLokalStatus('besucht')"
+                >
+                  <span>🍽️</span>
+                  <span>Bereits besucht</span>
+                </button>
+                <button
+                  type="button"
+                  id="status-btn-geplant"
+                  class="btn-status-option"
+                  onclick="window.setLokalStatus('geplant')"
+                >
+                  <span>📌</span>
+                  <span>Geplant (Wunschliste)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Ersteller Auswahl -->
+            <div class="form-group">
+              <label id="lokal-author-label"
+                >Eingetragen / Vorgeschlagen von</label
+              >
+              <div class="author-select-wrapper">
+                <img
+                  id="lokal-author-avatar"
+                  src="logo.png"
+                  class="author-avatar-preview"
+                  alt="Avatar"
+                />
+                <select
+                  id="lokal-author"
+                  class="form-control"
+                  style="flex: 1"
+                  required
+                >
+                  <option value="" disabled selected>Wähle Ersteller...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Name der Location -->
+            <div class="form-group">
+              <label for="lokal-name">Name des Lokals / Restaurants *</label>
+              <input
+                type="text"
+                id="lokal-name"
+                class="form-control"
+                placeholder="z. B. Ristorante Da Salvo, Brauhaus zur Post"
+                required
+              />
+            </div>
+
+            <!-- Kategorie -->
+            <div class="form-group">
+              <label for="lokal-kategorie">Küche / Kategorie</label>
+              <select id="lokal-kategorie" class="form-control">
+                <option value="Deutsch">
+                  🍽️ Deutsche Küche / Gutbürgerlich
+                </option>
+                <option value="Italienisch" selected>
+                  🍕 Italienisch / Pizza &amp; Pasta
+                </option>
+                <option value="Steak & Burger">
+                  🥩 Steakhaus / Burger / Grill
+                </option>
+                <option value="Griechisch">🇬🇷 Griechisch / Mediterran</option>
+                <option value="Brauhaus">🍺 Brauhaus / Biergarten</option>
+                <option value="Asiatisch">🥢 Asiatisch / Sushi</option>
+                <option value="International">
+                  🌮 International / Sonstiges
+                </option>
+              </select>
+            </div>
+
+            <!-- Ort / Stadt / Adresse -->
+            <div class="form-group">
+              <label for="lokal-ort">Ort / Stadt / Adresse</label>
+              <input
+                type="text"
+                id="lokal-ort"
+                class="form-control"
+                placeholder="z. B. Köln-Altstadt, Hauptstraße 12"
+              />
+            </div>
+
+            <!-- Wer war dabei? / Wer möchte mit? (Teilnehmer-Auswahl) -->
+            <div class="form-group" style="margin-top: 4px">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 8px;
+                  flex-wrap: wrap;
+                  gap: 6px;
+                "
+              >
+                <label
+                  id="lokal-participants-label"
+                  style="
+                    margin: 0;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    color: #cbd5e1;
+                  "
+                  >👥 Wer war alles dabei?</label
+                >
+                <div class="rsvp-quick-actions-bar">
+                  <button
+                    type="button"
+                    class="btn-rsvp-quick-action"
+                    onclick="window.selectAllLokalParticipants(true)"
+                  >
+                    👥 Alle
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-rsvp-quick-action"
+                    onclick="window.selectAllLokalParticipants(false)"
+                  >
+                    🧹 Keine
+                  </button>
+                </div>
+              </div>
+              <div
+                class="form-participants-grid"
+                id="lokal-participants-container"
+              ></div>
+            </div>
+
+            <!-- Bewertungsbereich (nur bei Status: Besucht) -->
+            <div id="lokal-ratings-section">
+              <!-- Detaillierte Bewertungskriterien -->
+              <div class="form-group">
+                <label style="color: var(--accent-color); font-weight: 800"
+                  >⭐ Gastro-Bewertungskriterien</label
+                >
+                <div class="criteria-rating-box">
+                  <!-- 1. Essen & Trinken -->
+                  <div class="criterion-row">
+                    <span class="criterion-label">🍽️ Essen &amp; Trinken</span>
+                    <div class="criterion-stars-wrapper">
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('essen', 1)"
+                        data-crit="essen"
+                        data-val="1"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('essen', 2)"
+                        data-crit="essen"
+                        data-val="2"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('essen', 3)"
+                        data-crit="essen"
+                        data-val="3"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('essen', 4)"
+                        data-crit="essen"
+                        data-val="4"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('essen', 5)"
+                        data-crit="essen"
+                        data-val="5"
+                        >⭐</span
+                      >
+                    </div>
+                    <span class="criterion-score-badge" id="score-badge-essen"
+                      >3 / 5</span
+                    >
+                  </div>
+
+                  <!-- 2. Service & Freundlichkeit -->
+                  <div class="criterion-row">
+                    <span class="criterion-label"
+                      >😊 Service &amp; Freundlichkeit</span
+                    >
+                    <div class="criterion-stars-wrapper">
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('service', 1)"
+                        data-crit="service"
+                        data-val="1"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('service', 2)"
+                        data-crit="service"
+                        data-val="2"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('service', 3)"
+                        data-crit="service"
+                        data-val="3"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('service', 4)"
+                        data-crit="service"
+                        data-val="4"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('service', 5)"
+                        data-crit="service"
+                        data-val="5"
+                        >⭐</span
+                      >
+                    </div>
+                    <span class="criterion-score-badge" id="score-badge-service"
+                      >3 / 5</span
+                    >
+                  </div>
+
+                  <!-- 3. Sauberkeit & Ambiente -->
+                  <div class="criterion-row">
+                    <span class="criterion-label"
+                      >✨ Sauberkeit &amp; Ambiente</span
+                    >
+                    <div class="criterion-stars-wrapper">
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('sauberkeit', 1)"
+                        data-crit="sauberkeit"
+                        data-val="1"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('sauberkeit', 2)"
+                        data-crit="sauberkeit"
+                        data-val="2"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('sauberkeit', 3)"
+                        data-crit="sauberkeit"
+                        data-val="3"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('sauberkeit', 4)"
+                        data-crit="sauberkeit"
+                        data-val="4"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('sauberkeit', 5)"
+                        data-crit="sauberkeit"
+                        data-val="5"
+                        >⭐</span
+                      >
+                    </div>
+                    <span
+                      class="criterion-score-badge"
+                      id="score-badge-sauberkeit"
+                      >3 / 5</span
+                    >
+                  </div>
+
+                  <!-- 4. Preis-Leistung -->
+                  <div class="criterion-row">
+                    <span class="criterion-label">💶 Preis-Leistung</span>
+                    <div class="criterion-stars-wrapper">
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('preis', 1)"
+                        data-crit="preis"
+                        data-val="1"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('preis', 2)"
+                        data-crit="preis"
+                        data-val="2"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit active"
+                        onclick="window.setLokalCriterion('preis', 3)"
+                        data-crit="preis"
+                        data-val="3"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('preis', 4)"
+                        data-crit="preis"
+                        data-val="4"
+                        >⭐</span
+                      >
+                      <span
+                        class="star-btn-crit"
+                        onclick="window.setLokalCriterion('preis', 5)"
+                        data-crit="preis"
+                        data-val="5"
+                        >⭐</span
+                      >
+                    </div>
+                    <span class="criterion-score-badge" id="score-badge-preis"
+                      >3 / 5</span
+                    >
+                  </div>
+
+                  <!-- Berechnete Gesamtnote Preview -->
+                  <div class="overall-score-banner">
+                    <span class="overall-score-label"
+                      >Gesamtnote (Ø Durchschnitt):</span
+                    >
+                    <span class="overall-score-val" id="lokal-overall-preview"
+                      >3.0 ⭐</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Was gegessen wurde & Insider-Tipps -->
+            <div class="form-group">
+              <label for="lokal-notizen"
+                >Erfahrungsbericht &amp; Was wurde gegessen?</label
+              >
+              <textarea
+                id="lokal-notizen"
+                class="form-control"
+                rows="3"
+                placeholder="z. B. Pizza Diavolo und hausgemachte Pasta waren genial, Portionen riesig, schöner Biergarten im Innenhof..."
+              ></textarea>
+            </div>
+
+            <!-- Speisekarte & Website Link -->
+            <div class="form-group">
+              <label for="lokal-web-link">Speisekarte / Website (Link)</label>
+              <input
+                type="url"
+                id="lokal-web-link"
+                class="form-control"
+                placeholder="https://..."
+              />
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; margin-top: 18px">
+              <button
+                type="button"
+                class="btn-submit"
+                id="cancel-lokal-btn"
+                style="
+                  flex: 1;
+                  background: rgba(255, 255, 255, 0.12);
+                  color: white;
+                "
+                onclick="window.closeLokalModal()"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="submit"
+                class="btn-submit"
+                id="submit-lokal-btn"
+                style="flex: 1.5"
+              >
+                Lokal speichern
               </button>
             </div>
           </form>
@@ -1640,6 +2231,11 @@
         } else if (tabId === "anschaffungen") {
           if (typeof window.renderPurchasesView === "function")
             window.renderPurchasesView();
+        } else if (tabId === "lokale" || tabId === "einkehr") {
+          if (typeof window.renderLokaleView === "function")
+            window.renderLokaleView();
+          else if (typeof window.renderEinkehrView === "function")
+            window.renderEinkehrView();
         }
 
         // Tab Indikator bewegen
@@ -1651,7 +2247,8 @@
 
         const subTitles = {
           termine: "Termine & Vorhaben",
-          neu: "Termin anlegen",
+          lokale: "Restaurant- & Lokal-Guide („Wo wir waren“)",
+          einkehr: "Restaurant- & Lokal-Guide („Wo wir waren“)",
           aufgaben: "Was fehlt noch für die Termine",
           anschaffungen: "Offene Anschaffungen",
           kasse: "Gemeinschaftskasse",
@@ -1666,6 +2263,18 @@
         if (typeof window.filterAndRender === "function")
           window.filterAndRender();
       });
+
+      const lokalSearch =
+        document.getElementById("lokal-search") ||
+        document.getElementById("einkehr-search");
+      if (lokalSearch) {
+        lokalSearch.addEventListener("input", () => {
+          if (typeof window.filterAndRenderLokale === "function")
+            window.filterAndRenderLokale();
+          else if (typeof window.filterAndRenderEinkehr === "function")
+            window.filterAndRenderEinkehr();
+        });
+      }
 
       // Version dynamisch aus sw.js laden
       fetch("sw.js?t=" + Date.now())
@@ -1780,6 +2389,6 @@
     </script>
 
     <!-- Firebase SDK Module -->
-    <script type="module" src="js/app.js?v=2.8.0"></script>
+    <script type="module" src="js/app.js?v=3.0.5"></script>
   </body>
 </html>

@@ -1506,6 +1506,8 @@ select.form-control {
 #purchase-modal-container,
 #readme-modal-container,
 #event-form-overlay,
+#einkehr-modal-container,
+#lokal-modal-container,
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -2425,4 +2427,584 @@ select.form-control {
 
 .btn-day-add-event:active {
   transform: scale(0.98);
+}
+
+/* ==========================================
+   Restaurant- & Lokal-Guide Styles
+   ========================================== */
+.lokal-stats-card,
+.einkehr-stats-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 16px 14px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.lokal-stat-item,
+.einkehr-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+}
+
+.lokal-stat-val,
+.einkehr-stat-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+}
+
+.lokal-stat-lbl,
+.einkehr-stat-lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: center;
+}
+
+.lokal-stat-divider,
+.einkehr-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Kriterien-Bewertungs-Box im Formular */
+.criteria-rating-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.criterion-row {
+  display: grid;
+  grid-template-columns: 1fr auto 42px;
+  align-items: center;
+  gap: 12px;
+}
+
+.criterion-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.criterion-stars-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.star-btn-crit {
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+  line-height: 1;
+  user-select: none;
+  filter: grayscale(1) opacity(0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.star-btn-crit.active {
+  filter: grayscale(0) opacity(1);
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+}
+
+.star-btn-crit:hover {
+  transform: scale(1.18);
+}
+
+.criterion-score-badge {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fbbf24;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .criterion-row {
+    grid-template-columns: 1fr auto 36px;
+    gap: 8px;
+  }
+  .criterion-label {
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+  .criterion-stars-wrapper {
+    gap: 3px;
+  }
+  .star-btn-crit {
+    font-size: 1.2rem;
+    width: 21px;
+    height: 21px;
+  }
+  .criterion-score-badge {
+    font-size: 0.78rem;
+  }
+}
+
+/* Gesamtnote Highlight Banner */
+.overall-score-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.15) 0%,
+    rgba(59, 130, 246, 0.15) 100%
+  );
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.overall-score-label {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.overall-score-val {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #34d399;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+}
+
+/* Fazit Auswahl-Buttons */
+.fazit-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-fazit-option {
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-fazit-option.active {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+}
+
+#fazit-btn-top.active,
+#fazit-btn-empfehlung.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fde68a;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+}
+
+#fazit-btn-gut.active,
+#fazit-btn-solide.active {
+  background: rgba(14, 165, 233, 0.18);
+  border-color: #0ea5e9;
+  color: #bae6fd;
+  box-shadow: 0 0 14px rgba(14, 165, 233, 0.35);
+}
+
+#fazit-btn-mittel.active {
+  background: rgba(234, 179, 8, 0.18);
+  border-color: #eab308;
+  color: #fef08a;
+  box-shadow: 0 0 14px rgba(234, 179, 8, 0.35);
+}
+
+#fazit-btn-schlecht.active,
+#fazit-btn-naja.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+}
+
+/* Lokal / Restaurant Card Styles */
+.lokal-card,
+.einkehr-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lokal-card:hover,
+.einkehr-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    0 0 15px rgba(16, 185, 129, 0.12);
+}
+
+.lokal-card-header,
+.einkehr-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.lokal-card-title-group,
+.einkehr-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.lokal-card-name,
+.einkehr-card-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.lokal-card-badges,
+.einkehr-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge-lokal-cat,
+.badge-einkehr-cat {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.badge-fazit {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-fazit.top,
+.badge-fazit.empfehlung {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.badge-fazit.gut,
+.badge-fazit.solide {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+  border: 1px solid rgba(14, 165, 233, 0.45);
+}
+
+.badge-fazit.mittel {
+  background: rgba(234, 179, 8, 0.18);
+  color: #fef08a;
+  border: 1px solid rgba(234, 179, 8, 0.45);
+}
+
+.badge-fazit.schlecht,
+.badge-fazit.naja {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Gesamtnote Badge auf der Karte */
+.overall-rating-card-badge {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-size: 1.05rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 4 Teilnoten Grid auf der Karte */
+.lokal-criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 6px;
+}
+
+.criterion-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 5px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.criterion-pill-name {
+  color: #94a3b8;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.criterion-pill-stars {
+  color: #fbbf24;
+  font-weight: 800;
+}
+
+.lokal-location-row,
+.einkehr-location-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+.lokal-notes-box,
+.einkehr-notes-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+.lokal-card-footer,
+.einkehr-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  color: #64748b;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lokal-card-links,
+.einkehr-card-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-lokal-link,
+.btn-einkehr-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-lokal-link:hover,
+.btn-einkehr-link:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+/* Status-Umschalter im Modal (Besucht vs Geplant) */
+.lokal-status-switch {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 6px;
+}
+
+.btn-status-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-status-option:hover {
+  color: #e2e8f0;
+}
+
+.btn-status-option.active {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+#status-btn-geplant.active {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: #3b82f6;
+  color: #93c5fd;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* Geplant Badge auf der Karte */
+.badge-status-geplant {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+}
+
+.lokal-card.geplant {
+  border-left: 3px solid #3b82f6;
+}
+
+/* Teilnehmer-Bereich auf den Karten */
+.lokal-participants-box {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lokal-participants-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lokal-participants-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  min-width: 90px;
+}
+
+.lokal-avatars-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.lokal-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 7px 2px 3px;
+  border-radius: 16px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #a7f3d0;
+}
+
+.lokal-user-chip img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.lokal-user-chip.missing {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  opacity: 0.85;
+}
+
+.lokal-user-chip.missing img {
+  filter: grayscale(0.85);
+  opacity: 0.65;
 }

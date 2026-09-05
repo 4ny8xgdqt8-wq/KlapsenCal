@@ -126,8 +126,32 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 ---
 
+### 11. 🍽️ Restaurant- & Lokal-Guide („Wo wir waren“ & Geplante Wunschliste)
+
+- **Neuer Tab „🍽️ Lokale“ in der Hauptleiste**: Ein vollwertiger Restaurant- und Gastro-Guide für die Klapse, um getestete Lokale festzuhalten sowie neue Einkehrmöglichkeiten vorzumerken.
+- **Detaillierte Gastro-Bewertungskriterien**:
+  - 🍽️ **Essen & Trinken** (1–5 Sterne)
+  - 😊 **Service & Freundlichkeit** (1–5 Sterne)
+  - ✨ **Sauberkeit & Ambiente** (1–5 Sterne)
+  - 💶 **Preis-Leistung** (1–5 Sterne)
+  - **Automatische Gesamtnote & neutrale Vorbelegung**: Alle 4 Kriterien starten beim Anlegen standardmäßig bei soliden **3 von 5 Sternen** (`3.0 ⭐`). Die App errechnet aus euren Eingaben automatisch die exakte Ø Durchschnittsnote (z. B. `4.3 ⭐`) und sortiert die besuchten Lokale übersichtlich nach dieser Bewertung.
+- **Teilnehmer-Tracking („Wer war dabei?“)**:
+  - **Dabei waren**: Auf jeder Karte seht ihr sofort die Avatare und Namen aller Personen, die beim Besuch mit am Tisch saßen.
+- **📌 Geplante Lokale (Wunschliste)**:
+  - Lokale können als _„Geplant (Wunschliste)“_ eingetragen werden, wenn man sie aufgeschnappt hat und gerne mal hin möchte.
+  - Kriterien werden bei Wunschlisten-Einträgen ausgeblendet; stattdessen stehen Notizen, Speisekarte und wer Interesse hat im Fokus.
+- **Kategorien & Schnellfilter**:
+  - Schnellumschaltung zwischen _🌐 Alle_, _🍽️ Besucht_ und _📌 Geplant / Wunschliste_.
+  - Filter nach Küchen: _🍽️ Deutsche Küche_, _🍕 Italienisch_, _🥩 Steak & Burger_, _🇬🇷 Griechisch_, _🍺 Brauhaus / Biergarten_, _🥢 Asiatisch_.
+- **Live-Suche**: Findet Lokale blitzschnell nach Name, Stadt/Ort, Küche oder Notizen.
+- **Schnellzugriff auf Speisekarten**: Direkter Button zu hinterlegten Online-Speisekarten und Websites (`📋 Speisekarte / Website`).
+- **Direkt aus dem Termin heraus bewerten**: Bei jedem Termin mit Ortsangabe gibt es im Detailfenster den Button **`🍽️ Restaurant / Lokal bewerten`** – Name, Ort, Link und alle Termin-Teilnehmer werden automatisch ins Formular übernommen!
+- **Schutz gegen Datenverlust beim Eintragen**: Ein versehentlicher Klick oder Wischen neben das Bewertungsfenster schließt den Dialog nicht mehr – eure Eingaben bleiben sicher erhalten, bis ihr bewusst auf Speichern, Abbrechen oder das Schließen-Kreuz tippt.
+
+---
+
 ## 🛠️ Tech-Stack
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
-- **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`).
-- **Service Worker**: PWA Cache v2.8.0 mit Network-First Strategie für App-Ressourcen.
+- **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`).
+- **Service Worker**: PWA Cache v3.0.5 mit Network-First Strategie für App-Ressourcen.
