@@ -86,8 +86,35 @@
 
 ---
 
+### 9. 🏖️ Urlaubs- & Abwesenheitsplaner mit Terminkonflikt-Warnung
+
+- **Neue Kategorie „🏖️ Urlaub / Abwesend“ in leuchtendem Signalrot**: Abwesenheiten und Urlaubszeiten heben sich unverkennbar in kräftigem Knallrot von allen normalen Terminen ab.
+- **Optimiertes Formular**: Bei Auswahl von _Urlaub / Abwesend_ werden irrelevante Felder (Uhrzeit, Ganztägig-Checkbox, Ort und Link) automatisch ausgeblendet und der Auswahl-Button leuchtet in Signalrot.
+- **Symmetrischer Datumsbereich (Von – Bis)**: Startdatum und Bis-Datum (Zeitraum) teilen sich übersichtlich und sauber die Zeile (je 50%). Ein- oder mehrtägige Urlaube können mit einer einzigen Eingabe erfasst werden.
+- **Automatische Kalender-Darstellung**: Jeder Tag der Abwesenheit wird nahtlos im Monatskalender und in der Terminliste in Knallrot hervorgehoben (mit Strand-Icon 🏖️ und Zeitraum-Badge `🏖️ Bis DD.MM.`).
+- **Smarte Terminkonflikt-Warnung**: Wählt man beim Planen eines gemeinsamen Termins ein Datum aus, an dem Gruppenmitglieder abwesend gemeldet sind, informiert ein Hinweisbanner direkt im Formular (z. B. _„Achtung: Alex, Thomas sind an diesem Tag im Urlaub / abwesend!“_).
+- **Klare Abwesenheitsliste**: Im Formular und Detail-Modal wird intuitiv angezeigt, welche Personen abwesend sind (inkl. Schnellauswahl aller Personen).
+
+---
+
+### 10. ✨ Intuitive Symbole für alle Kategorien
+
+Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in der App (Filterleiste, Formular-Buttons, Terminkarten und Detail-Modal) angezeigt wird:
+
+- 🍽️ **Essen**
+- 🎸 **Konzert**
+- 🎪 **Veranstaltung**
+- 🎂 **Geburtstag**
+- 🎯 **Dart**
+- 🎱 **Billard**
+- 🏖️ **Urlaub / Abwesend**
+- 📌 **Sonstiges**
+- 🌐 **Alle** _(in der Schnellfilterleiste)_
+
+---
+
 ## 🛠️ Tech-Stack
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`).
-- **Service Worker**: PWA Cache v2.4.x mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v2.7.0 mit Network-First Strategie für App-Ressourcen.

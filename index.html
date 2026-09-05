@@ -54,7 +54,7 @@
     />
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=2.6.7" />
+    <link rel="stylesheet" href="css/style.css?v=2.7.0" />
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -308,9 +308,9 @@
           </div>
 
           <!-- Datum & Uhrzeit -->
-          <div class="form-row">
-            <div class="form-group" style="flex: 1.2">
-              <label>Datum</label>
+          <div class="form-row" id="date-time-row">
+            <div class="form-group" id="start-date-group">
+              <label id="event-date-label">Datum</label>
               <input
                 type="date"
                 id="event-date"
@@ -318,14 +318,40 @@
                 required
               />
             </div>
-            <div class="form-group" id="time-group" style="flex: 1">
+            <div class="form-group" id="end-date-group" style="display: none">
+              <label>Bis Datum (Zeitraum)</label>
+              <input type="date" id="event-end-date" class="form-control" />
+            </div>
+            <div class="form-group" id="time-group">
               <label>Uhrzeit</label>
               <input type="time" id="event-time" class="form-control" />
             </div>
           </div>
 
+          <!-- Konflikt-Warnung (Urlaub / Abwesenheit) -->
+          <div
+            id="event-conflict-warning"
+            style="
+              display: none;
+              background: rgba(245, 158, 11, 0.15);
+              border: 1px solid rgba(245, 158, 11, 0.4);
+              border-radius: 8px;
+              padding: 8px 12px;
+              margin-top: -4px;
+              margin-bottom: 10px;
+              color: #fde68a;
+              font-size: 0.82rem;
+              align-items: center;
+              gap: 8px;
+            "
+          >
+            <span style="font-size: 1.1rem">🏖️</span>
+            <span id="event-conflict-warning-text"></span>
+          </div>
+
           <!-- Ganztägig Checkbox Toggle -->
           <div
+            id="all-day-toggle-group"
             style="
               display: flex;
               align-items: center;
@@ -406,6 +432,7 @@
               "
             >
               <label
+                id="form-participants-label"
                 style="
                   margin: 0;
                   font-size: 0.9rem;
@@ -513,7 +540,7 @@
           </div>
 
           <!-- Ort & Treffpunkt -->
-          <div class="form-group">
+          <div class="form-group" id="location-group">
             <label>Ort / Treffpunkt</label>
             <input
               type="text"
@@ -524,7 +551,7 @@
           </div>
 
           <!-- Google Maps Link / Web Link -->
-          <div class="form-group">
+          <div class="form-group" id="link-group">
             <label>Link (Google Maps, Komoot, Info-Website)</label>
             <input
               type="url"
@@ -850,6 +877,18 @@
               >
                 🔁 Wöchentlich
               </div>
+              <div
+                id="detail-daterange-tag"
+                class="recurrence-tag"
+                style="
+                  display: none;
+                  background: rgba(56, 189, 248, 0.2);
+                  color: #38bdf8;
+                  border-color: rgba(56, 189, 248, 0.4);
+                "
+              >
+                🏖️ Zeitraum
+              </div>
             </div>
           </div>
         </div>
@@ -918,7 +957,9 @@
           <!-- Teilnehmer-Runde (Wer ist dabei?) -->
           <div class="rsvp-section">
             <div class="rsvp-header">
-              <h4 class="rsvp-title">👥 Wer ist dabei?</h4>
+              <h4 class="rsvp-title" id="detail-rsvp-title">
+                👥 Wer ist dabei?
+              </h4>
             </div>
 
             <!-- Summen-Übersicht (Gesamt, Erwachsene, Kinder) -->
@@ -1695,6 +1736,6 @@
     </script>
 
     <!-- Firebase SDK Module -->
-    <script type="module" src="js/app.js?v=2.6.7"></script>
+    <script type="module" src="js/app.js?v=2.7.0"></script>
   </body>
 </html>

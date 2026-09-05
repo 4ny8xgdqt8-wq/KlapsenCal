@@ -104,6 +104,7 @@ const DEFAULT_CATEGORIES = [
   "Geburtstag",
   "Dart",
   "Billard",
+  "Urlaub / Abwesend",
   "Sonstiges",
 ];
 
@@ -112,36 +113,49 @@ const CATEGORY_COLORS = {
     color: "#f97316",
     bg: "rgba(249, 115, 22, 0.18)",
     border: "rgba(249, 115, 22, 0.45)",
+    icon: "🍽️",
   },
   Konzert: {
     color: "#a855f7",
     bg: "rgba(168, 85, 247, 0.18)",
     border: "rgba(168, 85, 247, 0.45)",
+    icon: "🎸",
   },
   Veranstaltung: {
     color: "#0ea5e9",
     bg: "rgba(14, 165, 233, 0.18)",
     border: "rgba(14, 165, 233, 0.45)",
+    icon: "🎪",
   },
   Geburtstag: {
     color: "#ec4899",
     bg: "rgba(236, 72, 153, 0.18)",
     border: "rgba(236, 72, 153, 0.45)",
+    icon: "🎂",
   },
   Dart: {
     color: "#eab308",
     bg: "rgba(234, 179, 8, 0.18)",
     border: "rgba(234, 179, 8, 0.45)",
+    icon: "🎯",
   },
   Billard: {
     color: "#10b981",
     bg: "rgba(16, 185, 129, 0.18)",
     border: "rgba(16, 185, 129, 0.45)",
+    icon: "🎱",
+  },
+  "Urlaub / Abwesend": {
+    color: "#ef4444",
+    bg: "rgba(239, 68, 68, 0.22)",
+    border: "rgba(239, 68, 68, 0.65)",
+    icon: "🏖️",
   },
   Sonstiges: {
     color: "#94a3b8",
     bg: "rgba(148, 163, 184, 0.18)",
     border: "rgba(148, 163, 184, 0.45)",
+    icon: "📌",
   },
 };
 
@@ -151,6 +165,7 @@ function getCategoryColor(cat) {
       color: "#10b981",
       bg: "rgba(16, 185, 129, 0.18)",
       border: "rgba(16, 185, 129, 0.45)",
+      icon: "📌",
     }
   );
 }
@@ -527,23 +542,24 @@ function initCategoriesListener() {
       }
 
       // Filter Chips in der Hauptansicht
-      filterCont.innerHTML = `<div class="filter-chip ${selectedCategory === "Alle" ? "active" : ""}" onclick="window.selectCategory('Alle', this)">Alle</div>`;
+      filterCont.innerHTML = `<div class="filter-chip ${selectedCategory === "Alle" ? "active" : ""}" onclick="window.selectCategory('Alle', this)">🌐 Alle</div>`;
       formChipsCont.innerHTML = "";
 
       allCategories.forEach((cat, idx) => {
         const cStyle = getCategoryColor(cat);
+        const icon = cStyle.icon || "📌";
 
         // Filter Chip
         const fChip = document.createElement("div");
         fChip.className = `filter-chip ${selectedCategory === cat ? "active" : ""}`;
-        fChip.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${cStyle.color}; margin-right:5px; vertical-align:middle;"></span>${cat}`;
+        fChip.innerHTML = `<span style="margin-right:5px; font-size:0.9rem;">${icon}</span>${cat}`;
         fChip.onclick = (e) => window.selectCategory(cat, e.currentTarget);
         filterCont.appendChild(fChip);
 
         // Formular Chip
         const sChip = document.createElement("div");
         sChip.className = `selectable-chip ${selectedType === cat ? "selected" : idx === 0 && !selectedType ? "selected" : ""}`;
-        sChip.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${cStyle.color}; margin-right:6px; vertical-align:middle;"></span>${cat}`;
+        sChip.innerHTML = `<span style="margin-right:6px; font-size:0.95rem;">${icon}</span>${cat}`;
         sChip.dataset.name = cat;
         sChip.onclick = () => {
           selectedType = cat;
@@ -581,19 +597,156 @@ function initCategoriesListener() {
   );
 }
 
+function applyFormChipColors() {
+  document
+    .querySelectorAll("#event-type-chips .selectable-chip")
+    .forEach((c) => {
+      const catName = c.dataset.name;
+      const catStyle = getCategoryColor(catName);
+      const isSel = c.classList.contains("selected");
+      if (isSel) {
+        c.style.background = catStyle.color;
+        c.style.borderColor = catStyle.color;
+        c.style.boxShadow = `0 3px 12px ${catStyle.color}90`;
+        c.style.color = "#ffffff";
+      } else {
+        c.style.background = "";
+        c.style.borderColor = "";
+        c.style.boxShadow = "";
+        c.style.color = "";
+      }
+    });
+}
+window.applyFormChipColors = applyFormChipColors;
+
 function updateCategoryDependentFields() {
   const birthYearGroup = document.getElementById("birth-year-group");
-  if (!birthYearGroup) return;
+  const endDateGroup = document.getElementById("end-date-group");
+  const timeGroup = document.getElementById("time-group");
+  const allDayToggleGroup = document.getElementById("all-day-toggle-group");
+  const locationGroup = document.getElementById("location-group");
+  const linkGroup = document.getElementById("link-group");
+  const dateLabel = document.getElementById("event-date-label");
+  const participantsLabel = document.getElementById("form-participants-label");
+  const titleInput = document.getElementById("event-title");
+  const authorSelect = document.getElementById("event-author");
 
-  if (selectedType === "Geburtstag") {
-    birthYearGroup.style.display = "block";
-  } else {
-    birthYearGroup.style.display = "none";
-    const birthYearInput = document.getElementById("event-birth-year");
-    if (birthYearInput && !editingEventId) birthYearInput.value = "";
+  if (birthYearGroup) {
+    if (selectedType === "Geburtstag") {
+      birthYearGroup.style.display = "block";
+    } else {
+      birthYearGroup.style.display = "none";
+      const birthYearInput = document.getElementById("event-birth-year");
+      if (birthYearInput && !editingEventId) birthYearInput.value = "";
+    }
   }
+
+  if (selectedType === "Urlaub / Abwesend") {
+    // 1. Bis-Datum einblenden & Label anpassen
+    if (endDateGroup) endDateGroup.style.display = "block";
+    if (dateLabel) dateLabel.textContent = "Startdatum";
+    if (participantsLabel)
+      participantsLabel.textContent = "🏖️ Wer ist abwesend? (Personen)";
+
+    // 2. Nicht benötigte Felder (Uhrzeit, Ganztägig, Ort, Link) ausblenden
+    if (timeGroup) timeGroup.style.display = "none";
+    if (allDayToggleGroup) allDayToggleGroup.style.display = "none";
+    if (locationGroup) locationGroup.style.display = "none";
+    if (linkGroup) linkGroup.style.display = "none";
+
+    // Automatisch ganztägig markieren
+    const allDayCheckbox = document.getElementById("event-all-day");
+    if (allDayCheckbox && !allDayCheckbox.checked) {
+      allDayCheckbox.checked = true;
+    }
+    const timeInput = document.getElementById("event-time");
+    if (timeInput && !editingEventId) timeInput.value = "";
+
+    // Titel-Vorschlag, falls noch leer
+    if (
+      titleInput &&
+      (!titleInput.value || titleInput.value.startsWith("Urlaub"))
+    ) {
+      const author = authorSelect?.value || "";
+      titleInput.placeholder = "z.B. Sommerurlaub, Städtetrip, Nicht da...";
+      if (!editingEventId && author && !titleInput.value) {
+        titleInput.value = `Urlaub - ${author}`;
+      }
+    }
+  } else {
+    // Standard-Felder wieder einblenden
+    if (endDateGroup) endDateGroup.style.display = "none";
+    if (timeGroup) timeGroup.style.display = "block";
+    if (allDayToggleGroup) allDayToggleGroup.style.display = "flex";
+    if (locationGroup) locationGroup.style.display = "block";
+    if (linkGroup) linkGroup.style.display = "block";
+
+    if (dateLabel) dateLabel.textContent = "Datum";
+    if (participantsLabel)
+      participantsLabel.textContent = "👥 Wer ist dabei? (Teilnehmer)";
+    if (titleInput)
+      titleInput.placeholder = "z.B. Sommerfest & Grillen, Wanderung...";
+    const endDateInput = document.getElementById("event-end-date");
+    if (endDateInput && !editingEventId) endDateInput.value = "";
+  }
+
+  applyFormChipColors();
+  checkAbsenceConflicts();
 }
 window.updateCategoryDependentFields = updateCategoryDependentFields;
+
+function checkAbsenceConflicts() {
+  const warningBox = document.getElementById("event-conflict-warning");
+  const warningText = document.getElementById("event-conflict-warning-text");
+  if (!warningBox || !warningText) return;
+
+  // Wenn man selbst gerade einen Urlaub anlegt, keinen Konflikt-Warner anzeigen
+  if (selectedType === "Urlaub / Abwesend") {
+    warningBox.style.display = "none";
+    return;
+  }
+
+  const dateInput = document.getElementById("event-date");
+  const chosenDate = dateInput?.value;
+  if (!chosenDate) {
+    warningBox.style.display = "none";
+    return;
+  }
+
+  const absentNames = new Set();
+
+  rawEvents.forEach((ev) => {
+    if (ev.Kategorie !== "Urlaub / Abwesend") return;
+    if (
+      editingEventId &&
+      (ev.id === editingEventId || ev.baseId === editingEventId)
+    )
+      return;
+
+    const start = ev.Datum;
+    const end = ev.Enddatum && ev.Enddatum >= ev.Datum ? ev.Enddatum : ev.Datum;
+
+    if (chosenDate >= start && chosenDate <= end) {
+      const rsvp = ev.Teilnehmer || {};
+      const members = Object.keys(rsvp).filter((name) => rsvp[name] === "yes");
+      if (members.length > 0) {
+        members.forEach((n) => absentNames.add(n));
+      } else if (ev.Ersteller) {
+        absentNames.add(ev.Ersteller);
+      }
+    }
+  });
+
+  if (absentNames.size > 0) {
+    const listStr = Array.from(absentNames).join(", ");
+    const verb = absentNames.size === 1 ? "ist" : "sind";
+    warningText.innerHTML = `<strong>Achtung:</strong> ${listStr} ${verb} an diesem Tag im Urlaub / abwesend!`;
+    warningBox.style.display = "flex";
+  } else {
+    warningBox.style.display = "none";
+  }
+}
+window.checkAbsenceConflicts = checkAbsenceConflicts;
 
 // ==========================================
 // 5. Firestore Realtime Listener & Serientermine
@@ -603,6 +756,39 @@ let rawEvents = [];
 function expandEventInstances(rawEventsList) {
   const expanded = [];
   rawEventsList.forEach((rawDoc) => {
+    // 1. Zeitraum-Termin (z. B. Urlaub über mehrere Tage)
+    if (rawDoc.Enddatum && rawDoc.Enddatum > rawDoc.Datum) {
+      const rangeDates = [];
+      const [sy, sm, sd] = rawDoc.Datum.split("-").map(Number);
+      const [ey, em, ed] = rawDoc.Enddatum.split("-").map(Number);
+      const cur = new Date(sy, sm - 1, sd, 12, 0, 0);
+      const end = new Date(ey, em - 1, ed, 12, 0, 0);
+
+      let safety = 0;
+      while (cur <= end && safety < 90) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth() + 1).padStart(2, "0");
+        const d = String(cur.getDate()).padStart(2, "0");
+        rangeDates.push(`${y}-${m}-${d}`);
+        cur.setDate(cur.getDate() + 1);
+        safety++;
+      }
+
+      rangeDates.forEach((rDate, idx) => {
+        expanded.push({
+          ...rawDoc,
+          id: idx === 0 ? rawDoc.id : `${rawDoc.id}_range_${idx}`,
+          baseId: rawDoc.id,
+          Datum: rDate,
+          rangeIndex: idx,
+          isRangeOccurrence: idx > 0,
+          rangeTotalDays: rangeDates.length,
+        });
+      });
+      return;
+    }
+
+    // 2. Einmaliger Termin ohne Wiederholung
     if (!rawDoc.Wiederholung || rawDoc.Wiederholung === "none") {
       expanded.push({
         ...rawDoc,
@@ -611,6 +797,7 @@ function expandEventInstances(rawEventsList) {
       return;
     }
 
+    // 3. Serientermin
     const recurrence = rawDoc.Wiederholung;
     const duration = rawDoc.WiederholungDauer || "forever";
     const recurringDates = calculateRecurrenceDates(
@@ -887,7 +1074,9 @@ function renderEvents(events) {
         .join("");
 
       let countLabel = `${totalParticipants} dabei`;
-      if (adultYesCount > 0 && childYesCount > 0) {
+      if (item.Kategorie === "Urlaub / Abwesend") {
+        countLabel = `${totalParticipants} abwesend`;
+      } else if (adultYesCount > 0 && childYesCount > 0) {
         countLabel = `${totalParticipants} dabei (${adultYesCount}E • ${childYesCount}K)`;
       } else if (adultYesCount > 0) {
         countLabel = `${totalParticipants} Erw.`;
@@ -922,6 +1111,15 @@ function renderEvents(events) {
       }
     }
 
+    const catStyle = getCategoryColor(item.Kategorie);
+    const catIcon = catStyle.icon ? `${catStyle.icon} ` : "";
+    const dateRangeBadgeHtml =
+      item.Kategorie === "Urlaub / Abwesend" &&
+      item.Enddatum &&
+      item.Enddatum > item.Datum
+        ? `<span class="event-tag" style="color: ${catStyle.color}; background: ${catStyle.bg}; border: 1px solid ${catStyle.border}; font-weight: 700;">🏖️ Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
+        : "";
+
     card.innerHTML = `
             <div class="event-date-box">
                 <span class="event-date-weekday">${dateParts.weekdayShort}</span>
@@ -934,7 +1132,8 @@ function renderEvents(events) {
                     ${countdown.badgeText ? `<span class="countdown-badge ${countdown.badgeClass}">${countdown.badgeText}</span>` : ""}
                 </div>
                 <div class="event-meta">
-                    <span class="event-tag" style="color: ${getCategoryColor(item.Kategorie).color}; background: ${getCategoryColor(item.Kategorie).bg}; border: 1px solid ${getCategoryColor(item.Kategorie).border}; font-weight: 700;">${item.Kategorie || "Essen"}</span>
+                    <span class="event-tag" style="color: ${catStyle.color}; background: ${catStyle.bg}; border: 1px solid ${catStyle.border}; font-weight: 700;">${catIcon}${item.Kategorie || "Essen"}</span>
+                    ${dateRangeBadgeHtml}
                     ${birthdayBadgeHtml}
                     ${item.Wiederholung && item.Wiederholung !== "none" ? '<span class="event-recurrence-icon" title="Serientermin">🔁</span>' : ""}
                     ${locationStr}
@@ -1277,7 +1476,7 @@ function showEventDetails(data) {
 
   const catTag = document.getElementById("detail-category-tag");
   const catColor = getCategoryColor(data.Kategorie);
-  catTag.textContent = data.Kategorie || "Sonstiges";
+  catTag.textContent = `${catColor.icon ? catColor.icon + " " : ""}${data.Kategorie || "Sonstiges"}`;
   catTag.style.color = catColor.color;
   catTag.style.background = catColor.bg;
   catTag.style.borderColor = catColor.border;
@@ -1330,6 +1529,23 @@ function showEventDetails(data) {
     }
   }
 
+  const dateRangeTag = document.getElementById("detail-daterange-tag");
+  if (dateRangeTag) {
+    if (
+      data.Kategorie === "Urlaub / Abwesend" &&
+      data.Enddatum &&
+      data.Enddatum > data.Datum
+    ) {
+      dateRangeTag.textContent = `🏖️ Bis ${formatDateObj(data.Enddatum).day}.${formatDateObj(data.Enddatum).monthShort}`;
+      dateRangeTag.style.display = "inline-flex";
+      dateRangeTag.style.color = catColor.color;
+      dateRangeTag.style.background = catColor.bg;
+      dateRangeTag.style.borderColor = catColor.border;
+    } else {
+      dateRangeTag.style.display = "none";
+    }
+  }
+
   const cdContainer = document.getElementById("detail-countdown");
   if (countdown.badgeText) {
     cdContainer.innerHTML = `<span class="countdown-badge ${countdown.badgeClass}" style="font-size: 0.75rem; padding: 4px 10px;">${countdown.badgeText}</span>`;
@@ -1338,9 +1554,17 @@ function showEventDetails(data) {
     cdContainer.style.display = "none";
   }
 
-  const startFormatted = formatDateObj(data.Datum).formattedLong;
+  let dateDisplayStr = formatDateObj(data.Datum).formattedLong;
+  if (
+    data.Kategorie === "Urlaub / Abwesend" &&
+    data.Enddatum &&
+    data.Enddatum > data.Datum
+  ) {
+    dateDisplayStr = `${formatDateObj(data.Datum).day}.${formatDateObj(data.Datum).monthShort} – ${formatDateObj(data.Enddatum).formattedLong}`;
+  }
+
   const isAllDay = data.isAllDay || !data.Uhrzeit;
-  document.getElementById("detail-date-str").textContent = startFormatted;
+  document.getElementById("detail-date-str").textContent = dateDisplayStr;
   document.getElementById("detail-time-str").textContent = isAllDay
     ? "☀️ Ganztägig"
     : `${data.Uhrzeit} Uhr`;
@@ -1453,6 +1677,14 @@ function renderDetailRSVP(data) {
   const container = document.getElementById("rsvp-members-container");
   container.innerHTML = "";
   const rsvp = data.Teilnehmer || {};
+
+  const rsvpTitle = document.getElementById("detail-rsvp-title");
+  if (rsvpTitle) {
+    rsvpTitle.textContent =
+      data.Kategorie === "Urlaub / Abwesend"
+        ? "🏖️ Wer ist abwesend?"
+        : "👥 Wer ist dabei?";
+  }
 
   const guests = data.Gäste || { adults: 0, children: 0 };
   const gAdults = parseInt(guests.adults) || 0;
@@ -1646,6 +1878,8 @@ window.editEventById = function (eventId, autoAddNewItem = false) {
   document.getElementById("event-author").dispatchEvent(new Event("change"));
   document.getElementById("event-title").value = data.Titel || "";
   document.getElementById("event-date").value = data.Datum || "";
+  const endDateInput = document.getElementById("event-end-date");
+  if (endDateInput) endDateInput.value = data.Enddatum || "";
   document.getElementById("event-time").value = data.Uhrzeit || "";
 
   const isAllDay = !!data.isAllDay || !data.Uhrzeit;
@@ -1917,6 +2151,12 @@ function resetForm() {
   const birthYearInput = document.getElementById("event-birth-year");
   if (birthYearInput) birthYearInput.value = "";
 
+  const endDateInput = document.getElementById("event-end-date");
+  if (endDateInput) endDateInput.value = "";
+
+  const conflictWarning = document.getElementById("event-conflict-warning");
+  if (conflictWarning) conflictWarning.style.display = "none";
+
   formParticipants = {};
   const currentAuthor = document.getElementById("event-author")?.value;
   if (currentAuthor) formParticipants[currentAuthor] = "yes";
@@ -1989,6 +2229,7 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
   const author = document.getElementById("event-author").value;
   const title = document.getElementById("event-title").value.trim();
   const date = document.getElementById("event-date").value;
+  const endDate = document.getElementById("event-end-date")?.value || "";
   const time = document.getElementById("event-time").value;
   const location = document.getElementById("event-location").value.trim();
   const link = document.getElementById("event-link").value.trim();
@@ -2053,6 +2294,10 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
     await setDoc(doc(db, "data_termine", docId), {
       ...baseEventData,
       Datum: date,
+      Enddatum:
+        selectedType === "Urlaub / Abwesend" && endDate && endDate >= date
+          ? endDate
+          : "",
       Teilnehmer: existingRsvp,
       Gäste: {
         adults: formGuests.adults || 0,
@@ -2060,9 +2305,14 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
       },
     });
 
+    const isVacation = selectedType === "Urlaub / Abwesend";
     const successMsg = editingEventId
-      ? "Termin wurde erfolgreich aktualisiert!"
-      : "Termin wurde erfolgreich im Kalender gespeichert!";
+      ? isVacation
+        ? "Urlaub / Abwesenheit wurde erfolgreich aktualisiert! 🏖️"
+        : "Termin wurde erfolgreich aktualisiert!"
+      : isVacation
+        ? "Urlaub / Abwesenheit wurde erfolgreich im Kalender gespeichert! 🏖️"
+        : "Termin wurde erfolgreich im Kalender gespeichert!";
     window.showAppModal("Erfolg", successMsg);
 
     if (typeof confetti === "function") {
@@ -2090,6 +2340,19 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
     window.showLoading(false);
   }
 });
+
+document
+  .getElementById("event-date")
+  ?.addEventListener("change", checkAbsenceConflicts);
+document
+  .getElementById("event-date")
+  ?.addEventListener("input", checkAbsenceConflicts);
+document
+  .getElementById("event-end-date")
+  ?.addEventListener("change", checkAbsenceConflicts);
+document
+  .getElementById("event-end-date")
+  ?.addEventListener("input", checkAbsenceConflicts);
 
 const recSelectEl = document.getElementById("event-recurrence");
 const recDurationEl = document.getElementById("event-recurrence-duration");
