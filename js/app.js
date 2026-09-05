@@ -1804,17 +1804,7 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
       dates.push(`${y}-${m}-${d}`);
       cur.setDate(cur.getDate() + 14);
     }
-  } else if (
-    recurrenceType === "monthly" ||
-    recurrenceType === "every2months" ||
-    recurrenceType === "every3months"
-  ) {
-    const stepSize =
-      recurrenceType === "every2months"
-        ? 2
-        : recurrenceType === "every3months"
-          ? 3
-          : 1;
+  } else if (recurrenceType === "monthly") {
     let step = 0;
     while (step <= maxMonths) {
       const targetMonthIndex = startMonth - 1 + step;
@@ -1832,6 +1822,43 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
         0,
         0,
       );
+      if (targetDate <= endDate) {
+        const y = targetDate.getFullYear();
+        const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+        const d = String(targetDate.getDate()).padStart(2, "0");
+        dates.push(`${y}-${m}-${d}`);
+      }
+      step++;
+    }
+  } else if (
+    recurrenceType === "every2months" ||
+    recurrenceType === "every3months"
+  ) {
+    const stepSize = recurrenceType === "every2months" ? 2 : 3;
+    const targetWeekday = startDate.getDay(); // 0 = So, 1 = Mo, ..., 5 = Fr, 6 = Sa
+    const nth = Math.floor((startDay - 1) / 7) + 1;
+    const daysInStartMonth = new Date(startYear, startMonth, 0).getDate();
+    const isLast = startDay + 7 > daysInStartMonth;
+
+    let step = 0;
+    while (step <= maxMonths) {
+      const targetMonthIndex = startMonth - 1 + step;
+      const firstDay = new Date(startYear, targetMonthIndex, 1, 12, 0, 0);
+      const tempYear = firstDay.getFullYear();
+      const tempMonth = firstDay.getMonth();
+      const firstWeekday = firstDay.getDay();
+      const dayOffset = (targetWeekday - firstWeekday + 7) % 7;
+      let day = 1 + dayOffset + (nth - 1) * 7;
+
+      const daysInTargetMonth = new Date(tempYear, tempMonth + 1, 0).getDate();
+      if (isLast && day + 7 <= daysInTargetMonth) {
+        day += 7;
+      }
+      if (day > daysInTargetMonth) {
+        day -= 7;
+      }
+
+      const targetDate = new Date(tempYear, tempMonth, day, 12, 0, 0);
       if (targetDate <= endDate) {
         const y = targetDate.getFullYear();
         const m = String(targetDate.getMonth() + 1).padStart(2, "0");

@@ -1,4 +1,4 @@
-const VERSION = "2.6.6";
+const VERSION = "2.6.7";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
