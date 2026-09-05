@@ -114,6 +114,7 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Symbole direkt im Monatskalender**: Auch im Kalender-Widget werden nun an Tagen mit Terminen die entsprechenden Kategorie-Icons (z. B. 🏖️ für Urlaub, 🎸 für Konzert, 🍽️ für Essen, ⚔️ für Mittelalter) direkt unter der Tageszahl dargestellt. Bei mehreren unterschiedlichen Kategorien zeigt ein kleiner Zähler (z. B. `+1`) weitere an.
 - **Mehrfarbige Kalendertage**: Finden an einem Tag mehrere Termine mit unterschiedlichen Kategorien statt (z. B. Urlaub und Essen), wird die Hintergrundfarbe der Kalenderzelle harmonisch aufgeteilt, sodass alle an diesem Tag vertretenen Kategorien auf einen Blick farblich erkennbar sind.
+- **Optimiertes Terminformular & Gäste-Auswahl**: Perfekt ausgerichtete Eingabefelder (Ort & Treffpunkt, Links) sowie ein responsiver Gäste-Stepper für Erwachsene und Kinder, der sich auf Smartphones und Tablets immer optimal an die Bildschirmbreite anpasst.
 
 ---
 
@@ -121,4 +122,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`).
-- **Service Worker**: PWA Cache v2.7.4 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v2.7.5 mit Network-First Strategie für App-Ressourcen.

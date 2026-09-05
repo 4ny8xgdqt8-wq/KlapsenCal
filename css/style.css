@@ -885,6 +885,7 @@ header {
   gap: 7px;
 }
 .form-group label {
+  display: block;
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--accent-color);
@@ -893,6 +894,8 @@ header {
   margin-left: 2px;
 }
 .form-control {
+  width: 100%;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
   border-radius: 13px;
@@ -2334,32 +2337,45 @@ select.form-control {
 
 /* Formular Gäste Stepper */
 .form-guests-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 4px;
+  width: 100%;
+}
+
+@media (min-width: 520px) {
+  .form-guests-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
 }
 
 .form-guest-stepper-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
+  width: 100%;
 }
 
 .form-guest-label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #cbd5e1;
+  white-space: nowrap;
 }
 
 .form-stepper-control {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .form-guest-count-val {

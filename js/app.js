@@ -640,7 +640,7 @@ function updateCategoryDependentFields() {
 
   if (birthYearGroup) {
     if (selectedType === "Geburtstag") {
-      birthYearGroup.style.display = "block";
+      birthYearGroup.style.display = "flex";
     } else {
       birthYearGroup.style.display = "none";
       const birthYearInput = document.getElementById("event-birth-year");
@@ -685,8 +685,8 @@ function updateCategoryDependentFields() {
     if (endDateGroup) endDateGroup.style.display = "none";
     if (timeGroup) timeGroup.style.display = "flex";
     if (allDayToggleGroup) allDayToggleGroup.style.display = "flex";
-    if (locationGroup) locationGroup.style.display = "block";
-    if (linkGroup) linkGroup.style.display = "block";
+    if (locationGroup) locationGroup.style.display = "flex";
+    if (linkGroup) linkGroup.style.display = "flex";
 
     if (dateLabel) dateLabel.textContent = "Datum";
     if (participantsLabel)
