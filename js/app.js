@@ -101,6 +101,7 @@ const DEFAULT_CATEGORIES = [
   "Essen",
   "Konzert",
   "Veranstaltung",
+  "Mittelalter",
   "Geburtstag",
   "Dart",
   "Billard",
@@ -126,6 +127,12 @@ const CATEGORY_COLORS = {
     bg: "rgba(14, 165, 233, 0.18)",
     border: "rgba(14, 165, 233, 0.45)",
     icon: "🎪",
+  },
+  Mittelalter: {
+    color: "#d97706",
+    bg: "rgba(217, 119, 6, 0.20)",
+    border: "rgba(217, 119, 6, 0.50)",
+    icon: "⚔️",
   },
   Geburtstag: {
     color: "#ec4899",
