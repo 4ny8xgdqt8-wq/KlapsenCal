@@ -1,6 +1,14 @@
 ## 🚀 Aktueller Walkthrough & Feature-Übersicht
 
-### 1. ⏳ Zeitraum-Filter (Schnelle zeitliche Übersicht)
+### 1. 📅 Terminerstellung direkt im Kalender & aufgeräumte Tab-Leiste
+
+- **Direktes Anlegen per Kalendertag**: Klickt man im Monatskalender auf einen Tag, erscheint in der Liste direkt der Aktions-Button **`➕ Termin für diesen Tag erstellen`** bzw. **`➕ Weiteren Termin am [Datum] anlegen`**. Das gewählte Datum ist im Formular **bereits automatisch vorausgefüllt**!
+- **Aufgeräumte 4-Tab-Navigation**: Der frühere separate „Neu“-Tab wurde aus der unteren Leiste entfernt. Dadurch haben die vier Hauptbereiche (_Termine_, _Was fehlt?_, _Anschaffungen_, _Kasse_) auf jedem Smartphone spürbar mehr Platz und Komfort.
+- **Flüssiges Eingabe-Modal**: Beim Anlegen oder Bearbeiten eines Termins öffnet sich ein elegantes Vollbild-Fenster, das nach dem Speichern nahtlos schließt – ohne die Kalenderansicht zu verlassen.
+
+---
+
+### 2. ⏳ Zeitraum-Filter (Schnelle zeitliche Übersicht)
 
 - **Direktfilter-Buttons**: Schnelles Umschalten des Zeithorizonts auf Tab 1:
   - **`30 Tage`** _(Standardaktiv)_: Zeigt die nächsten 30 Tage.
@@ -122,4 +130,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`).
-- **Service Worker**: PWA Cache v2.7.5 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v2.8.0 mit Network-First Strategie für App-Ressourcen.

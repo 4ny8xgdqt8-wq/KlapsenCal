@@ -1028,13 +1028,30 @@ function renderEvents(events) {
   container.innerHTML = "";
 
   if (events.length === 0) {
-    container.innerHTML = `
+    if (selectedCalendarDate) {
+      const formatted = formatDateObj(selectedCalendarDate).formattedLong;
+      container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); margin-top: 25px; padding: 24px 16px; background: rgba(255, 255, 255, 0.03); border-radius: 20px; border: 1px dashed rgba(255, 255, 255, 0.12);">
+                <div style="font-size: 2.6rem; margin-bottom: 8px; opacity: 0.85;">🗓️</div>
+                <h3 style="color: white; margin: 0 0 4px 0; font-size: 1.1rem;">Keine Termine am ${formatted}</h3>
+                <p style="font-size: 0.85rem; margin: 0 0 16px 0; color: #94a3b8;">Möchtest du für diesen Tag etwas mit der Gruppe planen?</p>
+                <button type="button" class="btn-day-add-event" style="max-width: 280px; margin: 0 auto;" onclick="window.openNewEventModal('${selectedCalendarDate}')">
+                  ➕ Termin für diesen Tag erstellen
+                </button>
+            </div>
+        `;
+    } else {
+      container.innerHTML = `
             <div style="text-align: center; color: var(--text-muted); margin-top: 45px; padding: 20px;">
                 <div style="font-size: 2.8rem; margin-bottom: 12px; opacity: 0.7;">📅</div>
                 <h3 style="color: white; margin: 0 0 6px 0;">Keine Termine gefunden</h3>
-                <p style="font-size: 0.85rem; margin: 0;">Trage oben über das „+“ einen neuen Termin ein!</p>
+                <p style="font-size: 0.85rem; margin: 0 0 16px 0;">Plane einen neuen Termin für die Gruppe!</p>
+                <button type="button" class="btn-day-add-event" style="max-width: 260px; margin: 0 auto;" onclick="window.openNewEventModal()">
+                  ➕ Neuen Termin anlegen
+                </button>
             </div>
         `;
+    }
     return;
   }
 
@@ -1154,6 +1171,16 @@ function renderEvents(events) {
         `;
     container.appendChild(card);
   });
+
+  if (selectedCalendarDate) {
+    const formatted = formatDateObj(selectedCalendarDate).formattedLong;
+    const addMoreBtn = document.createElement("button");
+    addMoreBtn.type = "button";
+    addMoreBtn.className = "btn-day-add-event";
+    addMoreBtn.innerHTML = `<span>➕</span> <span>Weiteren Termin am ${formatted} anlegen</span>`;
+    addMoreBtn.onclick = () => window.openNewEventModal(selectedCalendarDate);
+    container.appendChild(addMoreBtn);
+  }
 }
 
 function getISOWeekNumber(d) {
@@ -1903,7 +1930,10 @@ window.editEventById = function (eventId, autoAddNewItem = false) {
   if (!data) return;
   editingEventId = data.baseId || data.id;
 
-  window.switchTab("neu", document.querySelector('.tab-item[onclick*="neu"]'));
+  const overlay = document.getElementById("event-form-overlay");
+  if (overlay) overlay.style.display = "flex";
+  const titleEl = document.getElementById("event-modal-title");
+  if (titleEl) titleEl.textContent = "✏️ Termin bearbeiten";
 
   document.getElementById("event-author").value = data.Ersteller || "";
   document.getElementById("event-author").dispatchEvent(new Event("change"));
@@ -2214,12 +2244,38 @@ window.editEventFromDetail = function () {
   window.editEventById(currentDetailData.baseId || currentDetailData.id);
 };
 
-window.cancelEdit = function () {
+window.openNewEventModal = function (prefilledDate = null) {
   resetForm();
-  window.switchTab(
-    "termine",
-    document.querySelector('.tab-item[onclick*="termine"]'),
-  );
+  const dateToUse =
+    prefilledDate ||
+    selectedCalendarDate ||
+    new Date().toISOString().split("T")[0];
+  const dateInput = document.getElementById("event-date");
+  if (dateInput) {
+    dateInput.value = dateToUse;
+    dateInput.dispatchEvent(new Event("change"));
+  }
+  const titleEl = document.getElementById("event-modal-title");
+  if (titleEl) titleEl.textContent = "➕ Neuer Termin";
+  const submitBtn = document.getElementById("submit-event-btn");
+  if (submitBtn) submitBtn.textContent = "Termin speichern";
+  const cancelBtn = document.getElementById("cancel-edit-btn");
+  if (cancelBtn) cancelBtn.style.display = "block";
+
+  editingEventId = null;
+  const overlay = document.getElementById("event-form-overlay");
+  if (overlay) overlay.style.display = "flex";
+};
+
+window.closeEventModal = function () {
+  const overlay = document.getElementById("event-form-overlay");
+  if (overlay) overlay.style.display = "none";
+  resetForm();
+  editingEventId = null;
+};
+
+window.cancelEdit = function () {
+  window.closeEventModal();
 };
 
 window.deleteCurrentEvent = function () {
@@ -2356,11 +2412,9 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
       });
     }
 
-    resetForm();
-    window.switchTab(
-      "termine",
-      document.querySelector('.tab-item[onclick*="termine"]'),
-    );
+    window.closeEventModal();
+    renderCalendarWidget();
+    filterAndRender();
   } catch (err) {
     console.error("Fehler beim Speichern:", err);
     window.showAppModal(

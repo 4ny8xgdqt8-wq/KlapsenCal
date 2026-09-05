@@ -1091,7 +1091,8 @@ select.form-control {
   animation: fadeIn 0.2s ease;
 }
 
-.detail-modal-card {
+.detail-modal-card,
+.event-modal-card {
   background: #131c18;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 24px;
@@ -1104,6 +1105,13 @@ select.form-control {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
   box-sizing: border-box;
   animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.event-modal-body {
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 36px) 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
 }
 
 .detail-header {
@@ -1497,6 +1505,7 @@ select.form-control {
 #kasse-modal-container,
 #purchase-modal-container,
 #readme-modal-container,
+#event-form-overlay,
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -2384,4 +2393,36 @@ select.form-control {
   min-width: 20px;
   text-align: center;
   color: var(--primary-color);
+}
+
+/* ==========================================
+   Tages-Aktionen (Termin anlegen aus Kalendertag)
+   ========================================== */
+.btn-day-add-event {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1.5px dashed rgba(16, 185, 129, 0.45);
+  color: #34d399;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 13px 16px;
+  margin-top: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-day-add-event:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.btn-day-add-event:active {
+  transform: scale(0.98);
 }
