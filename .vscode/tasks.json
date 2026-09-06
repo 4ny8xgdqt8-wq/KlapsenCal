@@ -18,6 +18,17 @@
       "runOptions": {
         "runOn": "default"
       }
+    },
+    {
+      "label": "🔧 Git Index reparieren",
+      "type": "shell",
+      "command": "./repair-git-index.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      }
     }
   ]
 }
