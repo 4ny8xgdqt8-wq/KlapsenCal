@@ -1919,8 +1919,45 @@ window.closeEventDetails = function () {
 };
 
 // ==========================================
-// 9. Aufgaben / Was fehlt noch? Tab
+// 9. Aufgaben & Anschaffungen ("Was fehlt?") Tab
 // ==========================================
+let currentAufgabenSubTab = "anschaffungen";
+window.currentAufgabenSubTab = currentAufgabenSubTab;
+
+function switchAufgabenSubTab(subTab) {
+  currentAufgabenSubTab = subTab;
+  window.currentAufgabenSubTab = subTab;
+
+  const btnTasks = document.getElementById("seg-btn-tasks");
+  const btnPurchases = document.getElementById("seg-btn-purchases");
+  const viewTasks = document.getElementById("subview-tasks");
+  const viewPurchases = document.getElementById("subview-purchases");
+  const subTitle = document.getElementById("header-sub-title");
+
+  if (subTab === "anschaffungen") {
+    if (btnTasks) btnTasks.classList.remove("active");
+    if (btnPurchases) btnPurchases.classList.add("active");
+    if (viewTasks) viewTasks.style.display = "none";
+    if (viewPurchases) {
+      viewPurchases.style.display = "block";
+      if (typeof window.renderPurchasesView === "function") {
+        window.renderPurchasesView();
+      }
+    }
+    if (subTitle) subTitle.textContent = "Offene Anschaffungen & Budget";
+  } else {
+    if (btnPurchases) btnPurchases.classList.remove("active");
+    if (btnTasks) btnTasks.classList.add("active");
+    if (viewPurchases) viewPurchases.style.display = "none";
+    if (viewTasks) {
+      viewTasks.style.display = "block";
+      renderAllTasks();
+    }
+    if (subTitle) subTitle.textContent = "Was fehlt noch für die Termine";
+  }
+}
+window.switchAufgabenSubTab = switchAufgabenSubTab;
+
 function renderAllTasks() {
   const container = document.getElementById("all-tasks-container");
   container.innerHTML = "";
@@ -2096,6 +2133,46 @@ window.toggleGlobalTask = async function (eventId, itemIdx) {
   }
 };
 
+let cachedUnfinishedTasksCount = 0;
+let cachedOpenPurchasesCount = 0;
+
+function updateCombinedBadges() {
+  const totalCount = cachedUnfinishedTasksCount + cachedOpenPurchasesCount;
+
+  // Haupt-Badge in der Tab-Bar ("Was fehlt?")
+  const mainBadge = document.getElementById("tasks-badge");
+  if (mainBadge) {
+    mainBadge.textContent = totalCount;
+    if (totalCount > 0) mainBadge.classList.add("visible");
+    else mainBadge.classList.remove("visible");
+  }
+
+  // Altes purchases-badge (falls irgendwo noch vorhanden)
+  const oldPurchasesBadge = document.getElementById("purchases-badge");
+  if (oldPurchasesBadge) {
+    oldPurchasesBadge.textContent = cachedOpenPurchasesCount;
+    if (cachedOpenPurchasesCount > 0)
+      oldPurchasesBadge.classList.add("visible");
+    else oldPurchasesBadge.classList.remove("visible");
+  }
+
+  // Sub-Badges im Segmented Switcher
+  const segTasks = document.getElementById("seg-badge-tasks");
+  if (segTasks) {
+    segTasks.textContent = cachedUnfinishedTasksCount;
+    segTasks.style.display =
+      cachedUnfinishedTasksCount > 0 ? "inline-flex" : "none";
+  }
+
+  const segPurchases = document.getElementById("seg-badge-purchases");
+  if (segPurchases) {
+    segPurchases.textContent = cachedOpenPurchasesCount;
+    segPurchases.style.display =
+      cachedOpenPurchasesCount > 0 ? "inline-flex" : "none";
+  }
+}
+window.updateCombinedBadges = updateCombinedBadges;
+
 function updateTasksBadge() {
   const nowStr = new Date().toISOString().split("T")[0];
   let unfinishedCount = 0;
@@ -2112,12 +2189,8 @@ function updateTasksBadge() {
       }
     });
 
-  const badge = document.getElementById("tasks-badge");
-  if (badge) {
-    badge.textContent = unfinishedCount;
-    if (unfinishedCount > 0) badge.classList.add("visible");
-    else badge.classList.remove("visible");
-  }
+  cachedUnfinishedTasksCount = unfinishedCount;
+  updateCombinedBadges();
 }
 
 // ==========================================
@@ -2878,13 +2951,8 @@ function initPurchasesListener() {
 }
 
 function updatePurchasesBadge() {
-  const openCount = allPurchases.filter((p) => !p.erledigt).length;
-  const badge = document.getElementById("purchases-badge");
-  if (badge) {
-    badge.textContent = openCount;
-    if (openCount > 0) badge.classList.add("visible");
-    else badge.classList.remove("visible");
-  }
+  cachedOpenPurchasesCount = allPurchases.filter((p) => !p.erledigt).length;
+  updateCombinedBadges();
 }
 
 function renderPurchasesView() {
@@ -3914,6 +3982,1440 @@ window.filterAndRenderEinkehr = window.filterAndRenderLokale;
 window.initEinkehrListener = initLokaleListener;
 
 // ==========================================
+// 17. REZEPTE & KULINARIK (Look & Cook)
+// ==========================================
+let allRecipes = [];
+let activeRecipeCategoryFilter = "alle";
+let currentDetailRecipe = null;
+let currentDetailPortions = 4;
+let editingRecipeId = null;
+let selectedTypesOrder = [];
+
+const ALL_RECIPE_CATEGORIES = [
+  "Fleisch",
+  "Grillen",
+  "Burger",
+  "Steak",
+  "Suppe",
+  "Salat",
+  "Vorspeise",
+  "Beilagen",
+  "Brot",
+  "Dips",
+  "Saucen",
+  "Dutch",
+  "Plancha",
+  "Fisch",
+  "Snack",
+  "Dessert",
+  "Backen",
+  "Cocktails",
+];
+
+const STANDARD_UNITS = [
+  "",
+  "g",
+  "kg",
+  "ml",
+  "l",
+  "Stk",
+  "EL",
+  "TL",
+  "Prise",
+  "Bund",
+  "Zehe",
+  "Glas",
+  "Flasche",
+  "Würfel",
+  "Pck",
+  "Becher",
+  "Scheiben",
+  "Dose kl.",
+  "Dose gr.",
+];
+
+function getRecipeImage(artArray) {
+  const available = [
+    "Backen",
+    "Beilagen",
+    "Brot",
+    "Burger",
+    "Cocktails",
+    "Dessert",
+    "Dips",
+    "Fisch",
+    "Fleisch",
+    "Salat",
+    "Saucen",
+    "Snack",
+    "Steak",
+    "Suppe",
+  ];
+  const map = {
+    Grillen: "Steak",
+    Plancha: "Steak",
+    Dutch: "Fleisch",
+    Vorspeise: "Salat",
+    Nudeln: "Beilagen",
+    Pasta: "Beilagen",
+  };
+  if (!Array.isArray(artArray)) {
+    artArray = artArray ? [artArray] : [];
+  }
+  for (const a of artArray) {
+    if (available.includes(a)) return `images/rezepte/${a}.webp`;
+    if (map[a]) return `images/rezepte/${map[a]}.webp`;
+  }
+  return "logo.png";
+}
+
+function initRezepteListener() {
+  const colRef = collection(db, "data_rezepte");
+  onSnapshot(
+    colRef,
+    (snapshot) => {
+      const list = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (docSnap.id === "Art" || docSnap.id === "Ersteller") return;
+        if (!data.Titel) return;
+        list.push({ id: docSnap.id, ...data });
+      });
+      allRecipes = list;
+
+      // Gespeicherte Sortierung wiederherstellen
+      const savedSort = localStorage.getItem("recipe_sort_order");
+      const sortSelect = document.getElementById("recipe-sort");
+      if (savedSort && sortSelect) {
+        sortSelect.value = savedSort;
+      }
+
+      renderRezepteView();
+      updateCartBadge();
+    },
+    (err) => {
+      console.error("Fehler beim Laden der Rezepte:", err);
+    },
+  );
+}
+
+function renderRezepteView() {
+  const totalEl = document.getElementById("rezepte-stat-total");
+  const topCatEl = document.getElementById("rezepte-stat-top-cat");
+  const topAuthorEl = document.getElementById("rezepte-stat-top-author");
+
+  if (totalEl) totalEl.textContent = allRecipes.length;
+
+  if (topCatEl || topAuthorEl) {
+    const catCounts = {};
+    const authorCounts = {};
+
+    allRecipes.forEach((r) => {
+      const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
+      arts.forEach((cat) => {
+        catCounts[cat] = (catCounts[cat] || 0) + 1;
+      });
+      if (r.Ersteller) {
+        authorCounts[r.Ersteller] = (authorCounts[r.Ersteller] || 0) + 1;
+      }
+    });
+
+    let topCat = "-";
+    let maxCat = 0;
+    for (const [c, cnt] of Object.entries(catCounts)) {
+      if (cnt > maxCat) {
+        maxCat = cnt;
+        topCat = c;
+      }
+    }
+    if (topCatEl) topCatEl.textContent = topCat;
+
+    let topAuthor = "-";
+    let maxAuthor = 0;
+    for (const [a, cnt] of Object.entries(authorCounts)) {
+      if (cnt > maxAuthor) {
+        maxAuthor = cnt;
+        topAuthor = a;
+      }
+    }
+    if (topAuthorEl) topAuthorEl.textContent = topAuthor;
+  }
+
+  filterAndRenderRezepte();
+}
+
+function filterRezepte(category, el) {
+  activeRecipeCategoryFilter = category;
+  document
+    .querySelectorAll("#recipe-filter-chips .filter-chip")
+    .forEach((c) => c.classList.remove("active"));
+  if (el) el.classList.add("active");
+  filterAndRenderRezepte();
+}
+
+function onRecipeSortChange() {
+  const sortSelect = document.getElementById("recipe-sort");
+  if (sortSelect) {
+    localStorage.setItem("recipe_sort_order", sortSelect.value);
+  }
+  filterAndRenderRezepte();
+}
+
+function filterAndRenderRezepte() {
+  const container = document.getElementById("recipe-list-container");
+  if (!container) return;
+
+  const searchInput = document.getElementById("recipe-search");
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+  let filtered = allRecipes.slice();
+
+  // 1. Filter nach Kategorie
+  if (activeRecipeCategoryFilter && activeRecipeCategoryFilter !== "alle") {
+    filtered = filtered.filter((r) => {
+      const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
+      return arts.some(
+        (a) => a.toLowerCase() === activeRecipeCategoryFilter.toLowerCase(),
+      );
+    });
+  }
+
+  // 2. Filter nach Suche
+  if (query) {
+    filtered = filtered.filter((r) => {
+      const title = (r.Titel || "").toLowerCase();
+      const author = (r.Ersteller || "").toLowerCase();
+      const notes = (
+        r["Zusätzliche Hinweise"] ||
+        r.Hinweise ||
+        ""
+      ).toLowerCase();
+      const ingredients = Array.isArray(r.Zutaten)
+        ? r.Zutaten.map((z) => (z.name || "").toLowerCase()).join(" ")
+        : "";
+      return (
+        title.includes(query) ||
+        author.includes(query) ||
+        notes.includes(query) ||
+        ingredients.includes(query)
+      );
+    });
+  }
+
+  // 3. Sortierung anwenden
+  const sortOrder = document.getElementById("recipe-sort")?.value || "newest";
+  filtered.sort((a, b) => {
+    const getMillis = (date) =>
+      date && date.toMillis
+        ? date.toMillis()
+        : date
+          ? new Date(date).getTime()
+          : 0;
+
+    switch (sortOrder) {
+      case "newest":
+        return (
+          getMillis(b.updatedAt || b.createdAt) -
+          getMillis(a.updatedAt || a.createdAt)
+        );
+      case "oldest":
+        return (
+          getMillis(a.updatedAt || a.createdAt) -
+          getMillis(b.updatedAt || b.createdAt)
+        );
+      case "alpha":
+        return (a.Titel || "").localeCompare(b.Titel || "", "de");
+      case "time-asc":
+        return (parseInt(a.Zeit, 10) || 999) - (parseInt(b.Zeit, 10) || 999);
+      case "servings-asc":
+        return (
+          (parseInt(a.Personenanzahl, 10) || 999) -
+          (parseInt(b.Personenanzahl, 10) || 999)
+        );
+      default:
+        return 0;
+    }
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 40px 16px; color: #94a3b8;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🍳</div>
+        <div style="font-size: 1.1rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">Keine Rezepte gefunden</div>
+        <div style="font-size: 0.85rem;">Probiere einen anderen Suchbegriff oder trage ein neues Gericht ein.</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = "";
+  filtered.forEach((r) => {
+    const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
+    const imgSrc = getRecipeImage(arts);
+    const authorName = r.Ersteller || "Gruppe";
+    const authorAvatar = `avatars/${authorName}.webp`;
+    const portions = r.Personenanzahl || 4;
+    const time = r.Zeit ? `${r.Zeit} Min.` : "30 Min.";
+    const isLink = !!r.isLink;
+
+    // Badge für NEU oder AKTUALISIERT (letzte 3 Tage)
+    const getMillis = (date) =>
+      date && date.toMillis
+        ? date.toMillis()
+        : date
+          ? new Date(date).getTime()
+          : 0;
+    const dateMillis = getMillis(r.updatedAt || r.createdAt);
+    let badgeHtml = "";
+    if (dateMillis > 0) {
+      const diffInDays = (Date.now() - dateMillis) / (1000 * 60 * 60 * 24);
+      if (diffInDays >= 0 && diffInDays <= 3) {
+        const isUpdate = r.lastAction === "update" || !!r.updatedAt;
+        badgeHtml = `<span class="${isUpdate ? "rezept-badge-update" : "rezept-badge-new"}">${isUpdate ? "UPDATE" : "NEW"}</span>`;
+      }
+    }
+
+    let tagsHtml = "";
+    arts.slice(0, 3).forEach((tag) => {
+      tagsHtml += `<span class="rezept-pill-tag">${escapeLokalHtml(tag)}</span>`;
+    });
+    if (isLink) {
+      tagsHtml += `<span class="rezept-link-badge">Website</span>`;
+    }
+
+    const timeBadge = isLink
+      ? `<span class="rezept-time-badge" style="border-color: rgba(14, 165, 233, 0.4); color: #38bdf8;">🌐 Web-Link</span>`
+      : `<span class="rezept-time-badge">⏱️ ${escapeLokalHtml(time)}</span>`;
+
+    const portionBadge = isLink
+      ? ""
+      : `<span class="rezept-portion-badge">👥 ${escapeLokalHtml(String(portions))} Port.</span>`;
+
+    html += `
+      <div class="rezept-card" onclick="window.openRecipeDetail('${r.id}')">
+        <div class="rezept-card-bg" style="background-image: url('${imgSrc}');"></div>
+        <div class="rezept-card-overlay"></div>
+        <div class="rezept-card-top">
+          <div class="rezept-tags-group">${tagsHtml}</div>
+          ${timeBadge}
+        </div>
+        <div class="rezept-card-body">
+          <h3 class="rezept-card-title">
+            ${escapeLokalHtml(r.Titel || "")}${badgeHtml}${isLink ? `<span style="margin-left: 6px; font-size: 0.9rem; opacity: 0.9;">🔗</span>` : ""}
+          </h3>
+          <div class="rezept-card-meta">
+            <div class="rezept-author-box">
+              <img
+                src="${authorAvatar}"
+                onerror="this.onerror=null; this.src='logo.png';"
+                class="rezept-author-avatar"
+                alt="${escapeLokalHtml(authorName)}"
+              />
+              <span>${escapeLokalHtml(authorName)}</span>
+            </div>
+            ${portionBadge}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// Detail Modal
+function openRecipeDetail(recipeId) {
+  const r = allRecipes.find((x) => x.id === recipeId);
+  if (!r) return;
+
+  currentDetailRecipe = r;
+  currentDetailPortions = parseInt(r.Personenanzahl, 10) || 4;
+
+  const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
+  const imgSrc = getRecipeImage(arts);
+  const heroEl = document.getElementById("recipe-detail-hero");
+  if (heroEl) {
+    heroEl.style.backgroundImage = `url('${imgSrc}')`;
+  }
+
+  document.getElementById("recipe-detail-title").textContent =
+    r.Titel || "Rezept";
+
+  const authorName = r.Ersteller || "Gruppe";
+  document.getElementById("recipe-detail-author-name").textContent = authorName;
+  const authorImg = document.getElementById("recipe-detail-author-img");
+  if (authorImg) {
+    authorImg.src = `avatars/${authorName}.webp`;
+    authorImg.onerror = () => {
+      authorImg.src = "logo.png";
+    };
+  }
+
+  const timeEl = document.getElementById("recipe-detail-time");
+  const isLink = !!r.isLink;
+
+  const tagsEl = document.getElementById("recipe-detail-tags");
+  if (tagsEl) {
+    let tagsHtml = arts
+      .map(
+        (tag) => `<span class="rezept-pill-tag">${escapeLokalHtml(tag)}</span>`,
+      )
+      .join("");
+    if (isLink) {
+      tagsHtml += `<span class="rezept-link-badge">Website</span>`;
+    }
+    tagsEl.innerHTML = tagsHtml;
+  }
+
+  const linkContainer = document.getElementById("recipe-detail-link-container");
+  const linkBtn = document.getElementById("recipe-detail-link-btn");
+  const classicContent = document.getElementById(
+    "recipe-detail-classic-content",
+  );
+  const addCartBtn = document.getElementById("btn-recipe-add-cart");
+
+  if (isLink) {
+    if (linkContainer) linkContainer.style.display = "block";
+    if (linkBtn) linkBtn.href = r.link || "#";
+    if (classicContent) classicContent.style.display = "none";
+    if (addCartBtn) addCartBtn.style.display = "none";
+    if (timeEl) timeEl.textContent = "🔗 Web-Link";
+  } else {
+    if (linkContainer) linkContainer.style.display = "none";
+    if (classicContent) classicContent.style.display = "block";
+    if (addCartBtn) addCartBtn.style.display = "flex";
+    if (timeEl) timeEl.textContent = `⏱️ ${r.Zeit || 45} Min.`;
+
+    document.getElementById("recipe-detail-portions").textContent =
+      currentDetailPortions;
+    renderDetailIngredients();
+
+    const stepsEl = document.getElementById("recipe-detail-steps");
+    const rawSteps = Array.isArray(r.Zubereitung)
+      ? r.Zubereitung
+      : (r.Zubereitung || "").split("\n").filter((s) => s.trim());
+
+    if (stepsEl) {
+      if (rawSteps.length === 0) {
+        stepsEl.innerHTML = `<div style="color: #94a3b8; font-style: italic;">Keine Zubereitungsschritte hinterlegt.</div>`;
+      } else {
+        stepsEl.innerHTML = rawSteps
+          .map(
+            (step, idx) => `
+            <div class="recipe-step-item">
+              <div class="recipe-step-num">${idx + 1}</div>
+              <div class="recipe-step-text">${escapeLokalHtml(step)}</div>
+            </div>
+          `,
+          )
+          .join("");
+      }
+    }
+  }
+
+  const notes = r["Zusätzliche Hinweise"] || r.Hinweise || "";
+  const notesContainer = document.getElementById(
+    "recipe-detail-notes-container",
+  );
+  const notesEl = document.getElementById("recipe-detail-notes");
+  if (notesContainer && notesEl) {
+    if (notes.trim()) {
+      notesContainer.style.display = "block";
+      notesEl.textContent = notes;
+    } else {
+      notesContainer.style.display = "none";
+    }
+  }
+
+  const modal = document.getElementById("recipe-detail-modal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeRecipeDetail() {
+  const modal = document.getElementById("recipe-detail-modal");
+  if (modal) modal.style.display = "none";
+  currentDetailRecipe = null;
+}
+
+function updateRecipeDetailPortions(delta) {
+  if (!currentDetailRecipe || currentDetailRecipe.isLink) return;
+  const newPortions = Math.max(1, Math.min(50, currentDetailPortions + delta));
+  if (newPortions === currentDetailPortions) return;
+  currentDetailPortions = newPortions;
+  document.getElementById("recipe-detail-portions").textContent =
+    currentDetailPortions;
+  renderDetailIngredients();
+}
+
+function parseIngredientAmount(str) {
+  if (!str) return 0;
+  const clean = String(str).replace(",", ".").trim();
+  const val = parseFloat(clean);
+  return isNaN(val) ? 0 : val;
+}
+
+function formatScaledAmount(val) {
+  if (val === 0) return "";
+  if (Math.abs(val - Math.round(val)) < 0.05) {
+    return String(Math.round(val));
+  }
+  return val.toFixed(1).replace(".", ",");
+}
+
+function renderDetailIngredients() {
+  const ingListEl = document.getElementById("recipe-detail-ingredients");
+  if (!ingListEl || !currentDetailRecipe || currentDetailRecipe.isLink) return;
+
+  const basePortions = parseInt(currentDetailRecipe.Personenanzahl, 10) || 4;
+  const rawIngs = Array.isArray(currentDetailRecipe.Zutaten)
+    ? currentDetailRecipe.Zutaten
+    : [];
+
+  if (rawIngs.length === 0) {
+    ingListEl.innerHTML = `<div style="color: #94a3b8; font-style: italic;">Keine Zutaten angegeben.</div>`;
+    return;
+  }
+
+  ingListEl.innerHTML = rawIngs
+    .map((ing) => {
+      const origAmountNum = parseIngredientAmount(ing.amount);
+      let displayAmount = ing.amount || "";
+      if (origAmountNum > 0 && basePortions > 0) {
+        const scaled = (origAmountNum / basePortions) * currentDetailPortions;
+        displayAmount = formatScaledAmount(scaled);
+      }
+      const unit = ing.unit || "";
+      const name = ing.name || "";
+      const amountStr = displayAmount
+        ? `${displayAmount} ${unit}`.trim()
+        : unit;
+
+      return `
+        <div class="recipe-ing-item" onclick="this.classList.toggle('checked')">
+          <input type="checkbox" style="pointer-events: none; accent-color: #f43f5e;" />
+          <span class="recipe-ing-amount">${escapeLokalHtml(amountStr)}</span>
+          <span class="recipe-ing-name">${escapeLokalHtml(name)}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function editRecipeFromDetail() {
+  if (!currentDetailRecipe) return;
+  const id = currentDetailRecipe.id;
+  closeRecipeDetail();
+  openRecipeModal(id);
+}
+
+function deleteRecipeFromDetail() {
+  if (!currentDetailRecipe) return;
+  const id = currentDetailRecipe.id;
+  const title = currentDetailRecipe.Titel || "dieses Rezept";
+  closeRecipeDetail();
+
+  const confirmBtn = document.getElementById("btn-confirm-action");
+  document.getElementById("confirm-modal-title").textContent =
+    "Rezept löschen?";
+  document.getElementById("confirm-modal-text").textContent =
+    `Möchtest du "${title}" wirklich löschen?`;
+  confirmBtn.textContent = "Löschen";
+  confirmBtn.onclick = async () => {
+    window.closeConfirmModal();
+    window.showLoading(true, "Rezept wird gelöscht...");
+    try {
+      await deleteDoc(doc(db, "data_rezepte", id));
+    } catch (e) {
+      console.error("Fehler beim Löschen des Rezepts:", e);
+      window.showAppModal(
+        "Fehler",
+        "Konnte Rezept nicht löschen: " + e.message,
+      );
+    } finally {
+      window.showLoading(false);
+    }
+  };
+  document.getElementById("confirm-modal-container").style.display = "flex";
+}
+
+// ==========================================
+// Einkaufszettel (Shopping Cart) Logik
+// ==========================================
+function getCart() {
+  try {
+    return JSON.parse(localStorage.getItem("recipe_cart") || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  localStorage.setItem("recipe_cart", JSON.stringify(cart));
+  updateCartBadge();
+}
+
+function updateCartBadge() {
+  const cart = getCart();
+  const badge = document.getElementById("cart-badge");
+  if (badge) {
+    badge.textContent = cart.length;
+    badge.style.display = cart.length > 0 ? "inline-flex" : "none";
+  }
+}
+
+function openCartModal() {
+  renderCart();
+  const modal = document.getElementById("cart-modal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeCartModal() {
+  const modal = document.getElementById("cart-modal");
+  if (modal) modal.style.display = "none";
+}
+
+function renderCart() {
+  updateCartBadge();
+  const container = document.getElementById("cart-list-container");
+  if (!container) return;
+
+  const cart = getCart();
+  if (cart.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 35px 10px; color: #94a3b8;">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">🛒</div>
+        <div style="font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">Dein Einkaufszettel ist leer</div>
+        <div style="font-size: 0.82rem;">Füge Zutaten direkt aus einem Rezept über „In den Einkaufswagen“ hinzu.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = cart
+    .map((item, idx) => {
+      const amountStr = item.amount ? String(item.amount) : "";
+      const unitStr = item.unit ? String(item.unit) : "";
+      const displayAmount = (amountStr + " " + unitStr).trim();
+      const isChecked = !!item.checked;
+
+      return `
+      <div class="cart-item-row ${isChecked ? "checked" : ""}" onclick="window.toggleCartItem(${idx})">
+        <div class="cart-item-left">
+          <input type="checkbox" class="cart-item-checkbox" ${isChecked ? "checked" : ""}>
+          ${displayAmount ? `<span class="cart-item-amount">${escapeLokalHtml(displayAmount)}</span>` : ""}
+          <span class="cart-item-name">${escapeLokalHtml(item.name || "")}</span>
+        </div>
+        <button type="button" class="btn-remove-cart-item" onclick="event.stopPropagation(); window.removeFromCart(${idx});" title="Entfernen">✕</button>
+      </div>
+    `;
+    })
+    .join("");
+}
+
+function toggleCartItem(idx) {
+  const cart = getCart();
+  if (cart[idx]) {
+    cart[idx].checked = !cart[idx].checked;
+    saveCart(cart);
+    renderCart();
+  }
+}
+
+function removeFromCart(idx) {
+  const cart = getCart();
+  cart.splice(idx, 1);
+  saveCart(cart);
+  renderCart();
+}
+
+function clearCart() {
+  const cart = getCart();
+  if (cart.length === 0) return;
+
+  const confirmBtn = document.getElementById("btn-confirm-action");
+  document.getElementById("confirm-modal-title").textContent =
+    "Einkaufszettel leeren?";
+  document.getElementById("confirm-modal-text").textContent =
+    "Möchtest du wirklich alle Zutaten vom Einkaufszettel entfernen?";
+  confirmBtn.textContent = "Leeren";
+  confirmBtn.onclick = () => {
+    window.closeConfirmModal();
+    saveCart([]);
+    renderCart();
+  };
+  document.getElementById("confirm-modal-container").style.display = "flex";
+}
+
+function addToCartFromDetail() {
+  if (!currentDetailRecipe || currentDetailRecipe.isLink) return;
+
+  const basePortions = parseInt(currentDetailRecipe.Personenanzahl, 10) || 4;
+  const rawIngs = Array.isArray(currentDetailRecipe.Zutaten)
+    ? currentDetailRecipe.Zutaten
+    : [];
+
+  // Filter: Alles außer reines "Wasser" (wie in Look & Cook)
+  const filtered = rawIngs.filter(
+    (ing) => ing.name && !ing.name.toLowerCase().includes("wasser"),
+  );
+
+  if (filtered.length === 0) {
+    window.showAppModal("Einkaufszettel", "Keine relevanten Zutaten gefunden.");
+    return;
+  }
+
+  const cart = getCart();
+
+  filtered.forEach((ing) => {
+    const origAmountNum = parseIngredientAmount(ing.amount);
+    let scaledAmountStr = ing.amount || "";
+    if (origAmountNum > 0 && basePortions > 0) {
+      const scaled = (origAmountNum / basePortions) * currentDetailPortions;
+      scaledAmountStr = formatScaledAmount(scaled);
+    }
+
+    const nameNorm = (ing.name || "").toLowerCase().trim();
+    const unitNorm = (ing.unit || "").toLowerCase().trim();
+
+    const existingIdx = cart.findIndex(
+      (item) =>
+        !item.checked &&
+        (item.name || "").toLowerCase().trim() === nameNorm &&
+        (item.unit || "").toLowerCase().trim() === unitNorm,
+    );
+
+    if (existingIdx > -1) {
+      const v1 = parseIngredientAmount(cart[existingIdx].amount);
+      const v2 = parseIngredientAmount(scaledAmountStr);
+      if (v1 > 0 && v2 > 0) {
+        cart[existingIdx].amount = formatScaledAmount(v1 + v2);
+      }
+    } else {
+      cart.push({
+        name: ing.name.trim(),
+        unit: ing.unit || "",
+        amount: scaledAmountStr,
+        checked: false,
+      });
+    }
+  });
+
+  saveCart(cart);
+  if (typeof confetti === "function") {
+    confetti({ particleCount: 35, spread: 50, origin: { y: 0.8 } });
+  }
+  window.showAppModal(
+    "Einkaufszettel",
+    `${filtered.length} Zutaten wurden zusammengefasst auf den Einkaufszettel gelegt!`,
+  );
+}
+
+// ==========================================
+// PDF Generierung & Speicherung (reines jsPDF)
+// ==========================================
+function getJsPdfConstructor() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (typeof window.jsPDF === "function") return window.jsPDF;
+  return null;
+}
+
+async function saveGeneratedPdf(doc, filename, title) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // 1. Mobile (iOS / Android): Web Share API mit "In Dateien sichern" / iCloud Drive / WhatsApp
+  if (isMobile && navigator.canShare) {
+    try {
+      const pdfBlob = doc.output("blob");
+      const file = new File([pdfBlob], filename, { type: "application/pdf" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: title || filename,
+        });
+        return;
+      }
+    } catch (e) {
+      if (e.name === "AbortError") return; // Nutzer hat Share-Sheet abgebrochen
+      console.warn("Mobile Share fehlgeschlagen, nutze doc.save():", e);
+    }
+  }
+
+  // 2. Desktop (Mac / Windows / Linux) / Fallback:
+  // doc.save() lädt die Datei direkt in den Download-Ordner bzw. öffnet den Finder-Speicherdialog
+  doc.save(filename);
+}
+
+async function exportRecipePdf() {
+  if (!currentDetailRecipe) return;
+  const r = currentDetailRecipe;
+
+  if (r.isLink) {
+    window.showCustomModal(
+      "Hinweis",
+      "Web-Link Rezepte können nicht als PDF exportiert werden.",
+    );
+    return;
+  }
+
+  const jsPDF = getJsPdfConstructor();
+  if (!jsPDF) {
+    window.showCustomModal(
+      "PDF Fehler",
+      "Die PDF-Bibliothek wird noch geladen oder konnte nicht erreicht werden. Bitte lade die Seite einmal neu.",
+    );
+    return;
+  }
+
+  window.showLoading(true, "PDF wird erstellt...");
+  await new Promise((resolve) => setTimeout(resolve, 60));
+
+  try {
+    const title = r.Titel || "Rezept";
+    const cleanTitle = title.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_");
+    const filename = `Rezept_${cleanTitle}.pdf`;
+
+    const basePortions = parseInt(r.Personenanzahl, 10) || 4;
+    const portions = currentDetailPortions || basePortions;
+    const author = r.Ersteller || "Gruppe";
+    const time = r.Zeit ? `${r.Zeit} Min.` : "45 Min.";
+    const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
+    const ingredients = Array.isArray(r.Zutaten) ? r.Zutaten : [];
+    const rawSteps = Array.isArray(r.Zubereitung)
+      ? r.Zubereitung
+      : (r.Zubereitung || "").split("\n").filter((s) => s.trim());
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 16;
+    const contentWidth = pageWidth - margin * 2; // 178 mm
+    let y = margin;
+
+    function checkPageBreak(neededHeight) {
+      if (y + neededHeight > pageHeight - margin - 10) {
+        doc.addPage();
+        y = margin;
+        return true;
+      }
+      return false;
+    }
+
+    const todayStr = new Date().toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    // --- 1. App Header Meta ---
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(225, 29, 72); // Accent Rose #e11d48
+    doc.text("KLAPSENCAL  •  REZEPTBUCH", margin, y);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(todayStr, pageWidth - margin, y, { align: "right" });
+    y += 7;
+
+    // --- 2. Title ---
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(15, 23, 42); // #0f172a
+    const titleLines = doc.splitTextToSize(title, contentWidth);
+    doc.text(titleLines, margin, y);
+    y += titleLines.length * 7.5 + 2;
+
+    // --- 3. Meta Infobox (Author, Time, Portions, Tags) ---
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin, y, contentWidth, 11, 2, 2, "FD");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(51, 65, 85);
+    let metaItems = [
+      `Koch: ${author}`,
+      `Zeit: ${time}`,
+      `Portionen: ${portions}`,
+    ];
+    if (arts.length > 0) metaItems.push(arts.join(", "));
+    doc.text(metaItems.join("   |   "), margin + 4, y + 7);
+    y += 18;
+
+    // --- 4. Ingredients Section ---
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(225, 29, 72);
+    doc.text("Zutaten", margin, y);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`(für ${portions} Portionen berechnet)`, margin + 22, y);
+    y += 2.5;
+
+    doc.setDrawColor(225, 29, 72);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, margin + contentWidth, y);
+    y += 5.5;
+
+    if (ingredients.length === 0) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text("Keine Zutaten angegeben.", margin, y);
+      y += 8;
+    } else {
+      const formattedIngs = ingredients.map((ing) => {
+        const origAmountNum = parseIngredientAmount(ing.amount);
+        let displayAmount = ing.amount || "";
+        if (origAmountNum > 0 && basePortions > 0) {
+          const scaled = (origAmountNum / basePortions) * portions;
+          displayAmount = formatScaledAmount(scaled);
+        }
+        const unit = ing.unit || "";
+        const name = ing.name || "";
+        const amountStr = displayAmount
+          ? `${displayAmount} ${unit}`.trim()
+          : unit;
+        return { amount: amountStr, name: name };
+      });
+
+      // 2-Spalten-Layout
+      const colW = (contentWidth - 8) / 2;
+      for (let i = 0; i < formattedIngs.length; i += 2) {
+        checkPageBreak(6.5);
+        const item1 = formattedIngs[i];
+        const item2 = formattedIngs[i + 1];
+
+        // Spalte 1
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(190, 18, 60);
+        doc.text(item1.amount, margin, y);
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(30, 41, 59);
+        const name1 = doc.splitTextToSize(item1.name, colW - 28);
+        doc.text(name1, margin + 26, y);
+
+        // Spalte 2
+        if (item2) {
+          const col2X = margin + colW + 8;
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(190, 18, 60);
+          doc.text(item2.amount, col2X, y);
+
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(30, 41, 59);
+          const name2 = doc.splitTextToSize(item2.name, col2X - 28);
+          doc.text(name2, col2X + 26, y);
+        }
+        y += 6;
+      }
+      y += 8;
+    }
+
+    // --- 5. Preparation Steps ---
+    checkPageBreak(16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(225, 29, 72);
+    doc.text("Zubereitung", margin, y);
+    y += 2.5;
+
+    doc.setDrawColor(225, 29, 72);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, margin + contentWidth, y);
+    y += 7;
+
+    if (rawSteps.length === 0) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text("Keine Zubereitungsschritte angegeben.", margin, y);
+      y += 8;
+    } else {
+      rawSteps.forEach((step, idx) => {
+        const stepNum = `${idx + 1}.`;
+        const stepLines = doc.splitTextToSize(step, contentWidth - 10);
+        const stepH = stepLines.length * 4.8 + 4;
+        checkPageBreak(stepH);
+
+        // Nummer
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(225, 29, 72);
+        doc.text(stepNum, margin, y);
+
+        // Text
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+        doc.text(stepLines, margin + 8, y);
+
+        y += stepH;
+      });
+    }
+
+    // --- 6. Footer auf allen Seiten ---
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(margin, pageHeight - 12, margin + contentWidth, pageHeight - 12);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text("KlapsenCal • Guten Appetit!", margin, pageHeight - 7);
+      doc.text(
+        `Seite ${p} von ${totalPages}`,
+        pageWidth - margin,
+        pageHeight - 7,
+        {
+          align: "right",
+        },
+      );
+    }
+
+    await saveGeneratedPdf(doc, filename, title);
+  } catch (err) {
+    console.error("PDF-Erstellung fehlgeschlagen:", err);
+    window.showCustomModal(
+      "Fehler",
+      "PDF konnte nicht erstellt werden: " + err.message,
+    );
+  } finally {
+    window.showLoading(false);
+  }
+}
+
+async function exportCartPdf() {
+  const cart = getCart();
+  if (!cart || cart.length === 0) {
+    window.showCustomModal("Einkaufszettel", "Dein Einkaufszettel ist leer.");
+    return;
+  }
+
+  const jsPDF = getJsPdfConstructor();
+  if (!jsPDF) {
+    window.showCustomModal(
+      "PDF Fehler",
+      "Die PDF-Bibliothek wird noch geladen. Bitte lade die Seite kurz neu.",
+    );
+    return;
+  }
+
+  window.showLoading(true, "PDF wird erstellt...");
+  await new Promise((resolve) => setTimeout(resolve, 60));
+
+  try {
+    const todayStr = new Date().toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    const filename = `Einkaufszettel_${todayStr.replace(/\./g, "-")}.pdf`;
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 16;
+    const contentWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    function checkPageBreak(neededHeight) {
+      if (y + neededHeight > pageHeight - margin - 10) {
+        doc.addPage();
+        y = margin;
+        return true;
+      }
+      return false;
+    }
+
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(225, 29, 72);
+    doc.text("KLAPSENCAL  •  EINKAUFSZETTEL", margin, y);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(todayStr, pageWidth - margin, y, { align: "right" });
+    y += 7;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.text("Einkaufszettel", margin, y);
+    y += 2.5;
+
+    doc.setDrawColor(225, 29, 72);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, margin + contentWidth, y);
+    y += 7;
+
+    // Items
+    cart.forEach((item) => {
+      checkPageBreak(7.5);
+      const amountStr = item.amount ? String(item.amount) : "";
+      const unitStr = item.unit ? String(item.unit) : "";
+      const displayAmount = (amountStr + " " + unitStr).trim();
+
+      // Checkbox
+      doc.setDrawColor(148, 163, 184);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y - 3.5, 4.5, 4.5, 1, 1, "S");
+
+      // Amount
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(190, 18, 60);
+      doc.text(displayAmount, margin + 8, y);
+
+      // Name
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text(item.name || "", margin + 45, y);
+
+      // Light separator
+      doc.setDrawColor(241, 245, 249);
+      doc.line(margin, y + 2.5, margin + contentWidth, y + 2.5);
+
+      y += 7;
+    });
+
+    // Footers
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(margin, pageHeight - 12, margin + contentWidth, pageHeight - 12);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`KlapsenCal • ${cart.length} Einträge`, margin, pageHeight - 7);
+      doc.text(
+        `Seite ${p} von ${totalPages}`,
+        pageWidth - margin,
+        pageHeight - 7,
+        {
+          align: "right",
+        },
+      );
+    }
+
+    await saveGeneratedPdf(doc, filename, "Einkaufszettel " + todayStr);
+  } catch (err) {
+    console.error("PDF-Erstellung für Einkaufszettel fehlgeschlagen:", err);
+    window.showCustomModal(
+      "Fehler",
+      "PDF konnte nicht erstellt werden: " + err.message,
+    );
+  } finally {
+    window.showLoading(false);
+  }
+}
+
+// ==========================================
+// Rezept Formular Modal (Create / Edit)
+// ==========================================
+function toggleRecipeLinkMode(isLink) {
+  const linkGroup = document.getElementById("recipe-link-group");
+  const classicFields = document.getElementById("recipe-classic-fields");
+  const linkInput = document.getElementById("recipe-input-link");
+
+  if (linkGroup) linkGroup.style.display = isLink ? "block" : "none";
+  if (classicFields) classicFields.style.display = isLink ? "none" : "block";
+  if (linkInput && isLink) {
+    linkInput.focus();
+  }
+}
+
+function renderRecipeTypeChips(selected = []) {
+  selectedTypesOrder = Array.isArray(selected)
+    ? [...selected]
+    : selected
+      ? [selected]
+      : [];
+  const container = document.getElementById("recipe-type-chips-container");
+  if (!container) return;
+
+  container.innerHTML = ALL_RECIPE_CATEGORIES.map((cat) => {
+    const idx = selectedTypesOrder.indexOf(cat);
+    const isSel = idx > -1;
+    const badgeHtml = isSel ? `<span class="chip-badge">${idx + 1}</span>` : "";
+    return `
+      <div class="recipe-tag-choice ${isSel ? "active" : ""}" data-cat="${cat}" onclick="window.toggleRecipeTypeChip('${cat}')">
+        <span>${cat}</span>${badgeHtml}
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleRecipeTypeChip(cat) {
+  const idx = selectedTypesOrder.indexOf(cat);
+  if (idx > -1) {
+    selectedTypesOrder.splice(idx, 1);
+  } else {
+    selectedTypesOrder.push(cat);
+  }
+  renderRecipeTypeChips(selectedTypesOrder);
+}
+
+function openRecipeModal(recipeId = null) {
+  editingRecipeId = recipeId;
+  const modal = document.getElementById("recipe-modal");
+  const titleEl = document.getElementById("recipe-modal-title");
+  const form = document.getElementById("recipe-form");
+  if (!modal || !form) return;
+
+  form.reset();
+  document.getElementById("recipe-edit-id").value = recipeId || "";
+
+  const authorSelect = document.getElementById("recipe-input-author");
+  if (authorSelect) {
+    authorSelect.innerHTML = allAuthors
+      .map((a) => `<option value="${a}">${a}</option>`)
+      .join("");
+  }
+
+  const ingContainer = document.getElementById(
+    "recipe-ingredients-rows-container",
+  );
+  if (ingContainer) ingContainer.innerHTML = "";
+
+  const isLinkCheckbox = document.getElementById("recipe-is-link");
+
+  if (recipeId) {
+    const r = allRecipes.find((x) => x.id === recipeId);
+    if (r) {
+      titleEl.textContent = "✏️ Rezept bearbeiten";
+      document.getElementById("recipe-input-title").value = r.Titel || "";
+      if (authorSelect && r.Ersteller) authorSelect.value = r.Ersteller;
+
+      const isLink = !!r.isLink;
+      if (isLinkCheckbox) isLinkCheckbox.checked = isLink;
+      toggleRecipeLinkMode(isLink);
+
+      if (isLink) {
+        document.getElementById("recipe-input-link").value = r.link || "";
+      } else {
+        document.getElementById("recipe-input-time").value = r.Zeit || "45";
+        document.getElementById("recipe-input-portions").value =
+          r.Personenanzahl || "4";
+
+        const ings = Array.isArray(r.Zutaten) ? r.Zutaten : [];
+        if (ings.length > 0) {
+          ings.forEach((ing) =>
+            addIngredientRow(ing.amount, ing.unit, ing.name),
+          );
+        } else {
+          addIngredientRow();
+        }
+
+        const rawSteps = Array.isArray(r.Zubereitung)
+          ? r.Zubereitung.join("\n")
+          : r.Zubereitung || "";
+        document.getElementById("recipe-input-steps").value = rawSteps;
+      }
+
+      const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
+      renderRecipeTypeChips(arts);
+
+      document.getElementById("recipe-input-notes").value =
+        r["Zusätzliche Hinweise"] || r.Hinweise || "";
+    }
+  } else {
+    titleEl.textContent = "📖 Neues Rezept anlegen";
+    if (isLinkCheckbox) isLinkCheckbox.checked = false;
+    toggleRecipeLinkMode(false);
+
+    document.getElementById("recipe-input-time").value = "45";
+    document.getElementById("recipe-input-portions").value = "4";
+    renderRecipeTypeChips(["Fleisch"]);
+    addIngredientRow();
+    addIngredientRow();
+    addIngredientRow();
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeRecipeModal() {
+  const modal = document.getElementById("recipe-modal");
+  if (modal) modal.style.display = "none";
+  editingRecipeId = null;
+  selectedTypesOrder = [];
+}
+
+function addIngredientRow(amount = "", unit = "", name = "") {
+  const container = document.getElementById(
+    "recipe-ingredients-rows-container",
+  );
+  if (!container) return;
+
+  const unitOptions = STANDARD_UNITS.map(
+    (u) =>
+      `<option value="${u}" ${u.toLowerCase() === (unit || "").toLowerCase() ? "selected" : ""}>${u || "Einheit..."}</option>`,
+  ).join("");
+
+  const row = document.createElement("div");
+  row.className = "ing-edit-row";
+  row.innerHTML = `
+    <input type="text" class="form-control ing-amount" placeholder="Menge" value="${escapeLokalHtml(String(amount || ""))}">
+    <select class="form-control ing-unit" style="cursor: pointer;">
+      ${unitOptions}
+    </select>
+    <input type="text" class="form-control ing-name" placeholder="Zutat (z. B. Zwiebeln)" value="${escapeLokalHtml(String(name || ""))}" required>
+    <button type="button" class="btn-remove-ing-row" onclick="this.parentElement.remove()" title="Zeile löschen">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+async function saveRecipe(event) {
+  if (event) event.preventDefault();
+
+  const titleInput = document.getElementById("recipe-input-title");
+  const authorSelect = document.getElementById("recipe-input-author");
+  const isLinkMode = !!document.getElementById("recipe-is-link")?.checked;
+  const linkInput = document.getElementById("recipe-input-link");
+  const timeInput = document.getElementById("recipe-input-time");
+  const portionsInput = document.getElementById("recipe-input-portions");
+  const stepsInput = document.getElementById("recipe-input-steps");
+  const notesInput = document.getElementById("recipe-input-notes");
+
+  const title = titleInput ? titleInput.value.trim() : "";
+  if (!title) {
+    window.showAppModal("Hinweis", "Bitte gib einen Rezept-Titel ein.");
+    return;
+  }
+
+  if (isLinkMode) {
+    const linkVal = linkInput ? linkInput.value.trim() : "";
+    if (
+      !linkVal ||
+      (!linkVal.includes("http://") && !linkVal.includes("https://"))
+    ) {
+      window.showAppModal(
+        "Hinweis",
+        "Bitte gib einen gültigen Web-Link ein (beginnend mit https:// oder http://).",
+      );
+      return;
+    }
+  }
+
+  const selectedArts =
+    selectedTypesOrder.length > 0 ? [...selectedTypesOrder] : ["Fleisch"];
+
+  const recipeData = {
+    Titel: title,
+    Ersteller: authorSelect ? authorSelect.value : "Gruppe",
+    Art: selectedArts,
+    isLink: isLinkMode,
+    "Zusätzliche Hinweise": notesInput ? notesInput.value.trim() : "",
+    lastAction: editingRecipeId ? "update" : "new",
+    updatedAt: serverTimestamp(),
+  };
+
+  if (isLinkMode) {
+    recipeData.link = linkInput.value.trim();
+  } else {
+    const zutaten = [];
+    document.querySelectorAll(".ing-edit-row").forEach((row) => {
+      const amount = row.querySelector(".ing-amount")?.value.trim() || "";
+      const unit = row.querySelector(".ing-unit")?.value.trim() || "";
+      const name = row.querySelector(".ing-name")?.value.trim() || "";
+      if (name) {
+        zutaten.push({ amount, unit, name });
+      }
+    });
+
+    const rawStepsText = stepsInput ? stepsInput.value.trim() : "";
+    const zubereitung = rawStepsText
+      .split("\n")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    recipeData.Zeit = timeInput ? String(timeInput.value || 45) : "45";
+    recipeData.Personenanzahl = portionsInput
+      ? String(portionsInput.value || 4)
+      : "4";
+    recipeData.Zutaten = zutaten;
+    recipeData.Zubereitung = zubereitung;
+  }
+
+  const sanitizedTitle = title.replace(/[^\w\s-]/gi, "").replace(/\s+/g, "-");
+  const docId = editingRecipeId || sanitizedTitle || "Rezept-" + Date.now();
+
+  window.showLoading(true, "Rezept wird gespeichert...");
+  try {
+    // Falls Titel geändert wurde, altes Dokument löschen
+    if (editingRecipeId && editingRecipeId !== docId) {
+      await deleteDoc(doc(db, "data_rezepte", editingRecipeId));
+    }
+
+    await setDoc(doc(db, "data_rezepte", docId), recipeData, { merge: true });
+    closeRecipeModal();
+    if (typeof confetti === "function") {
+      confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+    }
+  } catch (e) {
+    console.error("Fehler beim Speichern des Rezepts:", e);
+    window.showAppModal(
+      "Fehler",
+      "Konnte Rezept nicht speichern: " + e.message,
+    );
+  } finally {
+    window.showLoading(false);
+  }
+}
+
+// Window Exports
+window.openRecipeModal = openRecipeModal;
+window.closeRecipeModal = closeRecipeModal;
+window.addIngredientRow = addIngredientRow;
+window.saveRecipe = saveRecipe;
+window.openRecipeDetail = openRecipeDetail;
+window.closeRecipeDetail = closeRecipeDetail;
+window.updateRecipeDetailPortions = updateRecipeDetailPortions;
+window.editRecipeFromDetail = editRecipeFromDetail;
+window.deleteRecipeFromDetail = deleteRecipeFromDetail;
+window.filterRezepte = filterRezepte;
+window.filterAndRenderRezepte = filterAndRenderRezepte;
+window.renderRezepteView = renderRezepteView;
+window.onRecipeSortChange = onRecipeSortChange;
+window.toggleRecipeTypeChip = toggleRecipeTypeChip;
+window.toggleRecipeLinkMode = toggleRecipeLinkMode;
+window.openCartModal = openCartModal;
+window.closeCartModal = closeCartModal;
+window.toggleCartItem = toggleCartItem;
+window.removeFromCart = removeFromCart;
+window.clearCart = clearCart;
+window.addToCartFromDetail = addToCartFromDetail;
+window.printRecipe = exportRecipePdf;
+window.exportRecipePdf = exportRecipePdf;
+window.printCart = exportCartPdf;
+window.exportCartPdf = exportCartPdf;
+
+// ==========================================
 // 12. Initialisierung beim Laden
 // ==========================================
 // Sofortiges Rendern der UI
@@ -3922,6 +5424,7 @@ filterAndRender();
 renderKasseView();
 renderPurchasesView();
 renderLokaleView();
+renderRezepteView();
 updateNotificationButton();
 renderFormParticipants();
 renderLokalParticipants();
@@ -3934,6 +5437,7 @@ initEventsListener();
 initKasseListener();
 initPurchasesListener();
 initLokaleListener();
+initRezepteListener();
 
 // ==========================================
 // 16. Readme & Info Modal Logik

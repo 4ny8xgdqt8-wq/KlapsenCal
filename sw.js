@@ -1,4 +1,4 @@
-const VERSION = "3.1.0";
+const VERSION = "3.2.9";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -26,7 +26,22 @@ const ASSETS_TO_CACHE = [
   "./avatars/Simone.webp",
   "./avatars/Tanja.webp",
   "./avatars/Thorsten.webp",
+  "./images/rezepte/Backen.webp",
+  "./images/rezepte/Beilagen.webp",
+  "./images/rezepte/Brot.webp",
+  "./images/rezepte/Burger.webp",
+  "./images/rezepte/Cocktails.webp",
+  "./images/rezepte/Dessert.webp",
+  "./images/rezepte/Dips.webp",
+  "./images/rezepte/Fisch.webp",
+  "./images/rezepte/Fleisch.webp",
+  "./images/rezepte/Salat.webp",
+  "./images/rezepte/Saucen.webp",
+  "./images/rezepte/Snack.webp",
+  "./images/rezepte/Steak.webp",
+  "./images/rezepte/Suppe.webp",
   "https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
 ];
 
 self.addEventListener("install", (event) => {
