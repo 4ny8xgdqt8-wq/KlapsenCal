@@ -171,7 +171,10 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 ### 13. 📖 Rezeptbuch & Kulinarik („Look & Cook“)
 
 - **Neuer Haupt-Tab „📖 Rezepte“ in der Navigationsleiste**: Die vollwertige Integration eurer Rezeptbuch-App direkt in KlapsenCal! Alle gemeinsamen Lieblingsgerichte, Grillrezepte, Salate und Drinks an einem zentralen Ort.
-- **Kompakte Glassmorphism Rezept-Karten**: Jedes Gericht wird auf einer optimierten, kompakten Karte mit stimmungsvollem Kategorie-Hintergrundbild, Zubereitungszeit, Portionsanzahl und Ersteller-Avatar präsentiert. Durch die kompaktere Bauhöhe sind deutlich mehr Lieblingsrezepte auf einen Blick sichtbar.
+- **Modernes Kitchen-Stories Split-Kartendesign**:
+  - **Brillanter Foto-Hero**: Das Kategorie-Foodbild wird im oberen Bereich der Kachel gestochen scharf und farbenfroh präsentiert, veredelt durch schwebende Badges für Kategorie, Dauer (`⏱️ 25 Min.`) und Neuheiten (`✨ NEW` / `UPDATE`).
+  - **Klar lesbarer Dark-Glass-Körper**: Der Rezepttitel steht frei auf ruhigem, dunklem Glas – 100 % reflexionsfrei und perfekt lesbar.
+  - **Harmonischer Footer**: Koch mit Profilbild (`Von [Name]`) und Portionsanzahl (`👥 4 Port.`).
 - **🛒 Integrierter Einkaufszettel (Warenkorb)**:
   - Mit einem Klick auf **„🛒 In den Einkaufswagen“** werden alle Zutaten (ohne Wasser) automatisch auf den gemeinsamen Einkaufszettel gelegt.
   - Gleiche Zutaten mit gleicher Einheit werden intelligent zusammengezählt.
@@ -201,4 +204,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`, `data_rezepte`, `data_stauder`, `data_stauder_kisten`).
-- **Service Worker**: PWA Cache v4.11 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v4.15 mit Network-First Strategie für App-Ressourcen.

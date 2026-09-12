@@ -1,4 +1,4 @@
-const VERSION = "4.11";
+const VERSION = "4.15";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -34,6 +34,7 @@ const ASSETS_TO_CACHE = [
   "./images/rezepte/Cocktails.webp",
   "./images/rezepte/Dessert.webp",
   "./images/rezepte/Dips.webp",
+  "./images/rezepte/Dutch.webp",
   "./images/rezepte/Fisch.webp",
   "./images/rezepte/Fleisch.webp",
   "./images/rezepte/Salat.webp",

@@ -4311,7 +4311,10 @@ function renderLokaleView() {
       `;
     }
 
-    // Kriterien-Leiste (schlank, einzeilig, harmonisch im Glas-Look)
+    // Score-Klasse je Wert
+    const scoreClass = (v) => (v >= 4.5 ? "high" : v >= 3.5 ? "mid" : "low");
+
+    // Kriterien-Raster (2×2 Score-Pills)
     let criteriaRowHtml = "";
     if (!isGeplant) {
       const rEssen = Number(item.ratingEssen) || Number(item.rating) || 5;
@@ -4321,29 +4324,26 @@ function renderLokaleView() {
       const rPreis = Number(item.ratingPreis) || 4;
 
       criteriaRowHtml = `
-        <div class="lokal-criteria-bar">
-          <div class="lokal-crit-item" title="Essen & Trinken: ${rEssen} / 5">
-            <span class="lokal-crit-icon">🍽️</span>
-            <span class="lokal-crit-label">Essen</span>
-            <span class="lokal-crit-val">${rEssen.toFixed(1).replace(".0", "")}</span>
+        <div class="lokal-score-grid">
+          <div class="lokal-score-pill ${scoreClass(rEssen)}" title="Essen & Trinken: ${rEssen} / 5">
+            <span class="lokal-score-pill-icon">🍽️</span>
+            <span class="lokal-score-pill-label">Essen</span>
+            <span class="lokal-score-pill-val">${rEssen.toFixed(1).replace(".0", "")}</span>
           </div>
-          <div class="lokal-crit-sep">•</div>
-          <div class="lokal-crit-item" title="Service & Freundlichkeit: ${rService} / 5">
-            <span class="lokal-crit-icon">😊</span>
-            <span class="lokal-crit-label">Service</span>
-            <span class="lokal-crit-val">${rService.toFixed(1).replace(".0", "")}</span>
+          <div class="lokal-score-pill ${scoreClass(rService)}" title="Service & Freundlichkeit: ${rService} / 5">
+            <span class="lokal-score-pill-icon">😊</span>
+            <span class="lokal-score-pill-label">Service</span>
+            <span class="lokal-score-pill-val">${rService.toFixed(1).replace(".0", "")}</span>
           </div>
-          <div class="lokal-crit-sep">•</div>
-          <div class="lokal-crit-item" title="Sauberkeit & Ambiente: ${rSauberkeit} / 5">
-            <span class="lokal-crit-icon">✨</span>
-            <span class="lokal-crit-label">Ambiente</span>
-            <span class="lokal-crit-val">${rSauberkeit.toFixed(1).replace(".0", "")}</span>
+          <div class="lokal-score-pill ${scoreClass(rSauberkeit)}" title="Sauberkeit & Ambiente: ${rSauberkeit} / 5">
+            <span class="lokal-score-pill-icon">✨</span>
+            <span class="lokal-score-pill-label">Ambiente</span>
+            <span class="lokal-score-pill-val">${rSauberkeit.toFixed(1).replace(".0", "")}</span>
           </div>
-          <div class="lokal-crit-sep">•</div>
-          <div class="lokal-crit-item" title="Preis-Leistung: ${rPreis} / 5">
-            <span class="lokal-crit-icon">💶</span>
-            <span class="lokal-crit-label">Preis</span>
-            <span class="lokal-crit-val">${rPreis.toFixed(1).replace(".0", "")}</span>
+          <div class="lokal-score-pill ${scoreClass(rPreis)}" title="Preis-Leistung: ${rPreis} / 5">
+            <span class="lokal-score-pill-icon">💶</span>
+            <span class="lokal-score-pill-label">Preis</span>
+            <span class="lokal-score-pill-val">${rPreis.toFixed(1).replace(".0", "")}</span>
           </div>
         </div>
       `;
@@ -4375,7 +4375,7 @@ function renderLokaleView() {
     }
 
     card.innerHTML = `
-      <!-- Header: Name & Meta links, Score-Badge rechts -->
+      <!-- Header: Name & Meta links, Score groß rechts -->
       <div class="lokal-card-header">
         <div class="lokal-card-title-group">
           <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
@@ -4387,9 +4387,9 @@ function renderLokaleView() {
         ${
           !isGeplant
             ? `
-          <div class="lokal-score-badge" title="Gesamtnote: ${overallScore} von 5 Sternen">
-            <span class="lokal-score-val">${overallScore}</span>
-            <span class="lokal-score-star">★</span>
+          <div class="lokal-score-big" title="Gesamtnote: ${overallScore} von 5 Sternen">
+            <span class="lokal-score-big-val">${overallScore}</span>
+            <span class="lokal-score-big-sub">★ / 5</span>
           </div>
         `
             : `
@@ -4400,7 +4400,7 @@ function renderLokaleView() {
         }
       </div>
 
-      <!-- Kriterien-Leiste -->
+      <!-- Kriterien-Raster -->
       ${criteriaRowHtml}
 
       <!-- Notizen falls vorhanden -->
@@ -4764,6 +4764,7 @@ function getRecipeImage(artArray) {
     "Cocktails",
     "Dessert",
     "Dips",
+    "Dutch",
     "Fisch",
     "Fleisch",
     "Salat",
@@ -4775,7 +4776,6 @@ function getRecipeImage(artArray) {
   const map = {
     Grillen: "Steak",
     Plancha: "Steak",
-    Dutch: "Fleisch",
     Vorspeise: "Salat",
     Nudeln: "Beilagen",
     Pasta: "Beilagen",
@@ -5014,15 +5014,26 @@ function filterAndRenderRezepte() {
 
     html += `
       <div class="rezept-card" onclick="window.openRecipeDetail('${r.id}')">
-        <div class="rezept-card-bg" style="background-image: url('${imgSrc}');"></div>
-        <div class="rezept-card-overlay"></div>
-        <div class="rezept-card-top">
-          <div class="rezept-tags-group">${tagsHtml}</div>
-          ${timeBadge}
+        <div class="rezept-card-hero">
+          <img
+            src="${imgSrc}"
+            onerror="this.onerror=null; this.src='logo.png';"
+            class="rezept-card-hero-img"
+            alt="${escapeLokalHtml(r.Titel || "")}"
+            loading="lazy"
+          />
+          <div class="rezept-card-hero-overlay"></div>
+          <div class="rezept-card-hero-top">
+            <div class="rezept-tags-group">
+              ${badgeHtml}
+              ${tagsHtml}
+            </div>
+            ${timeBadge}
+          </div>
         </div>
         <div class="rezept-card-body">
           <h3 class="rezept-card-title">
-            ${escapeLokalHtml(r.Titel || "")}${badgeHtml}${isLink ? `<span style="margin-left: 6px; font-size: 0.9rem; opacity: 0.9;">🔗</span>` : ""}
+            ${escapeLokalHtml(r.Titel || "")}${isLink ? `<span style="margin-left: 6px; font-size: 0.9rem; opacity: 0.9;">🔗</span>` : ""}
           </h3>
           <div class="rezept-card-meta">
             <div class="rezept-author-box">
@@ -5032,7 +5043,7 @@ function filterAndRenderRezepte() {
                 class="rezept-author-avatar"
                 alt="${escapeLokalHtml(authorName)}"
               />
-              <span>${escapeLokalHtml(authorName)}</span>
+              <span>Von <strong>${escapeLokalHtml(authorName)}</strong></span>
             </div>
             ${portionBadge}
           </div>
