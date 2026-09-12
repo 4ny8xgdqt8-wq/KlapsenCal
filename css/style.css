@@ -638,6 +638,7 @@ header {
   align-items: center;
   gap: 14px;
   border: 1px solid var(--border-color);
+  border-left: 5px solid var(--evt-color, #10b981);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
   transition:
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -649,91 +650,105 @@ header {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+}
 .event-card:active {
   transform: scale(0.975);
-  background: rgba(30, 45, 38, 0.85);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 .event-card.past-event {
-  opacity: 0.55;
+  opacity: 0.52;
   filter: grayscale(0.5);
 }
 .event-card.past-event:hover {
   opacity: 0.8;
 }
 
-/* Date Badge Box */
+/* ── Farbiges Datum-Quadrat ──────────────────────────────── */
 .event-date-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 58px;
-  height: 64px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  min-width: 62px;
+  width: 62px;
+  height: 70px;
+  background: var(--evt-gradient, linear-gradient(145deg, #10b981, #059669));
   border-radius: 16px;
-  padding: 4px;
+  padding: 4px 6px;
   flex-shrink: 0;
   text-align: center;
-}
-.event-date-day {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: #ffffff;
-  line-height: 1;
-}
-.event-date-month {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--accent-color);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
+  box-shadow: 0 4px 14px var(--evt-shadow, rgba(16, 185, 129, 0.35));
 }
 .event-date-weekday {
   font-size: 0.6rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.75);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.event-date-day {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.event-date-month {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+  line-height: 1;
 }
 
-/* Event Info */
+/* ── Event Info ──────────────────────────────────────────── */
 .event-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
 .event-title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 4px;
+  justify-content: space-between;
+  gap: 8px;
 }
+
 .event-title {
   margin: 0;
-  font-size: 1.08rem;
+  font-size: 1.05rem;
   color: #ffffff;
   font-weight: 800;
   letter-spacing: -0.3px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
-/* Status Countdown Badges */
+/* ── Countdown Badges ────────────────────────────────────── */
 .countdown-badge {
   font-size: 0.62rem;
   font-weight: 900;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .countdown-badge.today {
   background: #ef4444;
@@ -747,7 +762,7 @@ header {
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
 .countdown-badge.upcoming {
-  background: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.2);
   border: 1px solid rgba(16, 185, 129, 0.4);
   color: #34d399;
 }
@@ -771,15 +786,50 @@ header {
   }
 }
 
+/* ── Meta-Pills (Kategorie, Zeit, Ort) ──────────────────── */
 .event-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 0.75rem;
   color: #cbd5e1;
-  margin-top: 4px;
 }
+
+.event-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.event-pill-cat {
+  background: var(--evt-bg, rgba(16, 185, 129, 0.18));
+  border: 1px solid var(--evt-border, rgba(16, 185, 129, 0.4));
+  color: var(--evt-color, #34d399);
+}
+
+.event-pill-meta {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.event-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #94a3b8;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .event-tag {
   background: rgba(16, 185, 129, 0.18);
   border: 1px solid rgba(16, 185, 129, 0.35);
@@ -790,18 +840,40 @@ header {
   font-weight: 800;
   text-transform: uppercase;
 }
-.event-location {
+
+/* ── Untere Avatar-Zeile ─────────────────────────────────── */
+.event-bottom-row {
   display: flex;
   align-items: center;
-  gap: 3px;
-  color: #94a3b8;
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  gap: 8px;
 }
 
-/* Avatar Stack & Ersteller */
+.event-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.event-avatar-item {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--bg-color, #0d1a14);
+  margin-left: -6px;
+  background: #111827;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.event-avatar-item:first-child {
+  margin-left: 0;
+}
+
+.event-dabei-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
 .event-card-right {
   display: flex;
   flex-direction: column;
@@ -810,8 +882,8 @@ header {
   flex-shrink: 0;
 }
 .author-avatar-img {
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--primary-color);
   object-fit: cover;

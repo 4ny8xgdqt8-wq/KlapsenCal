@@ -1166,31 +1166,87 @@ function renderEvents(events) {
         ? `<span class="event-tag" style="color: ${catStyle.color}; background: ${catStyle.bg}; border: 1px solid ${catStyle.border}; font-weight: 700;">🏖️ Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
         : "";
 
+    // CSS-Variablen für Kategorie-Farben direkt am Element setzen
+    card.style.setProperty("--evt-color", catStyle.color);
+    card.style.setProperty("--evt-bg", catStyle.bg);
+    card.style.setProperty("--evt-border", catStyle.border);
+    card.style.setProperty(
+      "--evt-gradient",
+      `linear-gradient(145deg, ${catStyle.color}cc, ${catStyle.color}88)`,
+    );
+    card.style.setProperty("--evt-shadow", `${catStyle.color}44`);
+
+    // Kategorie-Pill
+    const catPillHtml = `<span class="event-pill event-pill-cat">${catStyle.icon ? catStyle.icon + " " : ""}${item.Kategorie || "Sonstiges"}</span>`;
+
+    // Zeit-Pill
+    const timePillHtml = isAllDay
+      ? `<span class="event-pill event-pill-meta">☀️ Ganztägig</span>`
+      : item.Uhrzeit
+        ? `<span class="event-pill event-pill-meta">⏰ ${item.Uhrzeit} Uhr</span>`
+        : "";
+
+    // Ort-Pill
+    const ortPillHtml = item.Ort
+      ? `<span class="event-pill event-pill-meta">📍 ${item.Ort}</span>`
+      : "";
+
+    // Urlaub-Zeitraum-Badge
+    const dateRangePillHtml =
+      item.Kategorie === "Urlaub / Abwesend" &&
+      item.Enddatum &&
+      item.Enddatum > item.Datum
+        ? `<span class="event-pill event-pill-meta">🏖️ Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
+        : "";
+
+    // Avatar-Stack (Teilnehmer)
+    let avatarStackHtml = "";
+    if (totalParticipants > 0) {
+      const avatars = yesMembers
+        .slice(0, 4)
+        .map(
+          (name) =>
+            `<img src="avatars/${name}.webp" onerror="this.onerror=null;this.src='logo.png';" class="event-avatar-item" alt="${name}" title="${name}">`,
+        )
+        .join("");
+      const extraCount =
+        totalParticipants > 4 ? ` +${totalParticipants - 4}` : "";
+      let dabeiLabel = `${totalParticipants} dabei`;
+      if (item.Kategorie === "Urlaub / Abwesend")
+        dabeiLabel = `${totalParticipants} abwesend`;
+      else if (adultYesCount > 0 && childYesCount > 0)
+        dabeiLabel = `${totalParticipants} dabei (${adultYesCount}E · ${childYesCount}K)`;
+
+      avatarStackHtml = `
+        <div class="event-bottom-row">
+          <div class="event-avatar-stack">${avatars}</div>
+          <span class="event-dabei-label">${dabeiLabel}${extraCount}</span>
+        </div>
+      `;
+    }
+
     card.innerHTML = `
-            <div class="event-date-box">
-                <span class="event-date-weekday">${dateParts.weekdayShort}</span>
-                <span class="event-date-day">${dateParts.day}</span>
-                <span class="event-date-month">${dateParts.monthShort}</span>
-            </div>
-            <div class="event-info">
-                <div class="event-title-row">
-                    <h3 class="event-title">${item.Titel}</h3>
-                    ${countdown.badgeText ? `<span class="countdown-badge ${countdown.badgeClass}">${countdown.badgeText}</span>` : ""}
-                </div>
-                <div class="event-meta">
-                    <span class="event-tag" style="color: ${catStyle.color}; background: ${catStyle.bg}; border: 1px solid ${catStyle.border}; font-weight: 700;">${catIcon}${item.Kategorie || "Essen"}</span>
-                    ${dateRangeBadgeHtml}
-                    ${birthdayBadgeHtml}
-                    ${item.Wiederholung && item.Wiederholung !== "none" ? '<span class="event-recurrence-icon" title="Serientermin">🔁</span>' : ""}
-                    ${locationStr}
-                    <span>${timeStr}</span>
-                </div>
-            </div>
-            <div class="event-card-right">
-                <img src="avatars/${item.Ersteller}.webp" onerror="this.onerror=null; this.src='logo.png';" class="author-avatar-img" alt="${item.Ersteller}">
-                ${participantStackHtml}
-            </div>
-        `;
+      <div class="event-date-box">
+        <span class="event-date-weekday">${dateParts.weekdayShort}</span>
+        <span class="event-date-day">${dateParts.day}</span>
+        <span class="event-date-month">${dateParts.monthShort}</span>
+      </div>
+      <div class="event-info">
+        <div class="event-title-row">
+          <h3 class="event-title">${item.Titel}</h3>
+          ${countdown.badgeText ? `<span class="countdown-badge ${countdown.badgeClass}">${countdown.badgeText}</span>` : ""}
+        </div>
+        <div class="event-meta">
+          ${catPillHtml}
+          ${timePillHtml}
+          ${ortPillHtml}
+          ${dateRangePillHtml}
+          ${birthdayBadgeHtml}
+          ${item.Wiederholung && item.Wiederholung !== "none" ? '<span class="event-pill event-pill-meta">🔁 Serie</span>' : ""}
+        </div>
+        ${avatarStackHtml}
+      </div>
+    `;
     container.appendChild(card);
   });
 

@@ -204,4 +204,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`, `data_rezepte`, `data_stauder`, `data_stauder_kisten`).
-- **Service Worker**: PWA Cache v4.15 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v4.16 mit Network-First Strategie für App-Ressourcen.
