@@ -4,6 +4,7 @@ import {
   signInAnonymously,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -1367,8 +1368,124 @@ function renderCalendarWidget() {
       gridEl.appendChild(cell);
     }
   }
+
+  initCalendarSwipeGestures();
 }
 window.renderCalendarWidget = renderCalendarWidget;
+
+function initCalendarSwipeGestures() {
+  const calWidget = document.getElementById("calendar-widget");
+  if (!calWidget || calWidget.dataset.swipeInit) return;
+  calWidget.dataset.swipeInit = "true";
+
+  // --- 1. Touchscreen Gesten (iPhone / iPad / Android) ---
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+
+  calWidget.addEventListener(
+    "touchstart",
+    (e) => {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    },
+    { passive: true },
+  );
+
+  calWidget.addEventListener(
+    "touchend",
+    (e) => {
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const duration = Date.now() - touchStartTime;
+
+      if (
+        Math.abs(deltaX) >= 40 &&
+        Math.abs(deltaX) > Math.abs(deltaY) * 1.5 &&
+        duration <= 600
+      ) {
+        if (deltaX < 0) {
+          window.navCalendarMonth(1);
+          if (navigator.vibrate) navigator.vibrate(10);
+        } else {
+          window.navCalendarMonth(-1);
+          if (navigator.vibrate) navigator.vibrate(10);
+        }
+      }
+    },
+    { passive: true },
+  );
+
+  // --- 2. MacBook Trackpad Zwei-Finger-Wischen (wheel Event) ---
+  let wheelCooldown = false;
+  calWidget.addEventListener(
+    "wheel",
+    (e) => {
+      if (wheelCooldown) return;
+      const absX = Math.abs(e.deltaX);
+      const absY = Math.abs(e.deltaY);
+
+      if (absX >= 30 && absX > absY * 1.2) {
+        wheelCooldown = true;
+        if (e.deltaX > 0) {
+          // Trackpad-Wisch nach links -> Nächster Monat
+          window.navCalendarMonth(1);
+        } else {
+          // Trackpad-Wisch nach rechts -> Vorheriger Monat
+          window.navCalendarMonth(-1);
+        }
+        setTimeout(() => {
+          wheelCooldown = false;
+        }, 450);
+      }
+    },
+    { passive: true },
+  );
+
+  // --- 3. Maus / Trackpad Klick & Ziehen (Pointer Drag) ---
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let pointerStartTime = 0;
+  let isPointerDown = false;
+
+  calWidget.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch") return; // Touch läuft separat über touchstart/touchend
+    if (e.button !== 0) return; // Nur linke Maustaste
+    isPointerDown = true;
+    pointerStartX = e.clientX;
+    pointerStartY = e.clientY;
+    pointerStartTime = Date.now();
+  });
+
+  calWidget.addEventListener("pointerup", (e) => {
+    if (!isPointerDown) return;
+    isPointerDown = false;
+    const deltaX = e.clientX - pointerStartX;
+    const deltaY = e.clientY - pointerStartY;
+    const duration = Date.now() - pointerStartTime;
+
+    if (
+      Math.abs(deltaX) >= 40 &&
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.5 &&
+      duration <= 700
+    ) {
+      if (deltaX < 0) {
+        window.navCalendarMonth(1);
+      } else {
+        window.navCalendarMonth(-1);
+      }
+    }
+  });
+
+  calWidget.addEventListener("pointercancel", () => {
+    isPointerDown = false;
+  });
+}
 
 window.navCalendarMonth = function (delta) {
   calCurrentMonth += delta;
@@ -1380,6 +1497,15 @@ window.navCalendarMonth = function (delta) {
     calCurrentYear -= 1;
   }
   renderCalendarWidget();
+
+  // Sanfte Slide-Animation auslösen
+  const daysGrid = document.getElementById("calendar-days-grid");
+  if (daysGrid) {
+    const animClass = delta > 0 ? "cal-slide-next" : "cal-slide-prev";
+    daysGrid.classList.remove("cal-slide-next", "cal-slide-prev");
+    void daysGrid.offsetWidth; // Reflow erzwingen
+    daysGrid.classList.add(animClass);
+  }
 };
 
 window.navCalendarToday = function () {
@@ -1655,17 +1781,16 @@ function showEventDetails(data) {
   const authorAvatarImg = document.getElementById("detail-author-avatar");
   if (authorAvatarImg) {
     if (data.Ersteller) {
-      authorAvatarImg.src = `avatars/${data.Ersteller}.webp`;
       authorAvatarImg.onerror = () => {
         authorAvatarImg.src = "logo.png";
       };
+      authorAvatarImg.src = `avatars/${data.Ersteller}.webp`;
     } else {
       authorAvatarImg.src = "logo.png";
     }
   }
 
   const linkBtn = document.getElementById("btn-open-link");
-  const einkehrBtn = document.getElementById("btn-open-einkehr-rating");
   const actionsCont = document.getElementById("detail-actions-container");
   const targetLink = data.OrtLink || data.Link;
 
@@ -1930,14 +2055,22 @@ function switchAufgabenSubTab(subTab) {
 
   const btnTasks = document.getElementById("seg-btn-tasks");
   const btnPurchases = document.getElementById("seg-btn-purchases");
+  const btnStauder = document.getElementById("seg-btn-stauder");
   const viewTasks = document.getElementById("subview-tasks");
   const viewPurchases = document.getElementById("subview-purchases");
+  const viewStauder = document.getElementById("subview-stauder");
   const subTitle = document.getElementById("header-sub-title");
 
+  // Deaktivieren aller Buttons und Ausblenden aller Subviews
+  if (btnPurchases) btnPurchases.classList.remove("active");
+  if (btnTasks) btnTasks.classList.remove("active");
+  if (btnStauder) btnStauder.classList.remove("active");
+  if (viewPurchases) viewPurchases.style.display = "none";
+  if (viewTasks) viewTasks.style.display = "none";
+  if (viewStauder) viewStauder.style.display = "none";
+
   if (subTab === "anschaffungen") {
-    if (btnTasks) btnTasks.classList.remove("active");
     if (btnPurchases) btnPurchases.classList.add("active");
-    if (viewTasks) viewTasks.style.display = "none";
     if (viewPurchases) {
       viewPurchases.style.display = "block";
       if (typeof window.renderPurchasesView === "function") {
@@ -1945,10 +2078,20 @@ function switchAufgabenSubTab(subTab) {
       }
     }
     if (subTitle) subTitle.textContent = "Offene Anschaffungen & Budget";
+  } else if (subTab === "stauder") {
+    if (btnStauder) btnStauder.classList.add("active");
+    if (viewStauder) {
+      viewStauder.style.display = "block";
+      if (typeof window.renderStauderView === "function") {
+        window.renderStauderView();
+      }
+      if (typeof window.renderStauderKistenView === "function") {
+        window.renderStauderKistenView();
+      }
+    }
+    if (subTitle) subTitle.textContent = "Stauder Kronkorken & Kisten";
   } else {
-    if (btnPurchases) btnPurchases.classList.remove("active");
     if (btnTasks) btnTasks.classList.add("active");
-    if (viewPurchases) viewPurchases.style.display = "none";
     if (viewTasks) {
       viewTasks.style.display = "block";
       renderAllTasks();
@@ -2588,10 +2731,12 @@ if (recSelectEl && recDurationEl) {
 document.getElementById("event-author").addEventListener("change", (e) => {
   const name = e.target.value;
   const img = document.getElementById("author-avatar");
-  img.src = `avatars/${name}.webp`;
-  img.onerror = () => {
-    img.src = "logo.png";
-  };
+  if (img) {
+    img.onerror = () => {
+      img.src = "logo.png";
+    };
+    img.src = name ? `avatars/${name}.webp` : "logo.png";
+  }
   if (name) {
     formParticipants[name] = "yes";
     renderFormParticipants();
@@ -2608,10 +2753,10 @@ if (lokalAuthorEl) {
       document.getElementById("lokal-author-avatar") ||
       document.getElementById("einkehr-author-avatar");
     if (img) {
-      img.src = `avatars/${name}.webp`;
       img.onerror = () => {
         img.src = "logo.png";
       };
+      img.src = name ? `avatars/${name}.webp` : "logo.png";
     }
   });
 }
@@ -3245,6 +3390,569 @@ window.deletePurchase = function (id) {
 };
 
 // ==========================================
+// 14b. Stauder Kronkorken-Tracker
+// ==========================================
+let kronkorkenCount = 0;
+
+function initStauderListener() {
+  const docRef = doc(db, "data_stauder", "kronkorken");
+  onSnapshot(
+    docRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        kronkorkenCount = parseInt(data.anzahl) || 0;
+      } else {
+        kronkorkenCount = 0;
+      }
+      renderStauderView();
+    },
+    (err) => {
+      console.warn("Fehler beim Laden der Stauder-Kronkorken:", err);
+    },
+  );
+}
+
+function renderStauderView() {
+  const countEl = document.getElementById("stauder-kronkorken-count");
+  if (countEl) {
+    countEl.textContent = kronkorkenCount;
+  }
+
+  // Kühlschrank Sparziel (770 Kronkorken)
+  const GOAL_KUEHLSCHRANK = 770;
+  const diff = Math.max(0, GOAL_KUEHLSCHRANK - kronkorkenCount);
+  const percent = Math.min(
+    100,
+    Math.round((kronkorkenCount / GOAL_KUEHLSCHRANK) * 100),
+  );
+
+  const diffEl = document.getElementById("stauder-kuehlschrank-diff");
+  if (diffEl) {
+    if (diff === 0) {
+      diffEl.textContent = "0 🎉 Erreicht!";
+      diffEl.style.color = "#34d399";
+    } else {
+      diffEl.textContent = diff;
+      diffEl.style.color = "#fca5a5";
+    }
+  }
+
+  const badgeEl = document.getElementById("stauder-goal-badge");
+  if (badgeEl) {
+    badgeEl.textContent = `${percent}%`;
+  }
+
+  const fillEl = document.getElementById("stauder-goal-progress-fill");
+  if (fillEl) {
+    fillEl.style.width = `${percent}%`;
+  }
+
+  // Quoten und Prognosen im Kistenbereich synchron halten
+  if (typeof renderStauderKistenView === "function") {
+    renderStauderKistenView();
+  }
+}
+
+window.renderStauderView = renderStauderView;
+
+window.changeKronkorken = async function (delta) {
+  let next = kronkorkenCount + delta;
+  if (next < 0) next = 0;
+  if (next === kronkorkenCount) return;
+
+  kronkorkenCount = next;
+  renderStauderView();
+
+  try {
+    await ensureAuth();
+    await setDoc(
+      doc(db, "data_stauder", "kronkorken"),
+      {
+        anzahl: kronkorkenCount,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    if (delta > 0 && typeof confetti === "function") {
+      confetti({
+        particleCount: delta >= 20 ? 60 : 30,
+        spread: 45,
+        origin: { y: 0.6 },
+        colors: ["#10b981", "#34d399", "#fbbf24"],
+        zIndex: 30000,
+      });
+    }
+  } catch (err) {
+    console.error("Fehler beim Aktualisieren der Kronkorken:", err);
+  }
+};
+
+window.promptSetKronkorken = async function () {
+  const val = prompt(
+    "Aktuellen Kronkorken-Stand eingeben:",
+    kronkorkenCount.toString(),
+  );
+  if (val === null) return;
+  const num = parseInt(val);
+  if (isNaN(num) || num < 0) {
+    alert("Bitte eine gültige positive Zahl eingeben.");
+    return;
+  }
+  kronkorkenCount = num;
+  renderStauderView();
+
+  try {
+    await ensureAuth();
+    await setDoc(
+      doc(db, "data_stauder", "kronkorken"),
+      {
+        anzahl: kronkorkenCount,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  } catch (err) {
+    console.error("Fehler beim Setzen der Kronkorken:", err);
+  }
+};
+
+// ==========================================
+// 14c. Stauder Kistenverfolgung
+// ==========================================
+let allStauderKisten = [];
+let stauderKisteSelectedBuyer = "";
+let stauderKisteCurrentCount = 1;
+
+function initStauderKistenListener() {
+  const colRef = collection(db, "data_stauder_kisten");
+  onSnapshot(
+    colRef,
+    (snapshot) => {
+      allStauderKisten = [];
+      snapshot.forEach((docSnap) => {
+        allStauderKisten.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      // Sortieren nach Datum absteigend, dann createdAt absteigend
+      allStauderKisten.sort((a, b) => {
+        const dateDiff = (b.datum || "").localeCompare(a.datum || "");
+        if (dateDiff !== 0) return dateDiff;
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+
+      renderStauderKistenView();
+    },
+    (err) => {
+      console.warn("Fehler beim Laden der Stauder-Kisten:", err);
+    },
+  );
+}
+
+function renderStauderKistenView() {
+  const badgeEl = document.getElementById("stauder-kisten-stats-badge");
+  const substatsEl = document.getElementById("stauder-kisten-substats");
+  const listEl = document.getElementById("stauder-kisten-list");
+
+  const totalKisten = allStauderKisten.reduce(
+    (sum, k) => sum + (parseInt(k.anzahl) || 1),
+    0,
+  );
+
+  if (badgeEl) {
+    badgeEl.textContent = `${totalKisten} Kiste${totalKisten === 1 ? "" : "n"}`;
+  }
+
+  // KPI-Elemente für die Verbrauchsanalyse
+  const totalKpiEl = document.getElementById("stauder-kpi-total");
+  const monthKpiEl = document.getElementById("stauder-kpi-month");
+  const monthNameKpiEl = document.getElementById("stauder-kpi-month-name");
+  const paceKpiEl = document.getElementById("stauder-kpi-pace");
+  const paceUnitKpiEl = document.getElementById("stauder-kpi-pace-unit");
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+  const currentYearMonth = `${currentYear}-${currentMonth}`;
+
+  const monthNamesShort = [
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+  ];
+  const currentMonthName = monthNamesShort[now.getMonth()];
+
+  // 1. KPI: Gesamtanzahl
+  if (totalKpiEl) {
+    totalKpiEl.textContent = totalKisten;
+  }
+
+  // 2. KPI: Diesen Monat
+  const monthKisten = allStauderKisten
+    .filter((k) => (k.datum || "").startsWith(currentYearMonth))
+    .reduce((sum, k) => sum + (parseInt(k.anzahl) || 1), 0);
+
+  if (monthKpiEl) {
+    monthKpiEl.textContent = monthKisten;
+  }
+  if (monthNameKpiEl) {
+    monthNameKpiEl.textContent = `im ${currentMonthName}`;
+  }
+
+  // 3. KPI: Ø Rhythmus (Tage pro Kiste)
+  if (paceKpiEl && paceUnitKpiEl) {
+    if (allStauderKisten.length <= 1 || totalKisten <= 1) {
+      paceKpiEl.textContent = totalKisten === 1 ? "1." : "--";
+      paceUnitKpiEl.textContent =
+        totalKisten === 1 ? "Kiste erfasst" : "Tage / Kiste";
+    } else {
+      const latestDateStr = allStauderKisten[0].datum;
+      const oldestDateStr = allStauderKisten[allStauderKisten.length - 1].datum;
+
+      const dLatest = new Date(latestDateStr + "T12:00:00");
+      const dOldest = new Date(oldestDateStr + "T12:00:00");
+      const diffDays = Math.round((dLatest - dOldest) / (1000 * 60 * 60 * 24));
+
+      const additionalKisten =
+        totalKisten -
+        (parseInt(allStauderKisten[allStauderKisten.length - 1].anzahl) || 1);
+
+      if (additionalKisten <= 0 || diffDays <= 0) {
+        paceKpiEl.textContent = "< 1";
+        paceUnitKpiEl.textContent = "Tag / Kiste";
+      } else {
+        const daysPerKiste = (diffDays / additionalKisten).toFixed(1);
+        const formattedDays = daysPerKiste.endsWith(".0")
+          ? parseInt(daysPerKiste)
+          : daysPerKiste.replace(".", ",");
+        paceKpiEl.textContent = `~${formattedDays}`;
+        paceUnitKpiEl.textContent = "Tage / Kiste";
+      }
+    }
+  }
+
+  // Substats mit relativer Zeitangabe
+  if (substatsEl) {
+    if (allStauderKisten.length === 0) {
+      substatsEl.textContent = "Noch keine Kisten eingetragen";
+    } else {
+      const latest = allStauderKisten[0];
+      const parts = (latest.datum || "").split("-");
+      let relativeText = "";
+      if (parts.length === 3) {
+        const dateLatest = new Date(parts[0], parts[1] - 1, parts[2]);
+        const todayMidnight = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+        const diffDays = Math.round(
+          (todayMidnight - dateLatest) / (1000 * 60 * 60 * 24),
+        );
+        if (diffDays === 0) {
+          relativeText = "Heute";
+        } else if (diffDays === 1) {
+          relativeText = "Gestern";
+        } else if (diffDays > 1) {
+          relativeText = `Vor ${diffDays} Tagen`;
+        } else if (diffDays < 0) {
+          relativeText = `Am ${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+      }
+      const dateFormatted =
+        parts.length === 3
+          ? `${parts[2]}.${parts[1]}.${parts[0]}`
+          : latest.datum;
+      const timePrefix = relativeText
+        ? `${relativeText} (${dateFormatted})`
+        : dateFormatted;
+      substatsEl.textContent = `Zuletzt: ${timePrefix} von ${latest.kaeufer || "Unbekannt"}`;
+    }
+  }
+
+  // 4. Erweiterte Bier-Statistiken: Flaschen & Liter
+  const bottlesEl = document.getElementById("stauder-stat-bottles");
+  const litersEl = document.getElementById("stauder-stat-liters");
+  const totalBottles = totalKisten * 20;
+  const totalLiters = totalKisten * 10;
+
+  if (bottlesEl) {
+    bottlesEl.textContent = `${totalBottles} Flasche${totalBottles === 1 ? "" : "n"}`;
+  }
+  if (litersEl) {
+    litersEl.textContent = `~${totalLiters} Liter Stauder (20x0,5l)`;
+  }
+
+  // 5. Monats-Balkendiagramm (Letzte 6 Monate)
+  const chartContainer = document.getElementById("stauder-monthly-bars");
+  if (chartContainer) {
+    chartContainer.innerHTML = "";
+    const last6Months = [];
+    const monthShortLabels = [
+      "Jan",
+      "Feb",
+      "Mär",
+      "Apr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Dez",
+    ];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, "0");
+      const ym = `${yr}-${mo}`;
+      const label = monthShortLabels[d.getMonth()];
+      const isCurrent = i === 0;
+
+      const count = allStauderKisten
+        .filter((k) => (k.datum || "").startsWith(ym))
+        .reduce((sum, k) => sum + (parseInt(k.anzahl) || 1), 0);
+
+      last6Months.push({ ym, label, isCurrent, count });
+    }
+
+    const maxMonthCount = Math.max(1, ...last6Months.map((m) => m.count));
+
+    last6Months.forEach((m) => {
+      const col = document.createElement("div");
+      col.className = "stauder-bar-col";
+
+      const fillPercent =
+        m.count > 0
+          ? Math.max(8, Math.round((m.count / maxMonthCount) * 100))
+          : 0;
+
+      col.innerHTML = `
+        <span class="stauder-bar-val" style="color: ${m.count > 0 ? (m.isCurrent ? "#6ee7b7" : "#f1f5f9") : "#64748b"};">
+          ${m.count > 0 ? m.count : "-"}
+        </span>
+        <div class="stauder-bar-track">
+          <div
+            class="stauder-bar-fill ${m.isCurrent ? "current-month" : ""}"
+            style="height: ${fillPercent > 0 ? fillPercent + "%" : "3px"}; opacity: ${m.count > 0 ? "1" : "0.25"};"
+            title="${m.label}: ${m.count} Kiste${m.count === 1 ? "" : "n"}"
+          ></div>
+        </div>
+        <span class="stauder-bar-label ${m.isCurrent ? "current-month" : ""}">
+          ${m.label}
+        </span>
+      `;
+      chartContainer.appendChild(col);
+    });
+  }
+
+  if (!listEl) return;
+  listEl.innerHTML = "";
+
+  if (allStauderKisten.length === 0) {
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 18px 12px; color: #64748b; font-size: 0.85rem;">
+        Noch keine Kisten erfasst.<br>Tippe auf <strong>➕ Kiste eintragen</strong>, wenn eine neue Kiste geholt wurde.
+      </div>
+    `;
+    return;
+  }
+
+  allStauderKisten.forEach((kiste) => {
+    const itemEl = document.createElement("div");
+    itemEl.className = "stauder-kisten-item";
+
+    const parts = (kiste.datum || "").split("-");
+    let displayDate = kiste.datum;
+    if (parts.length === 3) {
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const wDays = ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."];
+      displayDate = `${wDays[d.getDay()]}, ${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    const qty = parseInt(kiste.anzahl) || 1;
+    const buyerName = kiste.kaeufer || "Jemand";
+
+    itemEl.innerHTML = `
+      <div class="stauder-kisten-item-left">
+        <img
+          src="avatars/${buyerName}.webp"
+          onerror="this.onerror=null; this.src='logo.png';"
+          class="stauder-kisten-avatar"
+          alt="${buyerName}"
+        />
+        <div class="stauder-kisten-info">
+          <span class="stauder-kisten-name">${buyerName}</span>
+          <span class="stauder-kisten-date">${displayDate}</span>
+        </div>
+      </div>
+      <div class="stauder-kisten-item-right">
+        <span class="stauder-kisten-qty-badge">${qty} Kiste${qty === 1 ? "" : "n"}</span>
+        <button
+          type="button"
+          class="btn-stauder-kiste-delete"
+          onclick="window.deleteStauderKiste('${kiste.id}')"
+          title="Eintrag löschen"
+        >
+          🗑️
+        </button>
+      </div>
+    `;
+
+    listEl.appendChild(itemEl);
+  });
+}
+
+function openStauderKisteModal() {
+  stauderKisteCurrentCount = 1;
+  const countDisplay = document.getElementById("stauder-kiste-count-display");
+  const countInput = document.getElementById("stauder-kiste-count");
+  if (countDisplay) countDisplay.textContent = "1";
+  if (countInput) countInput.value = "1";
+
+  // Datum auf heute vorbelegen
+  const dateInput = document.getElementById("stauder-kiste-date");
+  if (dateInput) {
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.value = today;
+  }
+
+  // Käufer Chips rendern
+  const buyersContainer = document.getElementById(
+    "stauder-kiste-buyers-container",
+  );
+  const buyerInput = document.getElementById("stauder-kiste-buyer");
+
+  const adults = allAuthors.filter((n) => !isChild(n));
+  if (
+    !stauderKisteSelectedBuyer ||
+    !adults.includes(stauderKisteSelectedBuyer)
+  ) {
+    stauderKisteSelectedBuyer = adults[0] || "Thorsten";
+  }
+  if (buyerInput) buyerInput.value = stauderKisteSelectedBuyer;
+
+  if (buyersContainer) {
+    buyersContainer.innerHTML = "";
+    adults.forEach((name) => {
+      const chip = document.createElement("div");
+      chip.className = `stauder-kiste-buyer-chip ${name === stauderKisteSelectedBuyer ? "selected" : ""}`;
+      chip.innerHTML = `
+        <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="stauder-kiste-buyer-avatar" alt="${name}"/>
+        <span>${name}</span>
+      `;
+      chip.onclick = () => {
+        stauderKisteSelectedBuyer = name;
+        if (buyerInput) buyerInput.value = name;
+        buyersContainer
+          .querySelectorAll(".stauder-kiste-buyer-chip")
+          .forEach((c) => c.classList.remove("selected"));
+        chip.classList.add("selected");
+      };
+      buyersContainer.appendChild(chip);
+    });
+  }
+
+  const modal = document.getElementById("stauder-kiste-modal-container");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeStauderKisteModal() {
+  const modal = document.getElementById("stauder-kiste-modal-container");
+  if (modal) modal.style.display = "none";
+}
+
+function adjustStauderKisteCount(delta) {
+  let next = stauderKisteCurrentCount + delta;
+  if (next < 1) next = 1;
+  if (next > 20) next = 20;
+  stauderKisteCurrentCount = next;
+  const countDisplay = document.getElementById("stauder-kiste-count-display");
+  const countInput = document.getElementById("stauder-kiste-count");
+  if (countDisplay) countDisplay.textContent = next;
+  if (countInput) countInput.value = next;
+}
+
+async function saveStauderKiste() {
+  const buyer =
+    document.getElementById("stauder-kiste-buyer")?.value ||
+    stauderKisteSelectedBuyer;
+  const dateVal = document.getElementById("stauder-kiste-date")?.value;
+  const qty =
+    parseInt(document.getElementById("stauder-kiste-count")?.value) || 1;
+
+  if (!buyer) {
+    alert("Bitte wähle aus, wer die Kiste geholt hat.");
+    return;
+  }
+  if (!dateVal) {
+    alert("Bitte wähle ein Kaufdatum aus.");
+    return;
+  }
+
+  try {
+    await ensureAuth();
+    await addDoc(collection(db, "data_stauder_kisten"), {
+      kaeufer: buyer,
+      datum: dateVal,
+      anzahl: qty,
+      createdAt: serverTimestamp(),
+    });
+
+    closeStauderKisteModal();
+    if (typeof confetti === "function") {
+      confetti({
+        particleCount: 40,
+        spread: 45,
+        origin: { y: 0.7 },
+        colors: ["#10b981", "#34d399", "#6ee7b7"],
+        zIndex: 30000,
+      });
+    }
+  } catch (err) {
+    console.error("Fehler beim Speichern der Kiste:", err);
+    alert("Fehler beim Speichern. Bitte erneut versuchen.");
+  }
+}
+
+async function deleteStauderKiste(id) {
+  if (!id) return;
+  showConfirmModal(
+    "Kisteneintrag löschen",
+    "Möchtest du diesen Kisteneintrag wirklich löschen?",
+    async () => {
+      try {
+        await ensureAuth();
+        await deleteDoc(doc(db, "data_stauder_kisten", id));
+      } catch (err) {
+        console.error("Fehler beim Löschen des Kisteneintrags:", err);
+      }
+    },
+  );
+}
+
+window.openStauderKisteModal = openStauderKisteModal;
+window.closeStauderKisteModal = closeStauderKisteModal;
+window.adjustStauderKisteCount = adjustStauderKisteCount;
+window.saveStauderKiste = saveStauderKiste;
+window.deleteStauderKiste = deleteStauderKiste;
+window.renderStauderKistenView = renderStauderKistenView;
+
+// ==========================================
 // 15. Restaurant- & Lokal-Guide Logik („Wo wir waren“ & „Geplant“)
 // ==========================================
 let allLokale = [];
@@ -3570,136 +4278,149 @@ function renderLokaleView() {
     const tMap = item.teilnehmer || {};
     const attendedAuthors = allAuthors.filter((name) => tMap[name] === "yes");
 
-    // HTML für Teilnehmer-Chips
+    // HTML für Teilnehmer-Avatar-Stack
     let participantsHtml = "";
     if (attendedAuthors.length > 0) {
-      let attendedChips = "";
-      attendedAuthors.forEach((name) => {
-        attendedChips += `
-          <span class="lokal-user-chip" title="${name} ${isGeplant ? "möchte mit" : "war dabei"}">
-            <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" alt="${name}" />
-            <span>${name}</span>
-          </span>
+      let avatarStack = "";
+      attendedAuthors.slice(0, 5).forEach((name, idx) => {
+        avatarStack += `
+          <img
+            src="avatars/${name}.webp"
+            onerror="this.onerror=null; this.src='logo.png';"
+            class="lokal-stack-avatar"
+            style="z-index: ${10 - idx};"
+            alt="${name}"
+            title="${name}"
+          />
         `;
       });
+      const namesList = attendedAuthors.join(", ");
+      const extraCount =
+        attendedAuthors.length > 5 ? ` +${attendedAuthors.length - 5}` : "";
 
       participantsHtml = `
-        <div class="lokal-participants-box">
-          <div class="lokal-participants-section">
-            <span class="lokal-participants-label">${isGeplant ? "🙋 Möchten mit:" : "👥 Dabei waren:"}</span>
-            <div class="lokal-avatars-row">
-              ${attendedChips}
-            </div>
+        <div class="lokal-participants-bar" title="${isGeplant ? "Möchten mit: " : "Dabei waren: "} ${namesList}">
+          <div class="lokal-avatar-stack">
+            ${avatarStack}
+          </div>
+          <div class="lokal-participants-info">
+            <span class="lokal-participants-title">${isGeplant ? "Möchten mit:" : "Dabei waren:"}</span>
+            <span class="lokal-participants-names">${namesList}${extraCount}</span>
           </div>
         </div>
       `;
     }
 
-    // Kriterien-Pills bei besuchten Lokalen mit dynamischer Farbkodierung
-    let criteriaPillsHtml = "";
+    // Kriterien-Leiste (schlank, einzeilig, harmonisch im Glas-Look)
+    let criteriaRowHtml = "";
     if (!isGeplant) {
-      const rEssen = item.ratingEssen || item.rating || 5;
-      const rService = item.ratingService || item.rating || 5;
-      const rSauberkeit = item.ratingSauberkeit || item.rating || 5;
-      const rPreis = item.ratingPreis || 4;
+      const rEssen = Number(item.ratingEssen) || Number(item.rating) || 5;
+      const rService = Number(item.ratingService) || Number(item.rating) || 5;
+      const rSauberkeit =
+        Number(item.ratingSauberkeit) || Number(item.rating) || 5;
+      const rPreis = Number(item.ratingPreis) || 4;
 
-      const getScoreClass = (val) => {
-        if (val >= 4) return "score-high";
-        if (val >= 3) return "score-mid";
-        return "score-low";
-      };
-
-      criteriaPillsHtml = `
-        <div class="lokal-criteria-grid">
-          <div class="criterion-pill ${getScoreClass(rEssen)}" title="Essen & Trinken: ${rEssen} von 5">
-            <span class="criterion-pill-name">🍽️ Essen</span>
-            <span class="criterion-pill-stars">${rEssen} ★</span>
+      criteriaRowHtml = `
+        <div class="lokal-criteria-bar">
+          <div class="lokal-crit-item" title="Essen & Trinken: ${rEssen} / 5">
+            <span class="lokal-crit-icon">🍽️</span>
+            <span class="lokal-crit-label">Essen</span>
+            <span class="lokal-crit-val">${rEssen.toFixed(1).replace(".0", "")}</span>
           </div>
-          <div class="criterion-pill ${getScoreClass(rService)}" title="Service & Freundlichkeit: ${rService} von 5">
-            <span class="criterion-pill-name">😊 Service</span>
-            <span class="criterion-pill-stars">${rService} ★</span>
+          <div class="lokal-crit-sep">•</div>
+          <div class="lokal-crit-item" title="Service & Freundlichkeit: ${rService} / 5">
+            <span class="lokal-crit-icon">😊</span>
+            <span class="lokal-crit-label">Service</span>
+            <span class="lokal-crit-val">${rService.toFixed(1).replace(".0", "")}</span>
           </div>
-          <div class="criterion-pill ${getScoreClass(rSauberkeit)}" title="Sauberkeit & Ambiente: ${rSauberkeit} von 5">
-            <span class="criterion-pill-name">✨ Sauberkeit</span>
-            <span class="criterion-pill-stars">${rSauberkeit} ★</span>
+          <div class="lokal-crit-sep">•</div>
+          <div class="lokal-crit-item" title="Sauberkeit & Ambiente: ${rSauberkeit} / 5">
+            <span class="lokal-crit-icon">✨</span>
+            <span class="lokal-crit-label">Ambiente</span>
+            <span class="lokal-crit-val">${rSauberkeit.toFixed(1).replace(".0", "")}</span>
           </div>
-          <div class="criterion-pill ${getScoreClass(rPreis)}" title="Preis-Leistung: ${rPreis} von 5">
-            <span class="criterion-pill-name">💶 Preis/Leist.</span>
-            <span class="criterion-pill-stars">${rPreis} ★</span>
+          <div class="lokal-crit-sep">•</div>
+          <div class="lokal-crit-item" title="Preis-Leistung: ${rPreis} / 5">
+            <span class="lokal-crit-icon">💶</span>
+            <span class="lokal-crit-label">Preis</span>
+            <span class="lokal-crit-val">${rPreis.toFixed(1).replace(".0", "")}</span>
           </div>
         </div>
+      `;
+    } else {
+      criteriaRowHtml = `
+        <div class="lokal-planned-info-row">
+          <span>🌟 Geplante Einkehr / Vormerkung auf der Wunschliste</span>
+        </div>
+      `;
+    }
+
+    // Notizen falls vorhanden (als aufklappbares Details-Akkordeon)
+    let notesHtml = "";
+    if (item.notizen) {
+      notesHtml = `
+        <details class="lokal-notes-accordion">
+          <summary class="lokal-notes-summary">
+            <span class="lokal-notes-summary-label">
+              <span class="notes-icon">💬</span>
+              <span>Erfahrungsbericht &amp; Notizen</span>
+            </span>
+            <span class="lokal-notes-chevron">▾</span>
+          </summary>
+          <div class="lokal-notes-content">
+            ${escapeLokalHtml(item.notizen)}
+          </div>
+        </details>
       `;
     }
 
     card.innerHTML = `
+      <!-- Header: Name & Meta links, Score-Badge rechts -->
       <div class="lokal-card-header">
         <div class="lokal-card-title-group">
-          <div class="lokal-card-meta-top">
+          <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
+          <div class="lokal-card-meta-row">
             <span class="badge-lokal-cat">${catBadgeText}</span>
             ${locationLinkHtml}
           </div>
-          <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
         </div>
-        <div class="lokal-card-header-right">
-          ${
-            !isGeplant
-              ? `
-            <div class="lokal-score-badge" title="Gesamtnote: ${overallScore} von 5 Sternen">
-              <span class="lokal-score-val">${overallScore}</span>
-              <span class="lokal-score-star">★</span>
-            </div>
-          `
-              : `
-            <div class="lokal-planned-badge">
-              <span>📌 Wunschliste</span>
-            </div>
-          `
-          }
-          <div class="lokal-card-actions">
-            <button class="btn-card-action" onclick="window.openLokalModal('${item.id}')" title="Lokal bearbeiten">✏️</button>
-            <button class="btn-card-action btn-card-action-del" onclick="window.deleteLokal('${item.id}')" title="Lokal löschen">🗑️</button>
+        ${
+          !isGeplant
+            ? `
+          <div class="lokal-score-badge" title="Gesamtnote: ${overallScore} von 5 Sternen">
+            <span class="lokal-score-val">${overallScore}</span>
+            <span class="lokal-score-star">★</span>
           </div>
-        </div>
+        `
+            : `
+          <div class="lokal-planned-badge">
+            <span>📌 Wunschliste</span>
+          </div>
+        `
+        }
       </div>
 
-      ${
-        !isGeplant
-          ? `
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <div class="lokal-stars-display" title="${overallScore} von 5 Sternen">
-          ${starsHtml}
-        </div>
-        <span style="font-size: 0.78rem; font-weight: 700; color: #94a3b8;">4 Kriterien im Schnitt</span>
-      </div>
-      ${criteriaPillsHtml}
-      `
-          : `
-      <div style="display: flex; align-items: center; gap: 6px; color: #93c5fd; font-size: 0.85rem; font-weight: 700;">
-        <span>🌟</span><span>Geplante Einkehr / Vormerkung</span>
-      </div>
-      `
-      }
+      <!-- Kriterien-Leiste -->
+      ${criteriaRowHtml}
 
-      ${
-        item.notizen
-          ? `
-      <div class="lokal-notes-box">
-        <span class="notes-icon">💬</span>
-        <div style="flex: 1;">${escapeLokalHtml(item.notizen)}</div>
-      </div>
-      `
-          : ""
-      }
+      <!-- Notizen falls vorhanden -->
+      ${notesHtml}
 
+      <!-- Teilnehmer Avatar-Stack -->
       ${participantsHtml}
 
+      <!-- Footer: Autor links, Aktionen & Link rechts -->
       <div class="lokal-card-footer">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <img src="${authorAvatar}" onerror="this.src='logo.png'" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);" alt="${escapeLokalHtml(item.author || "Anonym")}" />
-          <span>Eingetragen von <strong>${escapeLokalHtml(item.author || "Anonym")}</strong></span>
+        <div class="lokal-author-info">
+          <img src="${authorAvatar}" onerror="this.src='logo.png'" class="lokal-author-img" alt="${escapeLokalHtml(item.author || "Anonym")}" />
+          <span>Von <strong>${escapeLokalHtml(item.author || "Anonym")}</strong></span>
         </div>
-        <div class="lokal-card-links">
+        <div class="lokal-footer-actions">
           ${linksHtml}
+          <div class="lokal-action-btns">
+            <button type="button" class="btn-card-action" onclick="window.openLokalModal('${item.id}')" title="Lokal bearbeiten">✏️</button>
+            <button type="button" class="btn-card-action btn-card-action-del" onclick="window.deleteLokal('${item.id}')" title="Lokal löschen">🗑️</button>
+          </div>
         </div>
       </div>
     `;
@@ -5423,6 +6144,8 @@ renderCalendarWidget();
 filterAndRender();
 renderKasseView();
 renderPurchasesView();
+renderStauderView();
+renderStauderKistenView();
 renderLokaleView();
 renderRezepteView();
 updateNotificationButton();
@@ -5436,6 +6159,8 @@ initCategoriesListener();
 initEventsListener();
 initKasseListener();
 initPurchasesListener();
+initStauderListener();
+initStauderKistenListener();
 initLokaleListener();
 initRezepteListener();
 
@@ -5444,38 +6169,110 @@ initRezepteListener();
 // ==========================================
 function parseMarkdownToHtml(md) {
   if (!md) return "";
-  let html = md
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(
-      /^### (.*$)/gim,
-      '<h4 style="color: #34d399; font-size: 0.95rem; font-weight: 800; margin: 14px 0 6px 0;">$1</h4>',
-    )
-    .replace(
-      /^## (.*$)/gim,
-      '<h3 style="color: #6ee7b7; font-size: 1.05rem; font-weight: 800; margin: 18px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">$1</h3>',
-    )
-    .replace(
-      /^# (.*$)/gim,
-      '<h2 style="color: #ffffff; font-size: 1.15rem; font-weight: 900; margin: 0 0 10px 0;">$1</h2>',
-    )
-    .replace(/\*\*(.*?)\*\*/gim, '<strong style="color: #ffffff;">$1</strong>')
-    .replace(/\*(.*?)\*/gim, '<span style="color: #a7f3d0;">$1</span>')
-    .replace(
-      /^---$/gim,
-      '<hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0;">',
-    )
-    .replace(
-      /^\* (.*$)/gim,
-      '<li style="margin-bottom: 5px; margin-left: 18px;">$1</li>',
-    )
-    .replace(
-      /`([^`]+)`/gim,
-      '<code style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 4px; color: #a7f3d0; font-size: 0.8rem;">$1</code>',
-    );
 
-  return html;
+  function parseInline(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/`([^`]+)`/g, '<code class="readme-chip">$1</code>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="readme-strong">$1</strong>')
+      .replace(/_(.*?)_/g, '<span class="readme-em">$1</span>')
+      .replace(/\*(.*?)\*/g, '<span class="readme-em">$1</span>');
+  }
+
+  const lines = md.split("\n");
+  const out = [];
+  let inSectionCard = false;
+  let inMainList = false;
+  let inSubList = false;
+
+  function closeSubList() {
+    if (inSubList) {
+      out.push("</ul>");
+      inSubList = false;
+    }
+  }
+
+  function closeMainList() {
+    closeSubList();
+    if (inMainList) {
+      out.push("</ul>");
+      inMainList = false;
+    }
+  }
+
+  function closeCard() {
+    closeMainList();
+    if (inSectionCard) {
+      out.push("</div>");
+      inSectionCard = false;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    // Horizontal Trennlinie ---
+    if (trimmed === "---") {
+      closeCard();
+      continue;
+    }
+
+    // Haupt-Überschrift (## ...)
+    if (trimmed.startsWith("## ")) {
+      closeCard();
+      const title = parseInline(trimmed.substring(3));
+      out.push(`<div class="readme-main-header">${title}</div>`);
+      continue;
+    }
+
+    // Kapitel-Kachel (### ...)
+    if (trimmed.startsWith("### ")) {
+      closeCard();
+      inSectionCard = true;
+      const title = parseInline(trimmed.substring(4));
+      out.push(
+        `<div class="readme-card"><div class="readme-card-title">${title}</div>`,
+      );
+      continue;
+    }
+
+    // Eingerückte Unterpunkte (z.B. "  - " oder "    - ")
+    if (/^\s{2,}[-*]\s+/.test(rawLine)) {
+      const bulletContent = parseInline(rawLine.replace(/^\s{2,}[-*]\s+/, ""));
+      if (!inSubList) {
+        out.push('<ul class="readme-sublist">');
+        inSubList = true;
+      }
+      out.push(`<li class="readme-subitem">${bulletContent}</li>`);
+      continue;
+    }
+
+    // Haupt-Aufzählungspunkte ("- " oder "* ")
+    if (/^[-*]\s+/.test(trimmed)) {
+      closeSubList();
+      const bulletContent = parseInline(trimmed.replace(/^[-*]\s+/, ""));
+      if (!inMainList) {
+        out.push('<ul class="readme-list">');
+        inMainList = true;
+      }
+      out.push(`<li class="readme-item">${bulletContent}</li>`);
+      continue;
+    }
+
+    // Normaler Absatz / Fließtext
+    closeMainList();
+    out.push(`<p class="readme-p">${parseInline(trimmed)}</p>`);
+  }
+
+  closeCard();
+  return out.join("");
 }
 
 window.openReadmeModal = async function () {
@@ -5487,7 +6284,7 @@ window.openReadmeModal = async function () {
   modal.style.display = "flex";
   if (verEl) {
     const appVer =
-      document.getElementById("app-version")?.textContent || "Version 2.5.0";
+      document.getElementById("app-version")?.textContent || "Version 3.4";
     verEl.textContent = appVer;
   }
 

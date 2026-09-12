@@ -54,7 +54,7 @@
     />
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=3.2.9" />
+    <link rel="stylesheet" href="css/style.css" />
 
     <!-- Confetti für Erfolgs-Momente -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -653,6 +653,22 @@
               >0</span
             >
           </button>
+          <button
+            type="button"
+            class="segmented-control-btn"
+            id="seg-btn-stauder"
+            onclick="window.switchAufgabenSubTab('stauder')"
+            title="Stauder Vorrats-Tracker"
+          >
+            <img
+              src="images/stauder.webp"
+              alt="Stauder"
+              class="stauder-switcher-img"
+            />
+            <span id="seg-badge-stauder" class="seg-badge" style="display: none"
+              >0</span
+            >
+          </button>
         </div>
 
         <!-- SUBVIEW 1: Offene Anschaffungen & Budget (Standard) -->
@@ -771,6 +787,197 @@
             </button>
           </div>
           <div id="all-tasks-container" class="event-list"></div>
+        </div>
+
+        <!-- SUBVIEW 3: Stauder Kronkorken-Tracker -->
+        <div
+          id="subview-stauder"
+          class="aufgaben-subview"
+          style="display: none"
+        >
+          <!-- Stauder Header -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 10px;
+            "
+          >
+            <img
+              src="images/stauder.webp"
+              alt="Stauder"
+              style="
+                height: 38px;
+                object-fit: contain;
+                filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
+              "
+            />
+          </div>
+
+          <!-- Kronkorken Hero Card -->
+          <div class="stauder-stock-card">
+            <div class="stauder-stepper-container">
+              <button
+                type="button"
+                class="btn-stauder-step-action"
+                onclick="window.changeKronkorken(-1)"
+                title="1 Kronkorken abziehen"
+              >
+                −
+              </button>
+              <div
+                class="stauder-number-display"
+                onclick="window.promptSetKronkorken()"
+                style="cursor: pointer"
+                title="Tippen für Direkteingabe"
+              >
+                <span id="stauder-kronkorken-count" class="stauder-big-num"
+                  >0</span
+                >
+                <span class="stauder-unit-label">Kronkorken</span>
+                <span class="stauder-sub-flaschen">
+                  Tippen für Direkteingabe
+                </span>
+              </div>
+              <button
+                type="button"
+                class="btn-stauder-step-action"
+                onclick="window.changeKronkorken(1)"
+                title="1 Kronkorken hinzufügen"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Sparziel: Kühlschrank Kachel -->
+          <div class="stauder-stock-card stauder-goal-card">
+            <div class="stauder-goal-header">
+              <span class="stauder-goal-title">❄️ Kühlschrank</span>
+              <span id="stauder-goal-badge" class="stauder-goal-badge">0%</span>
+            </div>
+
+            <div class="stauder-goal-stats">
+              <div class="stauder-goal-stat-item">
+                <span class="stauder-goal-stat-label">Benötigt:</span>
+                <span class="stauder-goal-stat-val">770</span>
+              </div>
+              <div class="stauder-goal-stat-divider"></div>
+              <div class="stauder-goal-stat-item">
+                <span class="stauder-goal-stat-label">Fehlen:</span>
+                <span
+                  id="stauder-kuehlschrank-diff"
+                  class="stauder-goal-stat-val diff-val"
+                  >770</span
+                >
+              </div>
+            </div>
+
+            <!-- Feiner Fortschrittsbalken -->
+            <div class="stauder-progress-bar-bg">
+              <div
+                id="stauder-goal-progress-fill"
+                class="stauder-progress-bar-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Direktlink zum Stauder Kronshop -->
+          <a
+            href="https://bonus.stauder.de/Praemienkatalog/Alle-Praemien/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-stauder-shop"
+            title="Stauder Kronshop Prämienkatalog öffnen"
+          >
+            <span>🎁 Zum Stauder Kronshop</span>
+            <span class="external-icon">↗</span>
+          </a>
+
+          <!-- Kistenverfolgung Section -->
+          <div class="stauder-kisten-section">
+            <div class="stauder-kisten-header">
+              <div class="stauder-kisten-title-wrap">
+                <span class="stauder-kisten-title">📦 Kisten-Verlauf</span>
+                <span
+                  id="stauder-kisten-stats-badge"
+                  class="stauder-kisten-badge"
+                  >0 Kisten</span
+                >
+              </div>
+              <button
+                type="button"
+                class="btn-stauder-add-kiste"
+                onclick="window.openStauderKisteModal()"
+              >
+                ➕ Kiste eintragen
+              </button>
+            </div>
+
+            <div class="stauder-kisten-substats" id="stauder-kisten-substats">
+              Noch keine Kisten eingetragen
+            </div>
+
+            <!-- 3 KPI-Kacheln zur Verbrauchsanalyse -->
+            <div class="stauder-kisten-kpi-grid">
+              <div class="stauder-kisten-kpi-card">
+                <span class="stauder-kpi-label">Gesamt</span>
+                <span id="stauder-kpi-total" class="stauder-kpi-val">0</span>
+                <span class="stauder-kpi-unit">Kisten</span>
+              </div>
+              <div class="stauder-kisten-kpi-card">
+                <span class="stauder-kpi-label">Diesen Monat</span>
+                <span id="stauder-kpi-month" class="stauder-kpi-val">0</span>
+                <span id="stauder-kpi-month-name" class="stauder-kpi-unit"
+                  >Kisten</span
+                >
+              </div>
+              <div class="stauder-kisten-kpi-card">
+                <span class="stauder-kpi-label">Ø Rhythmus</span>
+                <span id="stauder-kpi-pace" class="stauder-kpi-val">--</span>
+                <span id="stauder-kpi-pace-unit" class="stauder-kpi-unit"
+                  >Tage / Kiste</span
+                >
+              </div>
+            </div>
+
+            <!-- Erweiterte Bier-Statistiken (Flaschen, Quote & Monatsverlauf) -->
+            <div class="stauder-stats-container">
+              <!-- Statistik-Karte: Flaschen & Liter -->
+              <div class="stauder-stats-grid">
+                <div class="stauder-stat-card">
+                  <div class="stauder-stat-card-header">
+                    <span class="stauder-stat-icon">🍾</span>
+                    <span class="stauder-stat-title">Getrunken</span>
+                  </div>
+                  <div id="stauder-stat-bottles" class="stauder-stat-highlight">
+                    0 Flaschen
+                  </div>
+                  <div id="stauder-stat-liters" class="stauder-stat-detail">
+                    ~0 Liter Bier
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monats-Balkendiagramm (Letzte 6 Monate) -->
+              <div class="stauder-chart-card">
+                <div class="stauder-chart-header">
+                  <span class="stauder-chart-title"
+                    >📈 Monats-Verlauf (Kisten)</span
+                  >
+                  <span class="stauder-chart-badge">Letzte 6 Monate</span>
+                </div>
+                <div id="stauder-monthly-bars" class="stauder-bars-wrap">
+                  <!-- Dynamisch via JavaScript gerendert -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Liste der gekauften Kisten -->
+            <div id="stauder-kisten-list" class="stauder-kisten-list"></div>
+          </div>
         </div>
       </div>
 
@@ -983,6 +1190,10 @@
               <img
                 id="detail-author-avatar"
                 src="logo.png"
+                onerror="
+                  this.onerror = null;
+                  this.src = 'logo.png';
+                "
                 class="author-avatar-img"
                 style="
                   width: 36px;
@@ -1134,6 +1345,10 @@
                 <img
                   id="author-avatar"
                   src="logo.png"
+                  onerror="
+                    this.onerror = null;
+                    this.src = 'logo.png';
+                  "
                   class="author-avatar-preview"
                   alt="Avatar"
                 />
@@ -1536,10 +1751,6 @@
           >
             <input type="hidden" id="lokal-id" value="" />
             <input type="hidden" id="lokal-status" value="besucht" />
-            <input type="hidden" id="lokal-rating-essen" value="5" />
-            <input type="hidden" id="lokal-rating-service" value="5" />
-            <input type="hidden" id="lokal-rating-sauberkeit" value="5" />
-            <input type="hidden" id="lokal-rating-preis" value="4" />
             <input type="hidden" id="lokal-rating-essen" value="3" />
             <input type="hidden" id="lokal-rating-service" value="3" />
             <input type="hidden" id="lokal-rating-sauberkeit" value="3" />
@@ -1579,6 +1790,10 @@
                 <img
                   id="lokal-author-avatar"
                   src="logo.png"
+                  onerror="
+                    this.onerror = null;
+                    this.src = 'logo.png';
+                  "
                   class="author-avatar-preview"
                   alt="Avatar"
                 />
@@ -1993,6 +2208,10 @@
                 <img
                   id="recipe-detail-author-img"
                   src="logo.png"
+                  onerror="
+                    this.onerror = null;
+                    this.src = 'logo.png';
+                  "
                   class="rezept-author-avatar"
                   alt="Autor"
                 />
@@ -2943,6 +3162,161 @@
       </div>
     </div>
 
+    <!-- Stauder Kiste Modal -->
+    <div
+      id="stauder-kiste-modal-container"
+      class="custom-modal-overlay"
+      style="display: none"
+      onclick="window.closeStauderKisteModal()"
+    >
+      <div
+        class="custom-modal"
+        onclick="event.stopPropagation()"
+        style="max-width: 360px; text-align: left"
+      >
+        <h3
+          style="
+            color: #34d399;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-align: center;
+          "
+        >
+          📦 Kiste eintragen
+        </h3>
+
+        <!-- Käufer Auswahl -->
+        <div class="form-group" style="margin-bottom: 14px">
+          <label
+            style="
+              font-size: 0.8rem;
+              font-weight: 700;
+              color: #94a3b8;
+              display: block;
+              margin-bottom: 8px;
+            "
+          >
+            Wer hat die Kiste geholt?
+          </label>
+          <div
+            id="stauder-kiste-buyers-container"
+            class="stauder-kiste-buyers-grid"
+          ></div>
+          <input type="hidden" id="stauder-kiste-buyer" value="" />
+        </div>
+
+        <!-- Kaufdatum -->
+        <div class="form-group" style="margin-bottom: 14px">
+          <label
+            style="
+              font-size: 0.8rem;
+              font-weight: 700;
+              color: #94a3b8;
+              display: block;
+              margin-bottom: 4px;
+            "
+          >
+            Kaufdatum
+          </label>
+          <input
+            type="date"
+            id="stauder-kiste-date"
+            class="form-control"
+            required
+          />
+        </div>
+
+        <!-- Anzahl Kisten -->
+        <div class="form-group" style="margin-bottom: 14px">
+          <label
+            style="
+              font-size: 0.8rem;
+              font-weight: 700;
+              color: #94a3b8;
+              display: block;
+              margin-bottom: 6px;
+            "
+          >
+            Anzahl Kisten
+          </label>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button
+              type="button"
+              class="btn-stauder-kiste-stepper"
+              onclick="window.adjustStauderKisteCount(-1)"
+            >
+              −
+            </button>
+            <span
+              id="stauder-kiste-count-display"
+              style="
+                font-size: 1.3rem;
+                font-weight: 800;
+                min-width: 36px;
+                text-align: center;
+                color: #ffffff;
+              "
+              >1</span
+            >
+            <button
+              type="button"
+              class="btn-stauder-kiste-stepper"
+              onclick="window.adjustStauderKisteCount(1)"
+            >
+              +
+            </button>
+            <span style="font-size: 0.85rem; color: #94a3b8; margin-left: 4px"
+              >Kiste(n)</span
+            >
+          </div>
+          <input type="hidden" id="stauder-kiste-count" value="1" />
+        </div>
+
+        <!-- Hinweis -->
+        <div
+          style="
+            font-size: 0.74rem;
+            color: #64748b;
+            margin-bottom: 16px;
+            line-height: 1.35;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          "
+        >
+          ℹ️ Wirkt sich nicht auf den Kronkorken-Stand aus (Aktions-Kronkorken
+          werden oben separat gezählt).
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 10px; margin-top: 12px">
+          <button
+            type="button"
+            class="btn-modal-close"
+            style="flex: 1; background: rgba(255, 255, 255, 0.1); color: white"
+            onclick="window.closeStauderKisteModal()"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            class="btn-modal-close"
+            id="btn-save-stauder-kiste"
+            style="
+              flex: 1.2;
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              font-weight: 800;
+            "
+            onclick="window.saveStauderKiste()"
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Readme & Info Popup Modal -->
     <div
       id="readme-modal-container"
@@ -2953,12 +3327,12 @@
       <div
         class="custom-modal"
         style="
-          max-width: 540px;
+          max-width: 620px;
           width: 100%;
-          max-height: 75vh;
+          max-height: 82vh;
           display: flex;
           flex-direction: column;
-          padding: 18px 20px;
+          padding: 18px 18px;
           text-align: left;
         "
         onclick="event.stopPropagation()"
@@ -3087,6 +3461,11 @@
             if (curSub === "anschaffungen") {
               if (typeof window.renderPurchasesView === "function")
                 window.renderPurchasesView();
+            } else if (curSub === "stauder") {
+              if (typeof window.renderStauderView === "function")
+                window.renderStauderView();
+              if (typeof window.renderStauderKistenView === "function")
+                window.renderStauderKistenView();
             } else {
               if (typeof window.renderAllTasks === "function")
                 window.renderAllTasks();
@@ -3095,14 +3474,14 @@
         } else if (tabId === "kasse") {
           if (typeof window.renderKasseView === "function")
             window.renderKasseView();
-        } else if (tabId === "lokale" || tabId === "einkehr") {
-          if (typeof window.renderLokaleView === "function")
-            window.renderLokaleView();
-          else if (typeof window.renderEinkehrView === "function")
-            window.renderEinkehrView();
         } else if (tabId === "rezepte") {
           if (typeof window.renderRezepteView === "function")
             window.renderRezepteView();
+        } else {
+          if (typeof window.renderCalendarWidget === "function")
+            window.renderCalendarWidget();
+          if (typeof window.filterAndRender === "function")
+            window.filterAndRender();
         }
 
         // Tab Indikator bewegen
@@ -3113,14 +3492,15 @@
         }
 
         const subTitles = {
-          termine: "Termine & Vorhaben",
-          lokale: "Restaurant- & Lokal-Guide („Wo wir waren“)",
-          rezepte: "Rezeptbuch & Kulinarik",
-          einkehr: "Restaurant- & Lokal-Guide („Wo wir waren“)",
+          termine: "Übersicht & Kalender",
+          lokale: "Restaurant-Guide & Einkehr",
+          rezepte: "Rezepte & Kulinarik",
           aufgaben:
             window.currentAufgabenSubTab === "anschaffungen"
               ? "Offene Anschaffungen & Budget"
-              : "Was fehlt noch für die Termine",
+              : window.currentAufgabenSubTab === "stauder"
+                ? "Stauder Kronkorken & Kisten"
+                : "Was fehlt noch für die Termine",
           kasse: "Gemeinschaftskasse",
         };
         document.getElementById("header-sub-title").textContent =
@@ -3157,7 +3537,7 @@
           }
         })
         .catch(() => {
-          document.getElementById("app-version").textContent = "Version 1.0.0";
+          document.getElementById("app-version").textContent = "Version 3.4";
         });
 
       // Splash Screen Steuerung
@@ -3259,6 +3639,6 @@
     </script>
 
     <!-- Firebase SDK Module -->
-    <script type="module" src="js/app.js?v=3.2.9"></script>
+    <script type="module" src="js/app.js"></script>
   </body>
 </html>

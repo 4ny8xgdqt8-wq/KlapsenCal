@@ -1,4 +1,4 @@
-const VERSION = "3.3.1";
+const VERSION = "4.11";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   "./README.md",
   "./css/style.css",
   "./js/app.js",
+  "./images/stauder.webp",
   "./logo.png",
   "./favicon.ico",
   "./favicon-32x32.png",
