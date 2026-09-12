@@ -998,20 +998,24 @@
           <div class="kasse-balance-amount" id="kasse-total-balance">
             0,00 €
           </div>
-          <div class="kasse-sub-stats">
-            <div class="kasse-stat-item">
-              <span class="kasse-stat-label">🟢 Einzahlungen</span>
-              <span class="kasse-stat-val positive" id="kasse-total-in"
+          <div class="kasse-stat-tiles">
+            <div class="kasse-stat-tile kasse-stat-tile-in">
+              <span class="kasse-stat-tile-label">📥 Einnahmen</span>
+              <span class="kasse-stat-tile-val" id="kasse-total-in"
                 >+0,00 €</span
               >
             </div>
-            <div class="kasse-stat-divider"></div>
-            <div class="kasse-stat-item">
-              <span class="kasse-stat-label">🔴 Ausgaben</span>
-              <span class="kasse-stat-val negative" id="kasse-total-out"
+            <div class="kasse-stat-tile kasse-stat-tile-out">
+              <span class="kasse-stat-tile-label">📤 Ausgaben</span>
+              <span class="kasse-stat-tile-val" id="kasse-total-out"
                 >-0,00 €</span
               >
             </div>
+          </div>
+          <div class="kasse-bookings-pill-row">
+            <span class="kasse-bookings-pill" id="kasse-bookings-count"
+              >🔢 0 Buchungen</span
+            >
           </div>
         </div>
 

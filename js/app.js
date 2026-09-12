@@ -2875,6 +2875,7 @@ function renderKasseView() {
   const totalBalanceEl = document.getElementById("kasse-total-balance");
   const totalInEl = document.getElementById("kasse-total-in");
   const totalOutEl = document.getElementById("kasse-total-out");
+  const bookingsCountEl = document.getElementById("kasse-bookings-count");
   const container = document.getElementById("kasse-list-container");
   if (!totalBalanceEl || !container) return;
 
@@ -2896,6 +2897,8 @@ function renderKasseView() {
 
   if (totalInEl) totalInEl.textContent = "+" + formatEuro(totalIn);
   if (totalOutEl) totalOutEl.textContent = "-" + formatEuro(totalOut);
+  if (bookingsCountEl)
+    bookingsCountEl.textContent = `🔢 ${allKasseBookings.length} ${allKasseBookings.length === 1 ? "Buchung" : "Buchungen"}`;
 
   // Filtern
   let filtered = [...allKasseBookings];
@@ -2919,12 +2922,12 @@ function renderKasseView() {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
-                <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
-                <h3 style="color: white; margin: 0 0 6px 0;">Keine Buchungen vorhanden</h3>
-                <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neue Buchung“ eine Einnahme oder Ausgabe ein!</p>
-            </div>
-        `;
+      <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
+        <h3 style="color: white; margin: 0 0 6px 0;">Keine Buchungen vorhanden</h3>
+        <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neue Buchung" eine Einnahme oder Ausgabe ein!</p>
+      </div>
+    `;
     return;
   }
 
@@ -2932,29 +2935,41 @@ function renderKasseView() {
     const card = document.createElement("div");
     card.className = "kasse-tx-card";
     const isIncome = b.typ === "einnahme";
+
+    // CSS-Variable für farbigen linken Rand
+    card.style.setProperty("--tx-color", isIncome ? "#10b981" : "#ef4444");
+
     const formattedDate = formatDateObj(b.datum).formattedLong;
 
+    // Ersteller-Avatar (falls vorhanden)
+    const authorHtml = b.ersteller
+      ? `<img src="avatars/${b.ersteller}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-tx-person-avatar" alt="${b.ersteller}" title="${b.ersteller}"> <span>${b.ersteller}</span>`
+      : "";
+
+    const notizHtml = b.notiz ? `<span>• 📝 ${b.notiz}</span>` : "";
+
     card.innerHTML = `
-            <div class="kasse-tx-icon ${isIncome ? "positive" : "negative"}">
-                ${isIncome ? "🟢" : "🔴"}
-            </div>
-            <div class="kasse-tx-info">
-                <div class="kasse-tx-title">${b.zweck || "Buchung"}</div>
-                <div class="kasse-tx-meta">
-                    <span>📅 ${formattedDate}</span>
-                    ${b.notiz ? `<span>• 📝 ${b.notiz}</span>` : ""}
-                </div>
-            </div>
-            <div class="kasse-tx-right">
-                <span class="kasse-tx-amount ${isIncome ? "positive" : "negative"}">
-                    ${isIncome ? "+" : "-"}${formatEuro(b.betrag)}
-                </span>
-                <div class="kasse-tx-actions">
-                    <button class="btn-tx-action" onclick="window.openKasseModalById('${b.id}')" title="Bearbeiten">✏️</button>
-                    <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${b.id}')" title="Löschen">🗑️</button>
-                </div>
-            </div>
-        `;
+      <div class="kasse-tx-icon ${isIncome ? "positive" : "negative"}">
+        ${isIncome ? "↑" : "↓"}
+      </div>
+      <div class="kasse-tx-info">
+        <div class="kasse-tx-title">${b.zweck || "Buchung"}</div>
+        <div class="kasse-tx-meta">
+          <span>📅 ${formattedDate}</span>
+          ${authorHtml}
+          ${notizHtml}
+        </div>
+      </div>
+      <div class="kasse-tx-right">
+        <span class="kasse-tx-amount ${isIncome ? "positive" : "negative"}">
+          ${isIncome ? "+" : "-"}${formatEuro(b.betrag)}
+        </span>
+        <div class="kasse-tx-actions">
+          <button class="btn-tx-action" onclick="window.openKasseModalById('${b.id}')" title="Bearbeiten">✏️</button>
+          <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${b.id}')" title="Löschen">🗑️</button>
+        </div>
+      </div>
+    `;
     container.appendChild(card);
   });
 

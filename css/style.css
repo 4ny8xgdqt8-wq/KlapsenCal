@@ -2000,52 +2000,98 @@ select.form-control {
   text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
 }
 
-.kasse-sub-stats {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 12px;
-  padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+/* ── Einnahmen/Ausgaben Kacheln ──────────────────────────── */
+.kasse-stat-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.kasse-stat-item {
+.kasse-stat-tile {
+  border-radius: 14px;
+  padding: 11px 14px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 
-.kasse-stat-label {
+.kasse-stat-tile-in {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.kasse-stat-tile-out {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.kasse-stat-tile-label {
   font-size: 0.65rem;
   font-weight: 700;
-  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
 }
 
-.kasse-stat-val {
-  font-size: 0.95rem;
-  font-weight: 800;
+.kasse-stat-tile-in .kasse-stat-tile-label {
+  color: #6ee7b7;
 }
-.kasse-stat-val.positive {
+.kasse-stat-tile-out .kasse-stat-tile-label {
+  color: #fca5a5;
+}
+
+.kasse-stat-tile-val {
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.kasse-stat-tile-in .kasse-stat-tile-val {
   color: #34d399;
 }
-.kasse-stat-val.negative {
+.kasse-stat-tile-out .kasse-stat-tile-val {
   color: #f87171;
 }
 
-.kasse-stat-divider {
-  width: 1px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.1);
+/* Buchungsanzahl-Pill */
+.kasse-bookings-pill-row {
+  display: flex;
+  justify-content: flex-end;
 }
 
-/* Transaktions-Karte */
+.kasse-bookings-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 3px 9px;
+}
+
+/* Alte Klassen für Rückwärtskompatibilität */
+.kasse-sub-stats {
+  display: none;
+}
+.kasse-stat-item {
+  display: none;
+}
+.kasse-stat-label {
+  display: none;
+}
+.kasse-stat-val {
+  display: none;
+}
+.kasse-stat-divider {
+  display: none;
+}
+
+/* ── Transaktionskarten ──────────────────────────────────── */
 .kasse-tx-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
+  border-left: 5px solid var(--tx-color, #10b981);
   border-radius: 16px;
   padding: 12px 14px;
   margin-bottom: 10px;
@@ -2054,27 +2100,37 @@ select.form-control {
   gap: 12px;
   transition:
     transform 0.2s ease,
-    border-color 0.2s ease;
+    box-shadow 0.2s ease;
   animation: fadeIn 0.25s ease;
 }
 
+.kasse-tx-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Pfeil-Quadrat Icon */
 .kasse-tx-icon {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 900;
   flex-shrink: 0;
+  line-height: 1;
 }
 .kasse-tx-icon.positive {
   background: rgba(16, 185, 129, 0.18);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
 }
 .kasse-tx-icon.negative {
   background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
 }
 
 .kasse-tx-info {
@@ -2082,7 +2138,7 @@ select.form-control {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .kasse-tx-title {
@@ -2108,13 +2164,14 @@ select.form-control {
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--primary-color);
+  flex-shrink: 0;
 }
 
 .kasse-tx-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -2140,14 +2197,18 @@ select.form-control {
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #cbd5e1;
   border-radius: 6px;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+.btn-tx-action:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 .btn-tx-action:active {
   transform: scale(0.9);
