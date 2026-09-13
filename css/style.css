@@ -4312,11 +4312,11 @@ select.form-control {
   );
   border: 1px solid rgba(245, 158, 11, 0.32);
   border-radius: 14px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   margin-bottom: 8px;
 }
@@ -4332,7 +4332,7 @@ select.form-control {
 
 .lokal-sign-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex: 1;
   min-width: 0;
@@ -4340,32 +4340,43 @@ select.form-control {
 
 .lokal-sign-icon {
   font-size: 1.55rem;
-  line-height: 1;
+  line-height: 1.2;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .lokal-sign-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
 .lokal-sign-title {
-  font-size: 1.3rem;
-  font-weight: 900;
+  font-size: 1.18rem;
+  font-weight: 800;
   color: #ffffff;
   margin: 0;
-  line-height: 1.15;
-  letter-spacing: -0.3px;
-  word-break: break-word;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  word-break: normal;
+  overflow-wrap: break-word;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
+.lokal-sign-sub-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
 .lokal-sign-sub {
-  font-size: 0.74rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
   color: #fbbf24;
   letter-spacing: 0.2px;
 }
@@ -4379,6 +4390,7 @@ select.form-control {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .lokal-sign-score {
@@ -4466,14 +4478,18 @@ select.form-control {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: #94a3b8;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  padding: 2px 8px;
-  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 7px;
+  border-radius: 6px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: all 0.2s ease;
 }
 

@@ -4751,11 +4751,13 @@ function renderLokaleView() {
           <span class="lokal-sign-icon">${catIcon}</span>
           <div class="lokal-sign-text">
             <h3 class="lokal-sign-title">${escapeLokalHtml(item.name || "")}</h3>
-            <div class="lokal-sign-sub">${escapeLokalHtml(cleanCatLabel)}</div>
+            <div class="lokal-sign-sub-row">
+              <span class="lokal-sign-sub">${escapeLokalHtml(cleanCatLabel)}</span>
+              ${locationLinkHtml}
+            </div>
           </div>
         </div>
         <div class="lokal-sign-right">
-          ${locationLinkHtml}
           ${
             !isGeplant
               ? `<div class="lokal-sign-score" title="Gesamtnote: ${overallScore} von 5 Sternen">

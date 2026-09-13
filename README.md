@@ -158,7 +158,7 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
   - 💶 **Preis-Leistung** (1–5 Sterne)
   - **Automatische Gesamtnote & neutrale Vorbelegung**: Alle 4 Kriterien starten beim Anlegen standardmäßig bei soliden **3 von 5 Sternen** (`3.0 ⭐`). Die App errechnet aus euren Eingaben automatisch die exakte Ø Durchschnittsnote (z. B. `4.3 ⭐`) und sortiert die besuchten Lokale übersichtlich nach dieser Bewertung.
 - **Modernes Gastro-Kartendesign**:
-  - **Markantes Restaurant-Schild (Plakette)**: Der Name jedes Lokals sticht nun als elegantes Wirtshausschild im oberen Bereich hervor – veredelt mit leuchtendem Küchen-Icon (z. B. 🥩, 🍕, 🍺), markanter Typografie, Kategorie-Untertitel und direktem Google Maps Pin `📍 [Ort]`.
+  - **Markantes Restaurant-Schild (Plakette)**: Der Name jedes Lokals sticht nun als elegantes Wirtshausschild im oberen Bereich hervor – veredelt mit leuchtendem Küchen-Icon (z. B. 🥩, 🍕, 🍺), markanter Typografie, Kategorie-Untertitel und direktem Google Maps Pin `📍 [Ort]` in einer sauberen, mobil-optimierten Unterzeile (garantiert perfekte Lesbarkeit auf jedem Smartphone ohne Textstauchung).
   - **Schlanke Kriterien-Leiste**: Alle 4 Bewertungskriterien (Essen 🍽️, Service 😊, Ambiente ✨, Preis 💶) kompakt und übersichtlich in einer eleganten Glas-Zeile zusammengefasst.
   - **Moderner Avatar-Stack**: Überlappende Teilnehmer-Avatare mit Namensliste für _„Dabei waren“_ bzw. _„Möchten mit“_.
   - **Aufklappbarer Erfahrungsbericht (Akkordeon)**: Notizen und Berichte über das Essen bleiben standardmäßig platzsparend als dezente 1-Zeilen-Leiste (`💬 Erfahrungsbericht & Notizen ▾`) eingeklappt. Mit einem Fingertipp klappt der Text auf – so bleiben alle Karten einheitlich aufgeräumt.
