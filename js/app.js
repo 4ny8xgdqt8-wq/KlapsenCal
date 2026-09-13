@@ -1077,12 +1077,12 @@ function renderEvents(events) {
     return;
   }
 
+  let heroRendered = false;
+
   events.forEach((item) => {
     const card = document.createElement("div");
     const countdown = getCountdownInfo(item.Datum);
     const isPast = countdown.daysDiff < 0;
-    card.className = `event-card ${isPast ? "past-event" : ""}`;
-    card.onclick = () => showEventDetails(item);
 
     const dateParts = formatDateObj(item.Datum);
     const isAllDay = item.isAllDay || !item.Uhrzeit;
@@ -1106,6 +1106,66 @@ function renderEvents(events) {
     const childYesCount =
       yesMembers.filter((n) => isChild(n)).length + gChildren;
     const totalParticipants = adultYesCount + childYesCount;
+
+    // ── VIP Event-Ticket / Boarding-Pass (Hero-Event ganz oben) ──
+    if (!selectedCalendarDate && !heroRendered && !isPast) {
+      heroRendered = true;
+      const ticket = document.createElement("div");
+      ticket.className = "ticket-card";
+      ticket.onclick = () => showEventDetails(item);
+
+      const catStyle = getCategoryColor(item.Kategorie);
+      const catIcon = catStyle.icon ? `${catStyle.icon} ` : "";
+
+      let countdownText = `⏳ In ${countdown.daysDiff} Tagen`;
+      if (countdown.daysDiff === 0) countdownText = "🔥 Heute!";
+      else if (countdown.daysDiff === 1) countdownText = "⚡ Morgen!";
+
+      let rsvpStackHtml = "";
+      if (totalParticipants > 0) {
+        const avatars = yesMembers
+          .slice(0, 3)
+          .map(
+            (name) =>
+              `<img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" alt="${name}" title="${name}" style="width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #13241b; margin-left: -6px;">`,
+          )
+          .join("");
+        rsvpStackHtml = `
+          <div style="display: flex; align-items: center; justify-content: center; margin-top: 6px;">
+            <div style="display: flex; margin-left: 6px;">${avatars}</div>
+            <span style="font-size: 0.70rem; color: #a7f3d0; font-weight: 700; margin-left: 4px;">${totalParticipants}</span>
+          </div>
+        `;
+      }
+
+      ticket.innerHTML = `
+        <div class="ticket-header" style="background: linear-gradient(135deg, ${catStyle.color}dd, ${catStyle.color}aa);">
+          <span class="ticket-category">${catIcon}Nächstes Event: ${escapeLokalHtml(item.Kategorie || "Termin")}</span>
+          <span class="ticket-countdown">${countdownText}</span>
+        </div>
+        <div class="ticket-body">
+          <div class="ticket-main">
+            <div class="ticket-title">${escapeLokalHtml(item.Titel || "Termin")}</div>
+            <div class="ticket-meta-row">
+              <span class="ticket-meta-item">${timeStr.replace(" • ", "")}</span>
+              ${locationStr ? `<span class="ticket-meta-item">${locationStr}</span>` : ""}
+            </div>
+          </div>
+          <div class="ticket-rip-separator"></div>
+          <div class="ticket-side">
+            <span class="ticket-day-huge" style="color: ${catStyle.color};">${dateParts.day}</span>
+            <span class="ticket-month-sub">${dateParts.monthShort}</span>
+            <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">${dateParts.weekdayShort}</span>
+            ${rsvpStackHtml}
+          </div>
+        </div>
+      `;
+      container.appendChild(ticket);
+      return;
+    }
+
+    card.className = `event-card ${isPast ? "past-event" : ""}`;
+    card.onclick = () => showEventDetails(item);
 
     let participantStackHtml = "";
     if (totalParticipants > 0) {
@@ -2096,6 +2156,12 @@ function switchAufgabenSubTab(subTab) {
   currentAufgabenSubTab = subTab;
   window.currentAufgabenSubTab = subTab;
 
+  const contentEl = document.getElementById("content");
+  if (contentEl) {
+    contentEl.scrollTop = 0;
+  }
+  window.scrollTo(0, 0);
+
   const btnTasks = document.getElementById("seg-btn-tasks");
   const btnPurchases = document.getElementById("seg-btn-purchases");
   const btnStauder = document.getElementById("seg-btn-stauder");
@@ -2863,29 +2929,72 @@ function renderKasseView() {
   const totalInEl = document.getElementById("kasse-total-in");
   const totalOutEl = document.getElementById("kasse-total-out");
   const bookingsCountEl = document.getElementById("kasse-bookings-count");
+  const trendEl = document.getElementById("kasse-trend-badge");
+  const lastDepositEl = document.getElementById("kasse-last-deposit");
   const container = document.getElementById("kasse-list-container");
   if (!totalBalanceEl || !container) return;
 
   let totalIn = 0;
   let totalOut = 0;
+  let monthTrend = 0;
+  const currentMonthKey = new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
   allKasseBookings.forEach((b) => {
     const amount = parseFloat(b.betrag) || 0;
     if (b.typ === "einnahme") {
       totalIn += amount;
+      if (b.datum && b.datum.startsWith(currentMonthKey)) {
+        monthTrend += amount;
+      }
     } else if (b.typ === "ausgabe") {
       totalOut += amount;
+      if (b.datum && b.datum.startsWith(currentMonthKey)) {
+        monthTrend -= amount;
+      }
     }
   });
 
   const balance = totalIn - totalOut;
   totalBalanceEl.textContent = (balance >= 0 ? "+" : "") + formatEuro(balance);
-  totalBalanceEl.className = `kasse-balance-amount ${balance < 0 ? "negative" : ""}`;
+  totalBalanceEl.className = `wallet-balance-val ${balance < 0 ? "negative" : ""}`;
 
   if (totalInEl) totalInEl.textContent = "+" + formatEuro(totalIn);
   if (totalOutEl) totalOutEl.textContent = "-" + formatEuro(totalOut);
   if (bookingsCountEl)
     bookingsCountEl.textContent = `🔢 ${allKasseBookings.length} ${allKasseBookings.length === 1 ? "Buchung" : "Buchungen"}`;
+
+  // Trend-Badge (dieser Monat)
+  if (trendEl) {
+    const sign = monthTrend >= 0 ? "▲ +" : "▼ -";
+    trendEl.textContent = `${sign}${formatEuro(Math.abs(monthTrend))} diesen Monat`;
+    trendEl.className = `wallet-trend-badge ${monthTrend < 0 ? "negative" : ""}`;
+  }
+
+  // Zuletzt eingezahlt
+  if (lastDepositEl) {
+    const einnahmen = allKasseBookings
+      .filter((b) => b.typ === "einnahme")
+      .sort((a, b) => {
+        const dA = a.datum || "1970-01-01";
+        const dB = b.datum || "1970-01-01";
+        if (dA !== dB) return dB.localeCompare(dA);
+        const tA =
+          a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+        const tB =
+          b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+        return tB - tA;
+      });
+
+    if (einnahmen.length > 0) {
+      const latest = einnahmen[0];
+      const name = latest.ersteller || "Jemand";
+      const amount = formatEuro(parseFloat(latest.betrag) || 0);
+      const purpose = latest.zweck ? ` (${latest.zweck})` : "";
+      lastDepositEl.textContent = `${name}: +${amount}${purpose}`;
+    } else {
+      lastDepositEl.textContent = "Noch keine Einzahlung";
+    }
+  }
 
   // Filtern
   let filtered = [...allKasseBookings];
@@ -2912,7 +3021,7 @@ function renderKasseView() {
       <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
         <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
         <h3 style="color: white; margin: 0 0 6px 0;">Keine Buchungen vorhanden</h3>
-        <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neue Buchung" eine Einnahme oder Ausgabe ein!</p>
+        <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Einzahlen" oder „➖ Ausgabe" eine Buchung ein!</p>
       </div>
     `;
     return;
@@ -2989,11 +3098,12 @@ window.setKasseBookingType = function (type) {
   }
 };
 
-window.openKasseModal = function (booking = null) {
+window.openKasseModal = function (bookingOrType = null) {
   const modal = document.getElementById("kasse-modal-container");
   if (!modal) return;
 
-  if (booking) {
+  if (bookingOrType && typeof bookingOrType === "object") {
+    const booking = bookingOrType;
     editingKasseBookingId = booking.id;
     document.getElementById("kasse-modal-title").textContent =
       "✏️ Buchung bearbeiten";
@@ -3005,14 +3115,21 @@ window.openKasseModal = function (booking = null) {
     window.setKasseBookingType(booking.typ || "einnahme");
   } else {
     editingKasseBookingId = null;
+    const defaultType =
+      typeof bookingOrType === "string" &&
+      (bookingOrType === "ausgabe" || bookingOrType === "einnahme")
+        ? bookingOrType
+        : "einnahme";
     document.getElementById("kasse-modal-title").textContent =
-      "💰 Neue Buchung";
+      defaultType === "ausgabe"
+        ? "🔴 Ausgabe erfassen"
+        : "🟢 Einzahlung erfassen";
     document.getElementById("kasse-amount").value = "";
     document.getElementById("kasse-purpose").value = "";
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("kasse-date").value = today;
     document.getElementById("kasse-notes").value = "";
-    window.setKasseBookingType("einnahme");
+    window.setKasseBookingType(defaultType);
   }
 
   modal.style.display = "flex";

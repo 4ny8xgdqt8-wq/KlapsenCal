@@ -6,13 +6,20 @@
     <title>KlapsenCal Design-Ideen & Labor</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
+      html,
+      body {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
       body {
         background: #090d16;
         color: #f8fafc;
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
           Arial, sans-serif;
-        padding: 24px 16px 80px 16px;
+        padding: 24px 16px 140px 16px;
         margin: 0;
         display: flex;
         flex-direction: column;
@@ -21,15 +28,16 @@
       .preview-container {
         max-width: 620px;
         width: 100%;
+        transition: max-width 0.3s ease;
       }
       .preview-header {
         text-align: center;
-        margin-bottom: 28px;
+        margin-bottom: 24px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         padding-bottom: 16px;
       }
       .preview-header h1 {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
         margin: 0 0 6px 0;
         background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
         -webkit-background-clip: text;
@@ -38,425 +46,13 @@
       .preview-header p {
         font-size: 0.88rem;
         color: #94a3b8;
-        margin: 0;
-      }
-      .section-divider {
-        margin: 36px 0 16px 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .section-divider-title {
-        font-size: 0.95rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: #e2e8f0;
-        white-space: nowrap;
-      }
-      .section-divider-line {
-        flex: 1;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.1);
-      }
-
-      /* ── BEREICH 1: MODERNE ANSCHAFFUNGEN-KARTEN ── */
-      .purchase-card-v2 {
-        background: linear-gradient(
-          145deg,
-          rgba(255, 255, 255, 0.05) 0%,
-          rgba(255, 255, 255, 0.02) 100%
-        );
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        border-left: 5px solid var(--prio-color, #10b981);
-        border-radius: 16px;
-        padding: 12px 14px;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease;
-      }
-      .purchase-card-v2:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-      }
-      .purchase-card-v2.prio-hoch {
-        --prio-color: #ef4444;
-      }
-      .purchase-card-v2.prio-mittel {
-        --prio-color: #f59e0b;
-      }
-      .purchase-card-v2.prio-idee {
-        --prio-color: #3b82f6;
-      }
-
-      .checkbox-v2 {
-        width: 28px;
-        height: 28px;
-        border-radius: 9px;
-        border: 2px solid rgba(255, 255, 255, 0.25);
-        background: rgba(255, 255, 255, 0.04);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        color: transparent;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        flex-shrink: 0;
-      }
-      .checkbox-v2:hover {
-        border-color: #10b981;
-        transform: scale(1.08);
-      }
-      .checkbox-v2.checked {
-        background: linear-gradient(135deg, #10b981, #059669);
-        border-color: #10b981;
-        color: white;
-        box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
-      }
-
-      .p-v2-info {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .p-v2-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #ffffff;
-        margin: 0;
-        line-height: 1.25;
-      }
-      .p-v2-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .prio-badge-v2 {
-        font-size: 0.72rem;
-        font-weight: 800;
-        padding: 2px 7px;
-        border-radius: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-      }
-      .prio-badge-v2.hoch {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-        border: 1px solid rgba(239, 68, 68, 0.35);
-      }
-      .prio-badge-v2.mittel {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fde047;
-        border: 1px solid rgba(245, 158, 11, 0.35);
-      }
-      .prio-badge-v2.idee {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
-        border: 1px solid rgba(59, 130, 246, 0.35);
-      }
-
-      .p-v2-price {
-        font-size: 0.76rem;
-        font-weight: 800;
-        background: rgba(16, 185, 129, 0.15);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        padding: 2px 7px;
-        border-radius: 6px;
-      }
-      .p-v2-author {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.74rem;
-        color: #94a3b8;
-      }
-      .p-v2-author img {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-      }
-
-      /* ── BEREICH 2: STAUDER LIQUID-PROGRESS & SPARZIEL ── */
-      .stauder-goal-card-v2 {
-        background: linear-gradient(
-          145deg,
-          rgba(20, 50, 36, 0.5) 0%,
-          rgba(10, 25, 18, 0.7) 100%
-        );
-        border: 1px solid rgba(52, 211, 153, 0.3);
-        border-radius: 20px;
-        padding: 16px;
-        box-shadow:
-          0 10px 30px rgba(0, 0, 0, 0.4),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        margin-bottom: 12px;
-      }
-      .goal-header-v2 {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-      .goal-title-v2 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 800;
-        font-size: 1.05rem;
-        color: #fff;
-      }
-      .goal-pct-pill {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: #fff;
-        font-size: 0.82rem;
-        font-weight: 900;
-        padding: 3px 9px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
-      }
-      /* Liquid Progress Bar */
-      .liquid-progress-track {
-        height: 22px;
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-        overflow: hidden;
-        position: relative;
-        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
-        margin-bottom: 10px;
-      }
-      .liquid-progress-fill {
-        height: 100%;
-        width: 68%;
-        background: linear-gradient(
-          90deg,
-          #d97706 0%,
-          #f59e0b 50%,
-          #fbbf24 100%
-        );
-        border-radius: 10px;
-        position: relative;
-        box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
-        transition: width 0.8s ease;
-      }
-      /* Bierschaum-Kante */
-      .liquid-progress-fill::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 8px;
-        background: #ffffff;
-        border-radius: 3px;
-        box-shadow: 0 0 8px #ffffff;
-      }
-      .liquid-milestones {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.72rem;
-        color: #64748b;
-        font-weight: 700;
-        padding: 0 4px;
-      }
-
-      /* ── BEREICH 3: KALENDER-WIDGET MIT MULTI-DOTS ── */
-      .cal-widget-v2 {
-        background: linear-gradient(
-          180deg,
-          rgba(20, 32, 28, 0.85) 0%,
-          rgba(12, 20, 17, 0.9) 100%
-        );
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 18px;
-        padding: 12px;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-      }
-      .cal-grid-v2 {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
-        text-align: center;
-      }
-      .cal-day-cell {
-        aspect-ratio: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #cbd5e1;
-        position: relative;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-      .cal-day-cell:hover {
-        background: rgba(255, 255, 255, 0.08);
-      }
-      .cal-day-cell.selected {
-        background: rgba(16, 185, 129, 0.25);
-        color: #ffffff;
-        border: 1.5px solid #10b981;
-        box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
-      }
-      .cal-day-cell.today {
-        color: #34d399;
-        font-weight: 900;
-      }
-      .cal-dot-container {
-        display: flex;
-        gap: 3px;
-        margin-top: 2px;
-      }
-      .cal-dot {
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-      }
-      .dot-geburtstag {
-        background: #eab308;
-        box-shadow: 0 0 4px #eab308;
-      }
-      .dot-wandern {
-        background: #10b981;
-        box-shadow: 0 0 4px #10b981;
-      }
-      .dot-einkehr {
-        background: #f97316;
-        box-shadow: 0 0 4px #f97316;
-      }
-
-      /* ── BEREICH 4: FLOATING SEGMENTED FILTER-SLIDER ── */
-      .filter-track-v2 {
-        display: flex;
-        background: rgba(0, 0, 0, 0.35);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 14px;
-        padding: 3px;
-        gap: 4px;
-        position: relative;
-      }
-      .filter-pill-v2 {
-        flex: 1;
-        padding: 8px 4px;
-        border-radius: 10px;
-        border: none;
-        background: transparent;
-        color: #94a3b8;
-        font-size: 0.78rem;
-        font-weight: 800;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        white-space: nowrap;
-      }
-      .filter-pill-v2:hover {
-        color: #fff;
-      }
-      .filter-pill-v2.active {
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.15),
-          rgba(255, 255, 255, 0.05)
-        );
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-      }
-    </style>
-      /* ── BEREICH 0: KISTEN-VERLAUF HEADER-LAYOUT (NEU) ── */
-      .stauder-kisten-header-grid-demo {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-      .stauder-kisten-header-left-demo {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 0;
-      }
-      .stauder-kisten-header-left-demo .stauder-kisten-title-wrap {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      .stauder-kisten-header-left-demo .stauder-kisten-substats {
-        font-size: 0.72rem;
-        color: #94a3b8;
-        line-height: 1.25;
-        margin: 0;
-      }
-      .stauder-stat-card-header-demo {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 8px 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        min-width: 0;
-      }
-      .stauder-stat-card-header-demo .stauder-stat-card-top {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        margin-bottom: 2px;
-      }
-      .stauder-stat-card-header-demo .stauder-stat-title {
-        font-size: 0.65rem;
-        font-weight: 700;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .stauder-stat-card-header-demo .stauder-stat-highlight {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #f8fafc;
-        line-height: 1.15;
-        margin: 2px 0;
-        white-space: nowrap;
-      }
-      .stauder-stat-card-header-demo .stauder-stat-detail {
-        font-size: 0.68rem;
-        font-weight: 600;
-        color: #34d399;
-        line-height: 1.2;
-      }
-      .stauder-kisten-header-right-demo {
-        display: flex;
-        justify-content: flex-end;
-        min-width: 0;
+        margin: 0 0 14px 0;
       }
       .width-toggle-bar {
         display: flex;
         justify-content: center;
         gap: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 8px;
       }
       .width-toggle-btn {
         background: rgba(255, 255, 255, 0.06);
@@ -474,350 +70,1079 @@
         border-color: #10b981;
         color: #a7f3d0;
       }
+
+      /* Vorschlag-Container & Auswähl-Funktion */
+      .proposal-section {
+        position: relative;
+        border-radius: 22px;
+        padding: 4px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 28px;
+      }
+      .proposal-section.selected {
+        background: rgba(16, 185, 129, 0.08);
+        box-shadow: 0 0 28px rgba(16, 185, 129, 0.35);
+        border-radius: 24px;
+      }
+      .section-divider {
+        margin: 16px 0 14px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .section-divider-title {
+        font-size: 1rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .idea-badge {
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.3);
+      }
+
+      /* Auswähl-Button */
+      .btn-select-idea {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        user-select: none;
+      }
+      .btn-select-idea:hover {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: #10b981;
+        color: #ffffff;
+        transform: scale(1.05);
+      }
+      .btn-select-idea.selected {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-color: #34d399;
+        color: #ffffff;
+        box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+        transform: scale(1.04);
+      }
+
+      /* ═════════════════════════════════════════════════════════
+         IDEE 1: DIE „KLAPSENCARD“ (BANKING WALLET KASSETTE)
+         ═════════════════════════════════════════════════════════ */
+      .wallet-card-container {
+        perspective: 1000px;
+      }
+      .wallet-card {
+        background: linear-gradient(
+          135deg,
+          #13241b 0%,
+          #0b1612 50%,
+          #060c09 100%
+        );
+        border: 1px solid rgba(52, 211, 153, 0.35);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow:
+          0 14px 36px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        position: relative;
+        overflow: hidden;
+      }
+      .wallet-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(16, 185, 129, 0.15) 0%,
+          transparent 60%
+        );
+        pointer-events: none;
+      }
+      .wallet-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .wallet-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .wallet-chip {
+        width: 34px;
+        height: 26px;
+        background: linear-gradient(135deg, #e5e7eb, #9ca3af);
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        opacity: 0.9;
+      }
+      .wallet-card-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #a7f3d0;
+        text-transform: uppercase;
+      }
+      .wallet-nfc-icon {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.4);
+      }
+      .wallet-balance-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #94a3b8;
+        margin-bottom: 4px;
+      }
+      .wallet-balance-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+      .wallet-balance-val {
+        font-size: 2.1rem;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+      }
+      .wallet-trend-badge {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #34d399;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .wallet-card-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 14px;
+      }
+      .wallet-card-holder {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .wallet-holder-label {
+        font-size: 0.65rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .wallet-holder-name {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #e2e8f0;
+      }
+      .wallet-quick-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .wallet-action-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 10px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        color: #f8fafc;
+        font-size: 0.76rem;
+        font-weight: 700;
+        transition: all 0.2s ease;
+      }
+      .wallet-action-btn:hover {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: #10b981;
+        transform: translateY(-2px);
+      }
+      .wallet-action-icon {
+        font-size: 1.2rem;
+      }
+
+      /* ═════════════════════════════════════════════════════════
+         IDEE 2: EVENT-TICKET / BOARDING PASS (HERO-TERMIN)
+         ═════════════════════════════════════════════════════════ */
+      .ticket-card {
+        background: linear-gradient(
+          145deg,
+          rgba(28, 38, 34, 0.9) 0%,
+          rgba(15, 22, 19, 0.95) 100%
+        );
+        border: 1px solid rgba(52, 211, 153, 0.35);
+        border-radius: 20px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+        position: relative;
+      }
+      .ticket-header {
+        background: linear-gradient(135deg, #059669, #10b981);
+        padding: 8px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .ticket-category {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #ffffff;
+      }
+      .ticket-countdown {
+        font-size: 0.72rem;
+        font-weight: 800;
+        background: rgba(0, 0, 0, 0.35);
+        color: #fef08a;
+        padding: 2px 10px;
+        border-radius: 12px;
+        box-shadow: 0 0 10px rgba(254, 240, 138, 0.4);
+        animation: pulseGlow 2s infinite;
+      }
+      @keyframes pulseGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 6px rgba(254, 240, 138, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 14px rgba(254, 240, 138, 0.7);
+        }
+      }
+      .ticket-body {
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .ticket-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .ticket-title {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: #ffffff;
+        margin: 0 0 8px 0;
+        line-height: 1.2;
+      }
+      .ticket-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+      .ticket-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .ticket-rip-separator {
+        width: 1px;
+        height: 70px;
+        border-left: 2px dashed rgba(255, 255, 255, 0.18);
+        position: relative;
+      }
+      .ticket-rip-separator::before,
+      .ticket-rip-separator::after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: #090d16;
+        border-radius: 50%;
+        left: -9px;
+      }
+      .ticket-rip-separator::before {
+        top: -24px;
+      }
+      .ticket-rip-separator::after {
+        bottom: -24px;
+      }
+      .ticket-side {
+        width: 90px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .ticket-day-huge {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #34d399;
+        line-height: 1;
+      }
+      .ticket-month-sub {
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+      .ticket-rsvps {
+        display: flex;
+        justify-content: center;
+        margin-top: 8px;
+      }
+      .ticket-rsvps img {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 1.5px solid #13241b;
+        margin-left: -6px;
+      }
+      .ticket-rsvps img:first-child {
+        margin-left: 0;
+      }
+
+      /* ═════════════════════════════════════════════════════════
+         IDEE 3: GOURMET FOOD-CARD FÜR REZEPTE (INSTA STYLE)
+         ═════════════════════════════════════════════════════════ */
+      .recipe-gourmet-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+      .recipe-gourmet-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+      }
+      .recipe-gourmet-hero {
+        height: 180px;
+        background:
+          linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.1) 0%,
+            rgba(9, 13, 22, 0.95) 100%
+          ),
+          url("data_rezepte/pulled_pork.jpg"), url("logo.png");
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .recipe-hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .recipe-category-pill {
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #f8fafc;
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 20px;
+      }
+      .recipe-author-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        color: #e2e8f0;
+        font-weight: 700;
+      }
+      .recipe-author-badge img {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+      }
+      .recipe-hero-bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .recipe-hero-title {
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #ffffff;
+        margin: 0;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+      }
+      .recipe-hero-stats {
+        display: flex;
+        gap: 12px;
+        font-size: 0.76rem;
+        color: #cbd5e1;
+        font-weight: 700;
+      }
+      .recipe-hero-stats span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .recipe-card-content {
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .recipe-ingredients-preview {
+        font-size: 0.76rem;
+        color: #94a3b8;
+      }
+      .btn-recipe-cook {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      /* ═════════════════════════════════════════════════════════
+         IDEE 4: FLOATING GLASS ISLAND BOTTOM NAVIGATION (IOS 18)
+         ═════════════════════════════════════════════════════════ */
+      .floating-nav-demo-wrap {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 20px 14px;
+        display: flex;
+        justify-content: center;
+      }
+      .floating-nav-demo-inner {
+        width: 100%;
+        max-width: 460px;
+        background: rgba(14, 20, 17, 0.85);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 28px;
+        padding: 6px 8px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow:
+          0 16px 40px rgba(0, 0, 0, 0.6),
+          0 0 20px rgba(16, 185, 129, 0.15);
+      }
+      .floating-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 6px 10px;
+        border-radius: 20px;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 0.68rem;
+        font-weight: 700;
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border: none;
+        background: transparent;
+        flex: 1;
+      }
+      .floating-nav-item:hover {
+        color: #e2e8f0;
+      }
+      .floating-nav-item.active {
+        color: #ffffff;
+        background: rgba(16, 185, 129, 0.22);
+        border: 1px solid rgba(52, 211, 153, 0.35);
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        transform: translateY(-2px);
+      }
+      .floating-nav-icon {
+        font-size: 1.25rem;
+      }
+
+      /* ═════════════════════════════════════════════════════════
+         INTERAKTIVES CHAT-EXPORT DOCK (FLOATING ACTION BAR)
+         ═════════════════════════════════════════════════════════ */
+      .chat-dock {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(120px);
+        width: calc(100% - 32px);
+        max-width: 560px;
+        background: rgba(13, 23, 18, 0.92);
+        backdrop-filter: blur(28px) saturate(200%);
+        -webkit-backdrop-filter: blur(28px) saturate(200%);
+        border: 1px solid rgba(52, 211, 153, 0.45);
+        box-shadow:
+          0 16px 40px rgba(0, 0, 0, 0.7),
+          0 0 28px rgba(16, 185, 129, 0.3);
+        border-radius: 30px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        z-index: 99999;
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .chat-dock.visible {
+        transform: translateX(-50%) translateY(0);
+      }
+      .chat-dock-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .chat-dock-count {
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: #a7f3d0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .chat-dock-sub {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat-dock-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .btn-copy-chat {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: 1px solid rgba(52, 211, 153, 0.5);
+        color: #ffffff;
+        font-size: 0.84rem;
+        font-weight: 800;
+        padding: 9px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .btn-copy-chat:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+      }
+      .btn-copy-chat:active {
+        transform: scale(0.95);
+      }
+      .btn-clear-selection {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #94a3b8;
+        padding: 8px 12px;
+        border-radius: 18px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .btn-clear-selection:hover {
+        color: #f87171;
+        border-color: rgba(248, 113, 113, 0.4);
+      }
+
+      /* Kopier-Toast Popup */
+      .toast-notification {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff;
+        padding: 12px 22px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 800;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.5);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        pointer-events: none;
+      }
+      .toast-notification.show {
+        transform: translateX(-50%) translateY(0);
+      }
     </style>
   </head>
   <body>
+    <!-- Toast Popup bei Kopieren -->
+    <div id="toast" class="toast-notification">
+      <span>✨</span>
+      <span id="toast-text">In Zwischenablage kopiert! Einfach Cmd+V im Chat drücken.</span>
+    </div>
+
     <div class="preview-container" id="preview-main-container">
       <div class="preview-header">
-        <h1>🎨 KlapsenCal Design-Labor</h1>
+        <h1>🎨 KlapsenCal Design-Ideen &amp; Labor</h1>
         <p>
-          Experimentelle Entwürfe für mehr App-Feeling, Übersicht und Eleganz
+          Tippe bei den Ideen auf <strong>„➕ Auswählen“</strong>, um sie mit einem Klick in den Chat zu übernehmen!
         </p>
+
+        <!-- Breiten-Umschaltung für Live-Tests -->
+        <div class="width-toggle-bar">
+          <button
+            class="width-toggle-btn active"
+            onclick="setContainerWidth('620px', this)"
+          >
+            🖥️ Desktop / Tablet (620px)
+          </button>
+          <button
+            class="width-toggle-btn"
+            onclick="setContainerWidth('390px', this)"
+          >
+            📱 Smartphone (390px)
+          </button>
+        </div>
       </div>
 
       <!-- ═══════════════════════════════════════════════════════ -->
-      <!-- 0. KISTEN-VERLAUF MIT GETRUNKEN-KACHEL IM HEADER -->
+      <!-- IDEE 1: DIE „KLAPSENCARD“ (BANKING WALLET) -->
       <!-- ═══════════════════════════════════════════════════════ -->
-      <div class="section-divider">
-        <span class="section-divider-title"
-          >📦 NEU: Kisten-Verlauf Header (Getrunken über Diesen Monat)</span
-        >
-        <div class="section-divider-line"></div>
-      </div>
+      <div class="proposal-section" id="proposal-1">
+        <div class="section-divider">
+          <div class="section-divider-title">
+            <span>💳 Idee 1: Die „KlapsenCard“</span>
+            <span class="idea-badge">Tab 2</span>
+          </div>
+          <button
+            type="button"
+            class="btn-select-idea"
+            onclick="toggleSelectIdea(1, 'Idee 1: Die „KlapsenCard“ (Wallet-Look für die Kasse)', this)"
+          >
+            <span class="select-icon">➕</span>
+            <span class="select-text">Auswählen</span>
+          </button>
+        </div>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin: -6px 0 14px 0">
+          Ersetzt die schlichte Kassenbox durch eine edle, interaktive
+          Banking-Karte mit NFC-Chip, Saldo-Glow und Schnellaktionen.
+        </p>
 
-      <!-- Ansichtsbreite umschalten -->
-      <div class="width-toggle-bar">
-        <button
-          class="width-toggle-btn active"
-          onclick="setContainerWidth('620px', this)"
-        >
-          🖥️ Desktop / Tablet (620px)
-        </button>
-        <button
-          class="width-toggle-btn"
-          onclick="setContainerWidth('390px', this)"
-        >
-          📱 Smartphone (390px)
-        </button>
-      </div>
-
-      <div
-        style="
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 18px;
-          padding: 14px;
-          margin-bottom: 24px;
-        "
-      >
-        <!-- ROW 1: 3-Spalten Header-Grid -->
-        <div class="stauder-kisten-header-grid-demo">
-          <!-- Spalte 1: Titel, Badge & Substats -->
-          <div class="stauder-kisten-header-left-demo">
-            <div class="stauder-kisten-title-wrap">
-              <span class="stauder-kisten-title">📦 Kisten-Verlauf</span>
-              <span class="stauder-kisten-badge">2 Kisten</span>
+        <div class="wallet-card-container">
+          <div class="wallet-card">
+            <div class="wallet-card-top">
+              <div class="wallet-brand">
+                <div class="wallet-chip"></div>
+                <span class="wallet-card-title">KlapsenCard</span>
+              </div>
+              <span class="wallet-nfc-icon">📶</span>
             </div>
-            <div class="stauder-kisten-substats">
-              Zuletzt: Vor 2 Tagen (11.09.2026) von Peter
+
+            <div class="wallet-balance-label">Aktueller Kassenbestand</div>
+            <div class="wallet-balance-row">
+              <span class="wallet-balance-val">185,50 €</span>
+              <span class="wallet-trend-badge">▲ +45,00 € diesen Monat</span>
+            </div>
+
+            <div class="wallet-card-bottom">
+              <div class="wallet-card-holder">
+                <span class="wallet-holder-label">Zuletzt eingezahlt</span>
+                <span class="wallet-holder-name"
+                  >Peter (20,00 € für Getränke)</span
+                >
+              </div>
+              <div
+                style="
+                  font-size: 0.72rem;
+                  color: #64748b;
+                  font-family: monospace;
+                  letter-spacing: 1px;
+                "
+              >
+                •••• 2026
+              </div>
             </div>
           </div>
 
-          <!-- Spalte 2: Getrunken-Kachel (exakt über 'Diesen Monat', gleiche Breite) -->
-          <div class="stauder-stat-card-header-demo">
-            <div class="stauder-stat-card-top">
-              <span class="stauder-stat-icon">🍾</span>
-              <span class="stauder-stat-title">Getrunken</span>
-            </div>
-            <div class="stauder-stat-highlight">40 Flaschen</div>
-            <div class="stauder-stat-detail">~20 Liter Stauder (20x0,5l)</div>
-          </div>
-
-          <!-- Spalte 3: Kiste eintragen Button -->
-          <div class="stauder-kisten-header-right-demo">
-            <button type="button" class="btn-stauder-add-kiste">
-              ➕ Kiste eintragen
+          <div class="wallet-quick-actions">
+            <button class="wallet-action-btn">
+              <span class="wallet-action-icon">➕</span>
+              <span>Einzahlen</span>
+            </button>
+            <button class="wallet-action-btn">
+              <span class="wallet-action-icon">➖</span>
+              <span>Ausgabe</span>
+            </button>
+            <button class="wallet-action-btn">
+              <span class="wallet-action-icon">📊</span>
+              <span>Historie</span>
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- ROW 2: 3 KPI-Kacheln zur Verbrauchsanalyse -->
-        <div class="stauder-kisten-kpi-grid" style="margin-bottom: 0">
-          <div class="stauder-kisten-kpi-card">
-            <span class="stauder-kpi-label">Gesamt</span>
-            <span class="stauder-kpi-val">2</span>
-            <span class="stauder-kpi-unit">Kisten</span>
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- IDEE 2: VIP EVENT-TICKET / BOARDING PASS -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="proposal-section" id="proposal-2">
+        <div class="section-divider">
+          <div class="section-divider-title">
+            <span>🎟️ Idee 2: VIP Boarding-Pass</span>
+            <span class="idea-badge">Tab 1</span>
           </div>
-          <div
-            class="stauder-kisten-kpi-card"
-            style="border-color: rgba(16, 185, 129, 0.4)"
+          <button
+            type="button"
+            class="btn-select-idea"
+            onclick="toggleSelectIdea(2, 'Idee 2: VIP Event-Ticket / Boarding-Pass (Hero-Event auf Tab 1)', this)"
           >
-            <span class="stauder-kpi-label">Diesen Monat</span>
-            <span class="stauder-kpi-val">2</span>
-            <span class="stauder-kpi-unit">im September</span>
+            <span class="select-icon">➕</span>
+            <span class="select-text">Auswählen</span>
+          </button>
+        </div>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin: -6px 0 14px 0">
+          Der aller nächste anstehende Termin hebt sich als stylisches
+          Konzertticket/Boarding-Pass mit Perforation und pulsierendem Countdown
+          ab.
+        </p>
+
+        <div class="ticket-card">
+          <div class="ticket-header">
+            <span class="ticket-category">🥾 Nächstes Event: Wandertag</span>
+            <span class="ticket-countdown">⏳ In 3 Tagen (Samstag)</span>
           </div>
-          <div class="stauder-kisten-kpi-card">
-            <span class="stauder-kpi-label">Ø Rhythmus</span>
-            <span class="stauder-kpi-val">--</span>
-            <span class="stauder-kpi-unit">Tage / Kiste</span>
-          </div>
-        </div>
-      </div>
+          <div class="ticket-body">
+            <div class="ticket-main">
+              <div class="ticket-title">Große Klapsen-Herbstwanderung</div>
+              <div class="ticket-meta-row">
+                <span class="ticket-meta-item">⏰ 10:30 Uhr</span>
+                <span class="ticket-meta-item">📍 Baldeneysee Süd</span>
+                <span class="ticket-meta-item" style="color: #34d399"
+                  >☀️ 21°C heiter</span
+                >
+              </div>
+            </div>
 
-      <!-- ═══════════════════════════════════════════════════════ -->
-      <!-- 1. ANSCHAFFUNGEN & AUFGABEN -->
-      <!-- ═══════════════════════════════════════════════════════ -->
-      <div class="section-divider">
-        <span class="section-divider-title"
-          >🛒 1. Anschaffungen &amp; Aufgaben (Prio-Karten)</span
-        >
-        <div class="section-divider-line"></div>
-      </div>
+            <div class="ticket-rip-separator"></div>
 
-      <!-- Karte 1: Dringend -->
-      <div class="purchase-card-v2 prio-hoch">
-        <div class="checkbox-v2" onclick="this.classList.toggle('checked')">
-          ✓
-        </div>
-        <div class="p-v2-info">
-          <div class="p-v2-title">Neuer Pavillon für Wandertag 3x3m</div>
-          <div class="p-v2-meta">
-            <span class="prio-badge-v2 hoch">🔥 Dringend</span>
-            <span class="p-v2-price">~89,00 €</span>
-            <span class="p-v2-author">
-              <img
-                src="avatars/Thorsten.webp"
-                onerror="this.src = 'logo.png'"
-                alt="Thorsten"
-              />
-              <span>Thorsten</span>
-            </span>
-          </div>
-        </div>
-        <button class="btn-tx-action" style="font-size: 1rem">✏️</button>
-      </div>
-
-      <!-- Karte 2: Wichtig -->
-      <div class="purchase-card-v2 prio-mittel">
-        <div
-          class="checkbox-v2 checked"
-          onclick="this.classList.toggle('checked')"
-        >
-          ✓
-        </div>
-        <div class="p-v2-info">
-          <div
-            class="p-v2-title"
-            style="text-decoration: line-through; opacity: 0.7"
-          >
-            Glühweinkocher 10 Liter
-          </div>
-          <div class="p-v2-meta">
-            <span class="prio-badge-v2 mittel">⚡ Wichtig</span>
-            <span class="p-v2-price">~45,00 €</span>
-            <span class="p-v2-author">
-              <img
-                src="avatars/Carsten.webp"
-                onerror="this.src = 'logo.png'"
-                alt="Carsten"
-              />
-              <span>Carsten</span>
-            </span>
-          </div>
-        </div>
-        <button class="btn-tx-action" style="font-size: 1rem">✏️</button>
-      </div>
-
-      <!-- Karte 3: Idee -->
-      <div class="purchase-card-v2 prio-idee">
-        <div class="checkbox-v2" onclick="this.classList.toggle('checked')">
-          ✓
-        </div>
-        <div class="p-v2-info">
-          <div class="p-v2-title">Tragbare Bluetooth-Soundbox JBL</div>
-          <div class="p-v2-meta">
-            <span class="prio-badge-v2 idee">💡 Idee</span>
-            <span class="p-v2-price">~120,00 €</span>
-            <span class="p-v2-author">
-              <img
-                src="avatars/Stefan.webp"
-                onerror="this.src = 'logo.png'"
-                alt="Stefan"
-              />
-              <span>Stefan</span>
-            </span>
-          </div>
-        </div>
-        <button class="btn-tx-action" style="font-size: 1rem">✏️</button>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ -->
-      <!-- 2. STAUDER LIQUID PROGRESS & SPARZIEL -->
-      <!-- ═══════════════════════════════════════════════════════ -->
-      <div class="section-divider">
-        <span class="section-divider-title"
-          >🍺 2. Stauder Sparziel: Liquid Bier-Fortschritt</span
-        >
-        <div class="section-divider-line"></div>
-      </div>
-
-      <div class="stauder-goal-card-v2">
-        <div class="goal-header-v2">
-          <div class="goal-title-v2">
-            <span>❄️ Sparziel Kühlschrank</span>
-          </div>
-          <span class="goal-pct-pill">523 / 770 (68 %)</span>
-        </div>
-
-        <!-- Bier-Fortschrittsbalken mit bernsteinfarbenem Verlauf und Schaum-Lichtkante -->
-        <div class="liquid-progress-track">
-          <div class="liquid-progress-fill" style="width: 68%"></div>
-        </div>
-
-        <div class="liquid-milestones">
-          <span>0</span>
-          <span>192 (25%)</span>
-          <span>385 (50%)</span>
-          <span>577 (75%)</span>
-          <span>770 🎯</span>
-        </div>
-        <div
-          style="
-            font-size: 0.78rem;
-            color: #94a3b8;
-            text-align: center;
-            margin-top: 10px;
-          "
-        >
-          Noch <strong>247 Kronkorken</strong> bis zum Kühlschrank! 🍻
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ -->
-      <!-- 3. MONATSKALENDER MIT MULTI-DOTS -->
-      <!-- ═══════════════════════════════════════════════════════ -->
-      <div class="section-divider">
-        <span class="section-divider-title"
-          >📅 3. Monatskalender mit Kategorie-Dots</span
-        >
-        <div class="section-divider-line"></div>
-      </div>
-
-      <div class="cal-widget-v2">
-        <div class="calendar-header" style="margin-bottom: 8px">
-          <span class="calendar-month-title">September 2026</span>
-          <div style="display: flex; gap: 4px">
-            <button class="calendar-nav-btn">‹</button>
-            <button class="calendar-nav-btn">›</button>
-          </div>
-        </div>
-
-        <!-- Wochentage -->
-        <div
-          class="cal-grid-v2"
-          style="font-size: 0.72rem; color: #64748b; margin-bottom: 6px"
-        >
-          <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span
-          ><span>Fr</span><span style="color: #f87171">Sa</span
-          ><span style="color: #f87171">So</span>
-        </div>
-
-        <!-- Kalendertage -->
-        <div class="cal-grid-v2">
-          <div class="cal-day-cell">1</div>
-          <div class="cal-day-cell">2</div>
-          <div class="cal-day-cell">
-            3
-            <div class="cal-dot-container">
-              <span class="cal-dot dot-geburtstag"></span>
+            <div class="ticket-side">
+              <span class="ticket-day-huge">19</span>
+              <span class="ticket-month-sub">Sep 2026</span>
+              <div class="ticket-rsvps" title="7 Zusagen">
+                <img
+                  src="avatars/Thorsten.webp"
+                  onerror="this.src = 'logo.png'"
+                  alt="Thorsten"
+                />
+                <img
+                  src="avatars/Peter.webp"
+                  onerror="this.src = 'logo.png'"
+                  alt="Peter"
+                />
+                <img
+                  src="avatars/Basti.webp"
+                  onerror="this.src = 'logo.png'"
+                  alt="Basti"
+                />
+              </div>
             </div>
           </div>
-          <div class="cal-day-cell">4</div>
-          <div class="cal-day-cell">5</div>
-          <div class="cal-day-cell">6</div>
-          <div class="cal-day-cell">7</div>
-          <div class="cal-day-cell">8</div>
-          <div class="cal-day-cell">9</div>
-          <div class="cal-day-cell">10</div>
-          <div class="cal-day-cell">11</div>
-          <div class="cal-day-cell selected">
-            12
-            <div class="cal-dot-container">
-              <span class="cal-dot dot-wandern"></span>
-              <span class="cal-dot dot-einkehr"></span>
-            </div>
-          </div>
-          <div class="cal-day-cell today">
-            13
-            <div class="cal-dot-container">
-              <span class="cal-dot dot-geburtstag"></span>
-            </div>
-          </div>
-          <div class="cal-day-cell">14</div>
-        </div>
-
-        <div
-          style="
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            margin-top: 10px;
-            font-size: 0.72rem;
-            color: #94a3b8;
-          "
-        >
-          <span style="display: flex; align-items: center; gap: 4px"
-            ><span class="cal-dot dot-geburtstag"></span> Geburtstag</span
-          >
-          <span style="display: flex; align-items: center; gap: 4px"
-            ><span class="cal-dot dot-wandern"></span> Wandern</span
-          >
-          <span style="display: flex; align-items: center; gap: 4px"
-            ><span class="cal-dot dot-einkehr"></span> Einkehr</span
-          >
         </div>
       </div>
 
       <!-- ═══════════════════════════════════════════════════════ -->
-      <!-- 4. FLOATING FILTER-SLIDER -->
+      <!-- IDEE 3: GOURMET FOOD-CARDS -->
       <!-- ═══════════════════════════════════════════════════════ -->
-      <div class="section-divider">
-        <span class="section-divider-title"
-          >🎛️ 4. Floating Filter-Slider (iOS Style)</span
-        >
-        <div class="section-divider-line"></div>
+      <div class="proposal-section" id="proposal-3">
+        <div class="section-divider">
+          <div class="section-divider-title">
+            <span>🥘 Idee 3: Gourmet Food-Cards</span>
+            <span class="idea-badge">Tab 5</span>
+          </div>
+          <button
+            type="button"
+            class="btn-select-idea"
+            onclick="toggleSelectIdea(3, 'Idee 3: Gourmet Food-Cards (Instagram-Style für Rezepte)', this)"
+          >
+            <span class="select-icon">➕</span>
+            <span class="select-text">Auswählen</span>
+          </button>
+        </div>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin: -6px 0 14px 0">
+          Großzügige Bildkarten mit Dark-Vignette, integrierten Schnell-Tags und
+          Köche-Badge für puren Appetit beim Durchstöbern der Rezepte.
+        </p>
+
+        <div class="recipe-gourmet-card">
+          <div class="recipe-gourmet-hero">
+            <div class="recipe-hero-top">
+              <span class="recipe-category-pill">🔥 Smoker &amp; Grill</span>
+              <div class="recipe-author-badge">
+                <img
+                  src="avatars/Thorsten.webp"
+                  onerror="this.src = 'logo.png'"
+                  alt="Thorsten"
+                />
+                <span>von Thorsten</span>
+              </div>
+            </div>
+            <div class="recipe-hero-bottom">
+              <h3 class="recipe-hero-title">Klassisches BBQ Pulled Pork</h3>
+              <div class="recipe-hero-stats">
+                <span>⏱️ 480 Min.</span>
+                <span>👥 8 Portionen</span>
+                <span>⭐ 4.9 (12 Bewertungen)</span>
+              </div>
+            </div>
+          </div>
+          <div class="recipe-card-content">
+            <div class="recipe-ingredients-preview">
+              🥩 2,5 kg Schweinenacken · 🧂 Magic Dust Rub · 🍯 Apfelsaft
+            </div>
+            <button class="btn-recipe-cook">📖 Zubereiten</button>
+          </div>
+        </div>
       </div>
 
-      <div class="filter-track-v2">
-        <button class="filter-pill-v2 active" onclick="selectFilter(this)">
-          <span>⚡</span><span>30 Tage</span>
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- IDEE 4: FLOATING GLASS ISLAND NAVIGATION -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="proposal-section" id="proposal-4">
+        <div class="section-divider">
+          <div class="section-divider-title">
+            <span>🛸 Idee 4: Floating Glass Island Bar</span>
+            <span class="idea-badge">Global</span>
+          </div>
+          <button
+            type="button"
+            class="btn-select-idea"
+            onclick="toggleSelectIdea(4, 'Idee 4: Floating Glass Island Bottom-Bar (iOS 18 Style)', this)"
+          >
+            <span class="select-icon">➕</span>
+            <span class="select-text">Auswählen</span>
+          </button>
+        </div>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin: -6px 0 14px 0">
+          Die Navigationsleiste schwebt 18px über dem Rand als abgerundete
+          Glasinsel (wie moderne iOS 18 Apps) mit weichem Smaragd-Glow auf dem
+          aktiven Tab.
+        </p>
+
+        <div class="floating-nav-demo-wrap">
+          <div class="floating-nav-demo-inner">
+            <button class="floating-nav-item active" onclick="switchNav(this)">
+              <span class="floating-nav-icon">📅</span>
+              <span>Termine</span>
+            </button>
+            <button class="floating-nav-item" onclick="switchNav(this)">
+              <span class="floating-nav-icon">💰</span>
+              <span>Kasse</span>
+            </button>
+            <button class="floating-nav-item" onclick="switchNav(this)">
+              <span class="floating-nav-icon">🛒</span>
+              <span>Planen</span>
+            </button>
+            <button class="floating-nav-item" onclick="switchNav(this)">
+              <span class="floating-nav-icon">🍻</span>
+              <span>Lokale</span>
+            </button>
+            <button class="floating-nav-item" onclick="switchNav(this)">
+              <span class="floating-nav-icon">📖</span>
+              <span>Rezepte</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- FLOATING CHAT-EXPORT DOCK (ERSCHEINT BEI AUSWAHL) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="chat-dock" class="chat-dock">
+      <div class="chat-dock-info">
+        <div class="chat-dock-count">
+          <span>🎯</span>
+          <span id="chat-dock-count-text">0 Ideen ausgewählt</span>
+        </div>
+        <div class="chat-dock-sub" id="chat-dock-sub-text">
+          Tippe auf „Für Chat kopieren"
+        </div>
+      </div>
+      <div class="chat-dock-actions">
+        <button class="btn-clear-selection" onclick="clearAllSelections()" title="Auswahl aufheben">
+          ✕
         </button>
-        <button class="filter-pill-v2" onclick="selectFilter(this)">
-          <span>⏱️</span><span>60 Tage</span>
-        </button>
-        <button class="filter-pill-v2" onclick="selectFilter(this)">
-          <span>📅</span><span>2026</span>
-        </button>
-        <button class="filter-pill-v2" onclick="selectFilter(this)">
-          <span>🔮</span><span>2027</span>
-        </button>
-        <button class="filter-pill-v2" onclick="selectFilter(this)">
-          <span>🌐</span><span>Alle</span>
+        <button class="btn-copy-chat" onclick="copySelectionToChat()">
+          <span>📋</span>
+          <span id="btn-copy-label">Für Chat kopieren</span>
         </button>
       </div>
     </div>
 
     <script>
+      // Ausgewählte Vorschläge speichern
+      const selectedIdeas = new Map();
+
+      function toggleSelectIdea(id, title, btn) {
+        const section = document.getElementById("proposal-" + id);
+        if (selectedIdeas.has(id)) {
+          selectedIdeas.delete(id);
+          btn.classList.remove("selected");
+          btn.querySelector(".select-icon").textContent = "➕";
+          btn.querySelector(".select-text").textContent = "Auswählen";
+          if (section) section.classList.remove("selected");
+        } else {
+          selectedIdeas.set(id, title);
+          btn.classList.add("selected");
+          btn.querySelector(".select-icon").textContent = "✅";
+          btn.querySelector(".select-text").textContent = "Ausgewählt";
+          if (section) section.classList.add("selected");
+        }
+        updateChatDock();
+      }
+
+      function clearAllSelections() {
+        selectedIdeas.clear();
+        document.querySelectorAll(".btn-select-idea").forEach((btn) => {
+          btn.classList.remove("selected");
+          btn.querySelector(".select-icon").textContent = "➕";
+          btn.querySelector(".select-text").textContent = "Auswählen";
+        });
+        document.querySelectorAll(".proposal-section").forEach((sec) => {
+          sec.classList.remove("selected");
+        });
+        updateChatDock();
+      }
+
+      function updateChatDock() {
+        const dock = document.getElementById("chat-dock");
+        const countText = document.getElementById("chat-dock-count-text");
+        const subText = document.getElementById("chat-dock-sub-text");
+        const count = selectedIdeas.size;
+
+        if (count === 0) {
+          dock.classList.remove("visible");
+        } else {
+          dock.classList.add("visible");
+          countText.textContent = count + (count === 1 ? " Idee ausgewählt" : " Ideen ausgewählt");
+          const titles = Array.from(selectedIdeas.values()).map(t => t.split(":")[0]);
+          subText.textContent = titles.join(", ");
+        }
+      }
+
+      function copySelectionToChat() {
+        if (selectedIdeas.size === 0) return;
+
+        const ids = Array.from(selectedIdeas.keys()).sort((a, b) => a - b);
+        let chatText = "";
+
+        if (ids.length === 1) {
+          const title = selectedIdeas.get(ids[0]);
+          chatText = "Ich nehme Vorschlag " + ids[0] + ":\n- " + title;
+        } else {
+          const idsString = ids.slice(0, -1).join(", ") + " und " + ids[ids.length - 1];
+          chatText = idsString + " finde ich mega:\n" +
+            ids.map(id => "- " + selectedIdeas.get(id)).join("\n");
+        }
+
+        // In Zwischenablage kopieren (Clipboard API mit Fallback)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(chatText).then(() => {
+            showToast("✨ Kopiert! Drücke jetzt einfach Cmd+V (Einfügen) im Chat.");
+          }).catch(() => {
+            fallbackCopy(chatText);
+          });
+        } else {
+          fallbackCopy(chatText);
+        }
+
+        // Button Animation
+        const label = document.getElementById("btn-copy-label");
+        label.textContent = "Kopiert! ✓";
+        setTimeout(() => {
+          label.textContent = "Für Chat kopieren";
+        }, 2200);
+      }
+
+      function fallbackCopy(text) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand("copy");
+          showToast("✨ Kopiert! Drücke jetzt einfach Cmd+V (Einfügen) im Chat.");
+        } catch (e) {
+          prompt("Kopiere diesen Text für den Chat:", text);
+        }
+        document.body.removeChild(textarea);
+      }
+
+      function showToast(msg) {
+        const toast = document.getElementById("toast");
+        const text = document.getElementById("toast-text");
+        text.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 3500);
+      }
+
       function setContainerWidth(width, btn) {
         document.getElementById("preview-main-container").style.maxWidth = width;
         btn.parentElement
@@ -826,9 +1151,9 @@
         btn.classList.add("active");
       }
 
-      function selectFilter(btn) {
+      function switchNav(btn) {
         btn.parentElement
-          .querySelectorAll(".filter-pill-v2")
+          .querySelectorAll(".floating-nav-item")
           .forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
       }

@@ -1000,39 +1000,86 @@
 
       <!-- TAB 4: Kasse -->
       <div id="kasse" class="tab-content">
-        <!-- Saldo Kachel -->
-        <div class="kasse-balance-card">
-          <div class="kasse-balance-header">
-            <span class="kasse-balance-title">💰 Gemeinschaftskasse</span>
+        <!-- KlapsenCard Wallet -->
+        <div class="wallet-card-container">
+          <div class="wallet-card">
+            <div class="wallet-card-top">
+              <div class="wallet-brand">
+                <div class="wallet-chip"></div>
+                <span class="wallet-card-title">KlapsenCard</span>
+              </div>
+              <div class="wallet-top-right">
+                <span id="kasse-bookings-count" class="wallet-bookings-badge"
+                  >🔢 0 Buchungen</span
+                >
+                <span class="wallet-nfc-icon">📶</span>
+              </div>
+            </div>
+
+            <div class="wallet-balance-label">Aktueller Kassenbestand</div>
+            <div class="wallet-balance-row">
+              <span class="wallet-balance-val" id="kasse-total-balance"
+                >0,00 €</span
+              >
+              <span class="wallet-trend-badge" id="kasse-trend-badge"
+                >▲ +0,00 € diesen Monat</span
+              >
+            </div>
+
+            <div class="wallet-stat-tiles">
+              <div class="wallet-stat-tile wallet-stat-in">
+                <span class="wallet-stat-label">📥 Gesamt-Einnahmen</span>
+                <span class="wallet-stat-val" id="kasse-total-in">+0,00 €</span>
+              </div>
+              <div class="wallet-stat-tile wallet-stat-out">
+                <span class="wallet-stat-label">📤 Gesamt-Ausgaben</span>
+                <span class="wallet-stat-val" id="kasse-total-out"
+                  >-0,00 €</span
+                >
+              </div>
+            </div>
+
+            <div class="wallet-card-bottom">
+              <div class="wallet-card-holder">
+                <span class="wallet-holder-label">Zuletzt eingezahlt</span>
+                <span class="wallet-holder-name" id="kasse-last-deposit"
+                  >Noch keine Einzahlung</span
+                >
+              </div>
+              <div class="wallet-card-number">•••• 2026</div>
+            </div>
+          </div>
+
+          <!-- Schnell-Aktionen Leiste -->
+          <div class="wallet-quick-actions">
             <button
               type="button"
-              class="btn-kasse-add"
-              onclick="window.openKasseModal()"
+              class="wallet-action-btn"
+              onclick="window.openKasseModal('einnahme')"
             >
-              ➕ Neue Buchung
+              <span class="wallet-action-icon">➕</span>
+              <span>Einzahlen</span>
             </button>
-          </div>
-          <div class="kasse-balance-amount" id="kasse-total-balance">
-            0,00 €
-          </div>
-          <div class="kasse-stat-tiles">
-            <div class="kasse-stat-tile kasse-stat-tile-in">
-              <span class="kasse-stat-tile-label">📥 Einnahmen</span>
-              <span class="kasse-stat-tile-val" id="kasse-total-in"
-                >+0,00 €</span
-              >
-            </div>
-            <div class="kasse-stat-tile kasse-stat-tile-out">
-              <span class="kasse-stat-tile-label">📤 Ausgaben</span>
-              <span class="kasse-stat-tile-val" id="kasse-total-out"
-                >-0,00 €</span
-              >
-            </div>
-          </div>
-          <div class="kasse-bookings-pill-row">
-            <span class="kasse-bookings-pill" id="kasse-bookings-count"
-              >🔢 0 Buchungen</span
+            <button
+              type="button"
+              class="wallet-action-btn"
+              onclick="window.openKasseModal('ausgabe')"
             >
+              <span class="wallet-action-icon">➖</span>
+              <span>Ausgabe</span>
+            </button>
+            <button
+              type="button"
+              class="wallet-action-btn"
+              onclick="
+                document
+                  .getElementById('kasse-filter-chips')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+            >
+              <span class="wallet-action-icon">📊</span>
+              <span>Historie</span>
+            </button>
           </div>
         </div>
 
@@ -3439,6 +3486,9 @@
     <script>
       // Tab Switching
       function switchTab(tabId, el) {
+        const contentEl = document.getElementById("content");
+        const isAlreadyActive = el && el.classList.contains("active");
+
         // Fallback falls 'anschaffungen' direkt als TabId übergeben wird
         if (tabId === "anschaffungen") {
           const aufgabenTab = document.querySelector(
@@ -3450,6 +3500,21 @@
           }
           return;
         }
+
+        // Wenn bereits im selben Tab: Sanft nach oben scrollen (iOS Tap-to-Top)
+        if (isAlreadyActive) {
+          if (contentEl) {
+            contentEl.scrollTo({ top: 0, behavior: "smooth" });
+          }
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+
+        // Bei Tab-Wechsel sofort an den Seitenanfang springen
+        if (contentEl) {
+          contentEl.scrollTop = 0;
+        }
+        window.scrollTo(0, 0);
 
         document
           .querySelectorAll(".tab-content")

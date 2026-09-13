@@ -21,6 +21,7 @@
 
 ### 2. 📅 Monatskalender mit Wischgesten (Touch & MacBook) & Schnell-Terminerstellung
 
+- **🎟️ VIP Event-Ticket / Boarding-Pass (Hero-Event)**: Der unmittelbar nächste anstehende Termin hebt sich ganz oben auf Tab 1 als stylisches Konzertticket bzw. Boarding-Pass mit perforierter Abrisskante, Live-Countdown (`⏳ In X Tagen` / `🔥 Heute!`) und Teilnehmer-Avataren hervor.
 - **Intuitive Wischgesten (Touch & MacBook Trackpad)**: Im Monatskalender kann man nun einfach und flüssig per Wischgeste zwischen den Monaten blättern – auf dem Smartphone/Tablet mit dem Finger, auf dem MacBook mit zwei Fingern auf dem Trackpad oder per Klick & Ziehen mit der Maus (inkl. weicher Slide-Animation).
 - **Direktes Anlegen per Kalendertag**: Klickt man im Monatskalender auf einen Tag, erscheint in der Liste direkt der Aktions-Button **`➕ Termin für diesen Tag erstellen`** bzw. **`➕ Weiteren Termin am [Datum] anlegen`**. Das gewählte Datum ist im Formular **bereits automatisch vorausgefüllt**!
 - **Aufgeräumte Navigation**: Der frühere separate „Neu“-Tab wurde aus der unteren Leiste entfernt, sodass die Hauptbereiche auf jedem Smartphone spürbar mehr Platz und Komfort bieten.
@@ -91,19 +92,23 @@
 
 ---
 
-### 8. 💰 Gemeinschaftskasse
+### 8. 💰 Gemeinschaftskasse & Die „KlapsenCard“
 
-- Übersicht über Gesamtsaldo, Gesamteinzahlungen und Gesamtausgaben.
-- Schnelles Buchen von Einnahmen und Ausgaben mit Zweck, Betrag, Datum und Notiz.
-- Buchungshistorie mit Filter (Alle, Einnahmen, Ausgaben) sowie Bearbeiten & Löschen.
+- **KlapsenCard Wallet**: Edle Kreditkarten-/Wallet-Optik im tiefgrünen Titan-Stil mit eingeprägtem Chip und NFC-Icon.
+- **Live-Saldo & Monatstrend**: Gesamtsaldo mit grünem/rotem Glow sowie automatischer Monats-Trend-Pill (z. B. `▲ +45,00 € diesen Monat`).
+- **Letzt-Einzahler-Zeile**: Zeigt auf einen Blick, wer zuletzt mit welchem Betrag eingezahlt hat.
+- **Schnell-Aktionen**: Direkte Buttons für `➕ Einzahlen`, `➖ Ausgabe` und `📊 Historie`.
+- **Buchungshistorie**: Übersicht über alle Einnahmen und Ausgaben samt Filter (Alle, Einnahmen, Ausgaben), Bearbeiten und Löschen.
 
 ---
 
 ### 9. 🎨 Premium UI/UX & PWA
 
 - **Brandneues Logo**: „Klapse hat Wandertag“ Stick-Badge mit freundlichem Wander-Häuschen.
+- **🛸 Floating Glass Island Bottom-Bar**: Schwebende, zentrierte Navigationsleiste (iOS 18 Stil) mit starkem Blur, abgerundeten Ecken und weich mitgleitendem Smaragd-Glow-Indikator auf dem aktiven Tab.
 - **Klares Dark-Design**: Reduzierter, edler Hintergrund ohne ablenkende Grafiken für beste Lesbarkeit und maximalen Kontrast auf allen Tabs.
 - **Frosted-Glass-Design**: iOS-inspirierte Glas-Effekte mit dezenten Lichtkanten und Smaragd-Glow.
+- **🔝 Automatischer Scroll-to-Top bei Tab-Wechsel**: Beim Wechsel zwischen den Tabs (_Termine_, _Lokale_, _Rezepte_, _Anschaffungen_, _Kasse_) sowie den Sub-Tabs startet die Seite ab sofort immer automatisch ganz oben. Ein erneutes Antippen des bereits aktiven Tabs scrollt die Ansicht wie bei einer nativen iOS-App sanft zurück an den Anfang (_Tap-to-Top_).
 - **Vollwertige PWA**: Offline-fähig, installierbar auf Homescreen (iOS & Android) mit hochauflösenden Icons.
 
 ---
@@ -205,4 +210,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`, `data_rezepte`, `data_stauder`, `data_stauder_kisten`).
-- **Service Worker**: PWA Cache v4.25 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v4.26 mit Network-First Strategie für App-Ressourcen.
