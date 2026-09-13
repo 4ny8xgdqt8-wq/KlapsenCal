@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lokale-Karten Kompakt-Vorschau</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      body {
+        background: #0b0f19;
+        color: #f8fafc;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        padding: 24px 16px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .preview-container {
+        max-width: 620px;
+        width: 100%;
+      }
+      .preview-header {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      .preview-header h1 {
+        font-size: 1.5rem;
+        margin: 0 0 6px 0;
+        color: #fff;
+      }
+      .preview-header p {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        margin: 0;
+      }
+      .variant-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin: 22px 0 8px 0;
+      }
+      .badge-va {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+      }
+      .badge-vb {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+      }
+      .badge-vc {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+      }
+
+      /* ── VORSCHLAG A: All-in-One Compact Banner (Score im Banner) ── */
+      .banner-compact-a {
+        background: linear-gradient(
+          135deg,
+          rgba(245, 158, 11, 0.14) 0%,
+          rgba(255, 255, 255, 0.03) 100%
+        );
+        border: 1px solid rgba(245, 158, 11, 0.32);
+        border-radius: 14px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        margin-bottom: 8px;
+      }
+      .banner-a-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .banner-a-icon {
+        font-size: 1.5rem;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .banner-a-title {
+        font-size: 1.28rem;
+        font-weight: 900;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.15;
+      }
+      .banner-a-sub {
+        font-size: 0.74rem;
+        color: #fbbf24;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .banner-a-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .banner-a-score {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #0b0f19;
+        font-weight: 900;
+        font-size: 1.05rem;
+        padding: 4px 9px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+      }
+
+      /* ── VORSCHLAG B: Schlanker Single-Row Header (Kein Box-in-Box) ── */
+      .header-compact-b {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .hb-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .hb-icon-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(
+          135deg,
+          rgba(245, 158, 11, 0.25),
+          rgba(245, 158, 11, 0.08)
+        );
+        border: 1.5px solid rgba(245, 158, 11, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 3px 10px rgba(245, 158, 11, 0.2);
+      }
+      .hb-text {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+      }
+      .hb-title {
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.15;
+      }
+      .hb-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.76rem;
+        color: #94a3b8;
+        font-weight: 600;
+      }
+      .hb-score-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(245, 158, 11, 0.15);
+        border: 1.5px solid rgba(245, 158, 11, 0.45);
+        border-radius: 12px;
+        padding: 4px 10px;
+        flex-shrink: 0;
+        min-width: 46px;
+      }
+      .hb-score-val {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: #fbbf24;
+        line-height: 1;
+      }
+      .hb-score-stars {
+        font-size: 0.65rem;
+        color: #f59e0b;
+      }
+
+      /* ── VORSCHLAG C: Ultra-flaches Slim-Banner ── */
+      .banner-compact-c {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 4px solid #f59e0b;
+        border-radius: 10px;
+        padding: 6px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .hc-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .hc-title {
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: #ffffff;
+        margin: 0;
+      }
+      .hc-cat-pill {
+        font-size: 0.72rem;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preview-container">
+      <div class="preview-header">
+        <h1>🍽️ Lokale-Karten: Kompakte Vorschläge</h1>
+        <p>
+          Vergleich am Beispiel „Dali“ (Dorsten): deutlich flacher, aufgeräumter
+          und ohne Leerraum
+        </p>
+      </div>
+
+      <!-- ── VORSCHLAG A ── -->
+      <div class="variant-label badge-va">
+        Vorschlag A: All-in-One Compact Banner (Score im Schild)
+      </div>
+      <div class="lokal-card" style="border-left-color: #f59e0b">
+        <!-- Nur ein einziges kompaktes Banner: Name + Küche + Ort + Score nebeneinander -->
+        <div class="banner-compact-a">
+          <div class="banner-a-left">
+            <span class="banner-a-icon">🥘</span>
+            <div>
+              <h3 class="banner-a-title">Dali</h3>
+              <div class="banner-a-sub">
+                <span>Spanisch / Tapas</span>
+              </div>
+            </div>
+          </div>
+          <div class="banner-a-right">
+            <a href="#" class="lokal-location-link" style="padding: 3px 7px"
+              ><span>📍</span><span>Dorsten</span></a
+            >
+            <div class="banner-a-score" title="5 von 5 Sternen">
+              <span>★</span><span>5.0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direkt die 4 Kriterien - keine Leerräume mehr! -->
+        <div class="lokal-score-grid">
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">🍽️</span
+            ><span class="lokal-score-pill-label">Essen</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">😊</span
+            ><span class="lokal-score-pill-label">Service</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">✨</span
+            ><span class="lokal-score-pill-label">Ambiente</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">💶</span
+            ><span class="lokal-score-pill-label">Preis</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VORSCHLAG B ── -->
+      <div class="variant-label badge-vb">
+        Vorschlag B: Schlanker Single-Row Header (Keine Box-in-Box)
+      </div>
+      <div class="lokal-card" style="border-left-color: #10b981">
+        <!-- Eine nahtlose Zeile: Links Icon-Box, Mitte Name & Ort, Rechts Score-Badge -->
+        <div class="header-compact-b">
+          <div class="hb-left">
+            <div class="hb-icon-box">🥘</div>
+            <div class="hb-text">
+              <h3 class="hb-title">Dali</h3>
+              <div class="hb-meta">
+                <span style="color: #cbd5e1">Spanisch / Tapas</span>
+                <span>•</span>
+                <a
+                  href="#"
+                  class="lokal-location-link"
+                  style="padding: 1px 6px; font-size: 0.72rem"
+                  ><span>📍</span><span>Dorsten</span></a
+                >
+              </div>
+            </div>
+          </div>
+          <div class="hb-score-badge">
+            <span class="hb-score-val">5.0</span>
+            <span class="hb-score-stars">★★★★★</span>
+          </div>
+        </div>
+
+        <div class="lokal-score-grid">
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">🍽️</span
+            ><span class="lokal-score-pill-label">Essen</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">😊</span
+            ><span class="lokal-score-pill-label">Service</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">✨</span
+            ><span class="lokal-score-pill-label">Ambiente</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">💶</span
+            ><span class="lokal-score-pill-label">Preis</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VORSCHLAG C ── -->
+      <div class="variant-label badge-vc">
+        Vorschlag C: Ultra-flaches Slim-Banner
+      </div>
+      <div class="lokal-card" style="border-left-color: #3b82f6">
+        <div class="banner-compact-c">
+          <div class="hc-title-row">
+            <span style="font-size: 1.2rem">🥘</span>
+            <h3 class="hc-title">Dali</h3>
+            <span class="hc-cat-pill">Spanisch / Tapas</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <a
+              href="#"
+              class="lokal-location-link"
+              style="padding: 2px 6px; font-size: 0.72rem"
+              ><span>📍</span><span>Dorsten</span></a
+            >
+            <span style="font-size: 1rem; font-weight: 900; color: #fbbf24"
+              >★ 5.0</span
+            >
+          </div>
+        </div>
+
+        <div class="lokal-score-grid">
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">🍽️</span
+            ><span class="lokal-score-pill-label">Essen</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">😊</span
+            ><span class="lokal-score-pill-label">Service</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">✨</span
+            ><span class="lokal-score-pill-label">Ambiente</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+          <div class="lokal-score-pill high">
+            <span class="lokal-score-pill-icon">💶</span
+            ><span class="lokal-score-pill-label">Preis</span
+            ><span class="lokal-score-pill-val">5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

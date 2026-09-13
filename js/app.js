@@ -1859,19 +1859,6 @@ function showEventDetails(data) {
     linkBtn.style.display = "none";
   }
 
-  const lokalBtn =
-    document.getElementById("btn-open-lokal-rating") ||
-    document.getElementById("btn-open-einkehr-rating");
-
-  if (lokalBtn) {
-    if (data.Ort || data.Titel) {
-      lokalBtn.style.display = "flex";
-      hasAction = true;
-    } else {
-      lokalBtn.style.display = "none";
-    }
-  }
-
   if (actionsCont) {
     actionsCont.style.display = hasAction ? "flex" : "none";
   }
@@ -3595,6 +3582,7 @@ window.promptSetKronkorken = async function () {
 let allStauderKisten = [];
 let stauderKisteSelectedBuyer = "";
 let stauderKisteCurrentCount = 1;
+let editingStauderKisteId = null;
 
 function initStauderKistenListener() {
   const colRef = collection(db, "data_stauder_kisten");
@@ -3875,6 +3863,14 @@ function renderStauderKistenView() {
         <span class="stauder-kisten-qty-badge">${qty} Kiste${qty === 1 ? "" : "n"}</span>
         <button
           type="button"
+          class="btn-stauder-kiste-edit"
+          onclick="window.openStauderKisteModal('${kiste.id}')"
+          title="Eintrag bearbeiten"
+        >
+          ✏️
+        </button>
+        <button
+          type="button"
           class="btn-stauder-kiste-delete"
           onclick="window.deleteStauderKiste('${kiste.id}')"
           title="Eintrag löschen"
@@ -3888,33 +3884,52 @@ function renderStauderKistenView() {
   });
 }
 
-function openStauderKisteModal() {
-  stauderKisteCurrentCount = 1;
+function openStauderKisteModal(id = null) {
+  const modalTitle = document.getElementById("stauder-kiste-modal-title");
+  const submitBtn = document.getElementById("btn-save-stauder-kiste");
   const countDisplay = document.getElementById("stauder-kiste-count-display");
   const countInput = document.getElementById("stauder-kiste-count");
-  if (countDisplay) countDisplay.textContent = "1";
-  if (countInput) countInput.value = "1";
-
-  // Datum auf heute vorbelegen
   const dateInput = document.getElementById("stauder-kiste-date");
-  if (dateInput) {
-    const today = new Date().toISOString().split("T")[0];
-    dateInput.value = today;
-  }
-
-  // Käufer Chips rendern
   const buyersContainer = document.getElementById(
     "stauder-kiste-buyers-container",
   );
   const buyerInput = document.getElementById("stauder-kiste-buyer");
 
   const adults = allAuthors.filter((n) => !isChild(n));
-  if (
-    !stauderKisteSelectedBuyer ||
-    !adults.includes(stauderKisteSelectedBuyer)
-  ) {
-    stauderKisteSelectedBuyer = adults[0] || "Thorsten";
+
+  if (id) {
+    const existing = allStauderKisten.find((k) => k.id === id);
+    if (!existing) return;
+    editingStauderKisteId = id;
+    if (modalTitle) modalTitle.textContent = "✏️ Kiste bearbeiten";
+    if (submitBtn) submitBtn.textContent = "Änderungen speichern";
+
+    stauderKisteCurrentCount = parseInt(existing.anzahl) || 1;
+    if (countDisplay)
+      countDisplay.textContent = String(stauderKisteCurrentCount);
+    if (countInput) countInput.value = String(stauderKisteCurrentCount);
+    if (dateInput)
+      dateInput.value =
+        existing.datum || new Date().toISOString().split("T")[0];
+    stauderKisteSelectedBuyer = existing.kaeufer || adults[0] || "Thorsten";
+  } else {
+    editingStauderKisteId = null;
+    if (modalTitle) modalTitle.textContent = "📦 Kiste eintragen";
+    if (submitBtn) submitBtn.textContent = "Kiste speichern";
+
+    stauderKisteCurrentCount = 1;
+    if (countDisplay) countDisplay.textContent = "1";
+    if (countInput) countInput.value = "1";
+    if (dateInput) dateInput.value = new Date().toISOString().split("T")[0];
+
+    if (
+      !stauderKisteSelectedBuyer ||
+      !adults.includes(stauderKisteSelectedBuyer)
+    ) {
+      stauderKisteSelectedBuyer = adults[0] || "Thorsten";
+    }
   }
+
   if (buyerInput) buyerInput.value = stauderKisteSelectedBuyer;
 
   if (buyersContainer) {
@@ -3943,6 +3958,7 @@ function openStauderKisteModal() {
 }
 
 function closeStauderKisteModal() {
+  editingStauderKisteId = null;
   const modal = document.getElementById("stauder-kiste-modal-container");
   if (modal) modal.style.display = "none";
 }
@@ -3977,43 +3993,71 @@ async function saveStauderKiste() {
 
   try {
     await ensureAuth();
-    await addDoc(collection(db, "data_stauder_kisten"), {
-      kaeufer: buyer,
-      datum: dateVal,
-      anzahl: qty,
-      createdAt: serverTimestamp(),
-    });
+    if (editingStauderKisteId) {
+      await setDoc(
+        doc(db, "data_stauder_kisten", editingStauderKisteId),
+        {
+          kaeufer: buyer,
+          datum: dateVal,
+          anzahl: qty,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+    } else {
+      await addDoc(collection(db, "data_stauder_kisten"), {
+        kaeufer: buyer,
+        datum: dateVal,
+        anzahl: qty,
+        createdAt: serverTimestamp(),
+      });
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 40,
+          spread: 45,
+          origin: { y: 0.7 },
+          colors: ["#10b981", "#34d399", "#6ee7b7"],
+          zIndex: 30000,
+        });
+      }
+    }
 
     closeStauderKisteModal();
-    if (typeof confetti === "function") {
-      confetti({
-        particleCount: 40,
-        spread: 45,
-        origin: { y: 0.7 },
-        colors: ["#10b981", "#34d399", "#6ee7b7"],
-        zIndex: 30000,
-      });
-    }
   } catch (err) {
     console.error("Fehler beim Speichern der Kiste:", err);
-    alert("Fehler beim Speichern. Bitte erneut versuchen.");
+    alert("Fehler beim Speichern. Bitte erneut versuchen: " + err.message);
   }
 }
 
 async function deleteStauderKiste(id) {
   if (!id) return;
-  showConfirmModal(
-    "Kisteneintrag löschen",
-    "Möchtest du diesen Kisteneintrag wirklich löschen?",
-    async () => {
-      try {
-        await ensureAuth();
-        await deleteDoc(doc(db, "data_stauder_kisten", id));
-      } catch (err) {
-        console.error("Fehler beim Löschen des Kisteneintrags:", err);
-      }
-    },
-  );
+  const kiste = allStauderKisten.find((k) => k.id === id);
+  const desc = kiste
+    ? `${kiste.anzahl || 1} Kiste(n) von ${kiste.kaeufer || "Unbekannt"}`
+    : "diesen Kisteneintrag";
+  const confirmBtn = document.getElementById("btn-confirm-action");
+  document.getElementById("confirm-modal-title").textContent =
+    "Kisteneintrag löschen?";
+  document.getElementById("confirm-modal-text").textContent =
+    `Möchtest du ${desc} wirklich löschen?`;
+  confirmBtn.textContent = "Löschen";
+  confirmBtn.onclick = async () => {
+    window.closeConfirmModal();
+    window.showLoading(true, "Eintrag wird gelöscht...");
+    try {
+      await ensureAuth();
+      await deleteDoc(doc(db, "data_stauder_kisten", id));
+    } catch (err) {
+      console.error("Fehler beim Löschen des Kisteneintrags:", err);
+      window.showAppModal(
+        "Fehler",
+        "Konnte Kiste nicht löschen: " + err.message,
+      );
+    } finally {
+      window.showLoading(false);
+    }
+  };
+  document.getElementById("confirm-modal-container").style.display = "flex";
 }
 
 window.openStauderKisteModal = openStauderKisteModal;
@@ -4320,6 +4364,8 @@ function renderLokaleView() {
 
     const catBadgeText =
       lokalCatLabels[item.kategorie] || item.kategorie || "🍽️ Restaurant";
+    const catIcon = (catBadgeText || "").split(" ")[0] || "🍽️";
+    const cleanCatLabel = (catBadgeText || "").replace(/^[^\p{L}]+\s*/u, "");
     const overallScore = item.gesamtRating || item.rating || "4.5";
     const starsHtml = renderStarsString(overallScore);
 
@@ -4446,29 +4492,27 @@ function renderLokaleView() {
     }
 
     card.innerHTML = `
-      <!-- Header: Name & Meta links, Score groß rechts -->
-      <div class="lokal-card-header">
-        <div class="lokal-card-title-group">
-          <h3 class="lokal-card-name">${escapeLokalHtml(item.name || "")}</h3>
-          <div class="lokal-card-meta-row">
-            <span class="badge-lokal-cat">${catBadgeText}</span>
-            ${locationLinkHtml}
+      <!-- Restaurant-Schild / Banner (Kompakt Vorschlag A) -->
+      <div class="lokal-sign-banner">
+        <div class="lokal-sign-left">
+          <span class="lokal-sign-icon">${catIcon}</span>
+          <div class="lokal-sign-text">
+            <h3 class="lokal-sign-title">${escapeLokalHtml(item.name || "")}</h3>
+            <div class="lokal-sign-sub">${escapeLokalHtml(cleanCatLabel)}</div>
           </div>
         </div>
-        ${
-          !isGeplant
-            ? `
-          <div class="lokal-score-big" title="Gesamtnote: ${overallScore} von 5 Sternen">
-            <span class="lokal-score-big-val">${overallScore}</span>
-            <span class="lokal-score-big-sub">★ / 5</span>
-          </div>
-        `
-            : `
-          <div class="lokal-planned-badge">
-            <span>📌 Wunschliste</span>
-          </div>
-        `
-        }
+        <div class="lokal-sign-right">
+          ${locationLinkHtml}
+          ${
+            !isGeplant
+              ? `<div class="lokal-sign-score" title="Gesamtnote: ${overallScore} von 5 Sternen">
+                   <span>★</span><span>${overallScore}</span>
+                 </div>`
+              : `<div class="lokal-planned-badge-compact">
+                   <span>📌 Wunschliste</span>
+                 </div>`
+          }
+        </div>
       </div>
 
       <!-- Kriterien-Raster -->

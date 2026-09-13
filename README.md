@@ -7,7 +7,7 @@
 - **Direkteingabe**: Durch Antippen der großen Ziffer kann der Kronkorken-Stand bei Bedarf auch direkt als Zahl eingetippt werden.
 - **❄️ Sparziel Kühlschrank**: Eigene Kachel für das Sammelziel von 770 Kronkorken. Zeigt live die benötigte Menge (`770`), die noch fehlenden Kronkorken und einen Fortschrittsbalken mit Prozentanzeige an.
 - **🎁 Direktlink zum Stauder Kronshop**: Komfortabler Aktions-Button zum direkten Aufrufen des offiziellen Prämienkatalogs.
-- **📦 Kisten-Verlauf (Wer hat wann Nachschub geholt?)**: Protokollierung jedes Kistenkaufs mit Käufer-Avatar, Datum und Anzahl (unabhängig vom Kronkorken-Zähler, da nur Aktions-Kronkorken zählen).
+- **📦 Kisten-Verlauf (Wer hat wann Nachschub geholt?)**: Protokollierung jedes Kistenkaufs mit Käufer-Avatar, Datum und Anzahl (unabhängig vom Kronkorken-Zähler, da nur Aktions-Kronkorken zählen). Jeder Eintrag kann bei Bedarf über `✏️` nachträglich bearbeitet oder über `🗑️` gelöscht werden.
 - **📊 Bier-Verbrauchsanalyse & Kennzahlen**: 3 übersichtliche Sofort-Kennzahlen direkt im Kistenbereich:
   - **Gesamt:** Gesamtzahl aller erfassten Kisten.
   - **Diesen Monat:** Aktueller Monatsverbrauch im laufenden Monat.
@@ -148,7 +148,7 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
   - 💶 **Preis-Leistung** (1–5 Sterne)
   - **Automatische Gesamtnote & neutrale Vorbelegung**: Alle 4 Kriterien starten beim Anlegen standardmäßig bei soliden **3 von 5 Sternen** (`3.0 ⭐`). Die App errechnet aus euren Eingaben automatisch die exakte Ø Durchschnittsnote (z. B. `4.3 ⭐`) und sortiert die besuchten Lokale übersichtlich nach dieser Bewertung.
 - **Modernes Gastro-Kartendesign**:
-  - **Klarer, ruhiger Header**: Prominente Gesamtnote-Plakette oben rechts (z. B. `4.8 ★`) bei besuchten Lokalen bzw. Saphir-Plakette (`📌 Wunschliste`) bei geplanten Ausflugszielen, harmonisch kombiniert mit Kategorie-Badge und direktem Google Maps Pin `📍 [Ort]`.
+  - **Markantes Restaurant-Schild (Plakette)**: Der Name jedes Lokals sticht nun als elegantes Wirtshausschild im oberen Bereich hervor – veredelt mit leuchtendem Küchen-Icon (z. B. 🥩, 🍕, 🍺), markanter Typografie, Kategorie-Untertitel und direktem Google Maps Pin `📍 [Ort]`.
   - **Schlanke Kriterien-Leiste**: Alle 4 Bewertungskriterien (Essen 🍽️, Service 😊, Ambiente ✨, Preis 💶) kompakt und übersichtlich in einer eleganten Glas-Zeile zusammengefasst.
   - **Moderner Avatar-Stack**: Überlappende Teilnehmer-Avatare mit Namensliste für _„Dabei waren“_ bzw. _„Möchten mit“_.
   - **Aufklappbarer Erfahrungsbericht (Akkordeon)**: Notizen und Berichte über das Essen bleiben standardmäßig platzsparend als dezente 1-Zeilen-Leiste (`💬 Erfahrungsbericht & Notizen ▾`) eingeklappt. Mit einem Fingertipp klappt der Text auf – so bleiben alle Karten einheitlich aufgeräumt.
@@ -163,7 +163,6 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
   - Umfassende Filter nach 13 Kategorien: _🍽️ Deutsche Küche_, _🍕 Italienisch_, _🥩 Steak & Burger_, _🇬🇷 Griechisch_, _🍺 Brauhaus / Biergarten_, _🥢 Asiatisch_, _🍻 Kneipe / Bar_, _☕ Café & Brunch_, _🍔 Imbiss & Fast Food_, _🥘 Spanisch / Tapas_, _🌮 Mexikanisch_, _🍦 Eisdiele_, _🌐 International / Sonstiges_.
 - **Live-Suche**: Findet Lokale blitzschnell nach Name, Stadt/Ort, Küche oder Notizen.
 - **Schnellzugriff auf Speisekarten**: Direkter Button zu hinterlegten Online-Speisekarten und Websites (`📋 Speisekarte / Website ↗`).
-- **Direkt aus dem Termin heraus bewerten**: Bei jedem Termin mit Ortsangabe gibt es im Detailfenster den Button **`🍽️ Restaurant / Lokal bewerten`** – Name, Ort, Link und alle Termin-Teilnehmer werden automatisch ins Formular übernommen!
 - **Schutz gegen Datenverlust beim Eintragen**: Ein versehentlicher Klick oder Wischen neben das Bewertungsfenster schließt den Dialog nicht mehr – eure Eingaben bleiben sicher erhalten, bis ihr bewusst auf Speichern, Abbrechen oder das Schließen-Kreuz tippt.
 
 ---
@@ -204,4 +203,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`, `data_rezepte`, `data_stauder`, `data_stauder_kisten`).
-- **Service Worker**: PWA Cache v4.17 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v4.21 mit Network-First Strategie für App-Ressourcen.
