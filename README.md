@@ -1,4 +1,29 @@
-## 🚀 Was ist neu & Feature-Übersicht (Version 5.0)
+## 🚀 Was ist neu & Feature-Übersicht (Version 5.2)
+
+### 📲 Smarte Push-Mitteilungen & Interaktive Schnell-Aktionen
+
+- **🍺 Stauder-Alarm mit Kisten-Zähler & Prost-Button**:
+  - Trifft mit offiziellem Stauder-Wappen ein, sobald jemand Nachschub erfasst.
+  - Zeigt sofort den aktuellen Monatsstand (z. B. _„📦 Monatsstand: 4 Kisten“_).
+  - **Aktions-Buttons**:
+    - `[ 🍻 Prost! ]`: Öffnet direkt den Stauder-Bereich und zündet ein golden-grünes Konfetti-Feuerwerk!
+    - `[ 📦 Kisten-Verlauf ]`: Öffnet die Kistenliste.
+- **📅 Neuer Termin mit Autoren-Profilbild & Maps-Navigation**:
+  - Zeigt als Benachrichtigungs-Icon direkt das echte Profilfoto der Person an, die den Termin angelegt hat.
+  - **Aktions-Buttons**:
+    - `[ 📅 Kalender ]`: Springt direkt zum Kalender.
+    - `[ 🗺️ Navigation ]`: Startet bei Terminen mit hinterlegtem Ort mit einem Fingertipp direkt die Google Maps Route.
+- **💰 Kassen-Radar mit Live-Saldo & Sofort-Betrag**:
+  - Klare farbliche Signale für Einzahlungen (`+XX €`) und Ausgaben (`-XX €`).
+  - Weist sofort den aktualisierten Gesamt-Kassenstand der Gruppenkasse in der Benachrichtigung aus.
+  - **Aktions-Button**: `[ 💳 Kasse ansehen ]`.
+- **⏰ 2h-Countdown & Vorabend-Erinnerung mit 1-Klick-Navigation**:
+  - Automatische Erinnerung 2 Stunden vor Beginn eines Termins bzw. am Vorabend um 20:00 Uhr bei ganztägigen Events.
+  - **Aktions-Buttons**: `[ 🧭 Route starten ]` (direkt Google Maps) und `[ 📋 Was fehlt? ]` (öffnet direkt die Mitbringsel & Aufgaben).
+- **🔗 Schnelles Deep-Linking**:
+  - Das Antippen von Benachrichtigungen und Aktions-Buttons führt direkt zielsicher in den entsprechenden Reiter der App.
+
+---
 
 ### 1. 🍺 Stauder Kronkorken-Tracker, Kühlschrank-Sparziel & Kisten-Verlauf (Im Tab Anschaffungen)
 
@@ -109,7 +134,12 @@
 - **Klares Dark-Design**: Reduzierter, edler Hintergrund ohne ablenkende Grafiken für beste Lesbarkeit und maximalen Kontrast auf allen Tabs.
 - **Frosted-Glass-Design**: iOS-inspirierte Glas-Effekte mit dezenten Lichtkanten und Smaragd-Glow.
 - **🔝 Automatischer Scroll-to-Top bei Tab-Wechsel**: Beim Wechsel zwischen den Tabs (_Termine_, _Lokale_, _Rezepte_, _Anschaffungen_, _Kasse_) sowie den Sub-Tabs startet die Seite ab sofort immer automatisch ganz oben. Ein erneutes Antippen des bereits aktiven Tabs scrollt die Ansicht wie bei einer nativen iOS-App sanft zurück an den Anfang (_Tap-to-Top_).
-- **🔔 Echte Hintergrund-Mitteilungen (Push mit 1-Klick-Toggle)**: Benachrichtigungen bei neuen Terminen, Änderungen oder Vorabend-Erinnerungen erreichen das Smartphone ab sofort auch dann verlässlich, wenn die App geschlossen oder der Bildschirm gesperrt ist.
+- **🔔 Echte Hintergrund-Mitteilungen (Umfassender Push für alle Bereiche)**: Benachrichtigungen erreichen das Smartphone ab sofort auch dann verlässlich, wenn die App geschlossen oder der Bildschirm gesperrt ist:
+  - 📅 **Termine**: Bei neuen Terminen, Änderungen, Absagen sowie automatische 2h- und Vorabend-Erinnerungen (20:00 Uhr).
+  - 🍺 **Stauder**: Sobald jemand Nachschub geholt hat (_„[Name] hat 1 Kiste Stauder geholt!“_).
+  - 💰 **Kasse**: Bei jeder neuen Einzahlung oder verbuchten Ausgabe.
+  - 🛒 **Anschaffungen**: Wenn neue Dinge auf die gemeinsame Wunschliste gesetzt werden.
+  - 🍽️ **Lokale**: Bei neuen Restaurant-Tipps und Empfehlungen im Guide.
   - _1-Klick-Bedienung_: Über das Glocken-Symbol in der Titelleiste lassen sich Mitteilungen mit einem einzigen Antippen an- (`🔔`) und ausschalten (`🔕`).
   - _Wichtig für Apple iPhone (iOS)_: Web-Push funktioniert auf iOS erst, wenn die App über Safari mit _„Zum Home-Bildschirm“_ installiert wurde.
 - **Vollwertige PWA**: Offline-fähig, installierbar auf Homescreen (iOS & Android) mit hochauflösenden Icons.

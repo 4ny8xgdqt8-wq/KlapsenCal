@@ -6674,7 +6674,7 @@ window.openReadmeModal = async function () {
   modal.style.display = "flex";
   if (verEl) {
     const appVer =
-      document.getElementById("app-version")?.textContent || "Version 3.4";
+      document.getElementById("app-version")?.textContent || "Version 5.2";
     verEl.textContent = appVer;
   }
 
@@ -6700,3 +6700,64 @@ signInAnonymously(auth)
   .catch((error) => {
     console.warn("Anonymer Login Hinweis:", error);
   });
+
+// Deep-Linking Handler für Push-Benachrichtigungen & Aktions-Buttons
+function handleDeepLinkHash() {
+  const hash = window.location.hash;
+  if (!hash) return;
+
+  const [rawTarget, queryString] = hash.slice(1).split("?");
+  const target = rawTarget.toLowerCase();
+  const params = new URLSearchParams(queryString || "");
+
+  if (target === "kasse") {
+    if (typeof window.switchTab === "function") {
+      window.switchTab("kasse");
+    }
+  } else if (target === "stauder") {
+    if (typeof window.switchTab === "function") {
+      window.switchTab("stauder");
+    }
+    if (params.get("prost") === "1") {
+      setTimeout(() => {
+        if (typeof confetti === "function") {
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#10b981", "#fbbf24", "#f59e0b", "#34d399"],
+            zIndex: 30000,
+          });
+        }
+      }, 500);
+    }
+  } else if (target === "aufgaben" || target === "anschaffungen") {
+    if (typeof window.switchTab === "function") {
+      window.switchTab("aufgaben");
+      if (typeof window.switchAufgabenSubTab === "function") {
+        window.switchAufgabenSubTab(
+          target === "aufgaben" ? "aufgaben" : "anschaffungen",
+        );
+      }
+    }
+  } else if (
+    target === "lokale" ||
+    target === "rezepte" ||
+    target === "termine"
+  ) {
+    if (typeof window.switchTab === "function") {
+      window.switchTab(target);
+    }
+  }
+}
+
+window.addEventListener("hashchange", handleDeepLinkHash);
+window.addEventListener("load", () => {
+  setTimeout(handleDeepLinkHash, 500);
+});
+if (
+  document.readyState === "complete" ||
+  document.readyState === "interactive"
+) {
+  setTimeout(handleDeepLinkHash, 500);
+}

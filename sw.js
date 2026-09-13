@@ -1,4 +1,4 @@
-const VERSION = "5.1";
+const VERSION = "5.2";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -151,23 +151,48 @@ self.addEventListener("push", (event) => {
     body: data.body || "Es gibt Neuigkeiten in deiner Tour-Gruppe!",
     icon: data.icon || "logo.png",
     badge: data.badge || "icons/icon-192.png",
-    vibrate: [200, 100, 200],
+    vibrate: data.vibrate || [200, 100, 200],
     tag: data.tag || "klapsencal-notification",
     renotify: true,
+    actions: Array.isArray(data.actions) ? data.actions : [],
     data: {
       url: data.url || "./index.html",
+      mapsQuery: data.mapsQuery || "",
+      actionType: data.actionType || "",
       dateOfArrival: Date.now(),
       primaryKey: data.id || "1",
     },
   };
 
+  if (data.image) {
+    options.image = data.image;
+  }
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Notification Click Handling
+// Notification Click & Action Buttons Handling
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || "./index.html";
+  const notifData = event.notification.data || {};
+  let targetUrl = notifData.url || "./index.html";
+
+  // Spezielle Aktionsbuttons
+  if (event.action === "open_maps" && notifData.mapsQuery) {
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(notifData.mapsQuery)}`;
+    event.waitUntil(clients.openWindow(mapsUrl));
+    return;
+  }
+
+  if (event.action === "prost") {
+    targetUrl = "./index.html#stauder?prost=1";
+  } else if (event.action === "open_stauder") {
+    targetUrl = "./index.html#stauder";
+  } else if (event.action === "open_kasse") {
+    targetUrl = "./index.html#kasse";
+  } else if (event.action === "open_tasks") {
+    targetUrl = "./index.html#aufgaben";
+  }
 
   event.waitUntil(
     clients
@@ -175,6 +200,7 @@ self.addEventListener("notificationclick", (event) => {
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes("index.html") && "focus" in client) {
+            client.navigate(targetUrl);
             return client.focus();
           }
         }

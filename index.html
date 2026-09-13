@@ -3487,19 +3487,24 @@
       // Tab Switching
       function switchTab(tabId, el) {
         const contentEl = document.getElementById("content");
-        const isAlreadyActive = el && el.classList.contains("active");
 
-        // Fallback falls 'anschaffungen' direkt als TabId übergeben wird
-        if (tabId === "anschaffungen") {
+        // Fallback falls 'anschaffungen' oder 'stauder' direkt als TabId übergeben wird
+        if (tabId === "anschaffungen" || tabId === "stauder") {
           const aufgabenTab = document.querySelector(
             ".tab-item[onclick*='aufgaben']",
           );
           switchTab("aufgaben", aufgabenTab);
           if (typeof window.switchAufgabenSubTab === "function") {
-            window.switchAufgabenSubTab("anschaffungen");
+            window.switchAufgabenSubTab(tabId);
           }
           return;
         }
+
+        if (!el) {
+          el = document.querySelector(`.tab-item[onclick*="'${tabId}'"]`);
+        }
+
+        const isAlreadyActive = el && el.classList.contains("active");
 
         // Wenn bereits im selben Tab: Sanft nach oben scrollen (iOS Tap-to-Top)
         if (isAlreadyActive) {
@@ -3610,7 +3615,7 @@
           }
         })
         .catch(() => {
-          document.getElementById("app-version").textContent = "Version 3.4";
+          document.getElementById("app-version").textContent = "Version 5.2";
         });
 
       // Splash Screen Steuerung

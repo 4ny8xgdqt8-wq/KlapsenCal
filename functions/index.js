@@ -91,15 +91,38 @@ exports.onEventCreated = functions
     const titel = data.Titel;
     const datum = data.Datum || "";
     const ersteller = data.Ersteller || "Jemand";
-    const ort = data.Ort ? ` (📍 ${data.Ort})` : "";
+    const uhrzeitText = data.Uhrzeit ? ` um ${data.Uhrzeit} Uhr` : "";
+    const ortText = data.Ort ? ` (📍 ${data.Ort})` : "";
 
     console.log(`Neuer Termin erstellt: "${titel}" von ${ersteller}`);
 
+    // Dynamisches Autoren-Profilbild ermitteln
+    const knownAvatars = [
+      "Daniel",
+      "Daniela",
+      "Peter",
+      "Simone",
+      "Tanja",
+      "Thorsten",
+    ];
+    const matchedAvatar = knownAvatars.find(
+      (a) => a.toLowerCase() === (ersteller || "").trim().toLowerCase(),
+    );
+    const icon = matchedAvatar ? `avatars/${matchedAvatar}.webp` : "logo.png";
+
+    const actions = [{ action: "open_event", title: "📅 Kalender" }];
+    if (data.Ort) {
+      actions.push({ action: "open_maps", title: "🗺️ Navigation" });
+    }
+
     await broadcastPushNotification(
       {
-        title: "Neuer Termin! 📅",
-        body: `${ersteller} hat '${titel}' (${datum}) eingetragen.${ort}`,
+        title: `📅 Neuer Termin: ${titel}`,
+        body: `${ersteller} lädt ein: ${datum}${uhrzeitText}${ortText}`,
         url: "./index.html",
+        icon,
+        mapsQuery: data.Ort || "",
+        actions,
         tag: `event-created-${docId}`,
       },
       ersteller,
@@ -136,11 +159,32 @@ exports.onEventUpdated = functions
 
     console.log(`Termin aktualisiert: "${titel}"`);
 
+    const knownAvatars = [
+      "Daniel",
+      "Daniela",
+      "Peter",
+      "Simone",
+      "Tanja",
+      "Thorsten",
+    ];
+    const matchedAvatar = knownAvatars.find(
+      (a) => a.toLowerCase() === (ersteller || "").trim().toLowerCase(),
+    );
+    const icon = matchedAvatar ? `avatars/${matchedAvatar}.webp` : "logo.png";
+
+    const actions = [{ action: "open_event", title: "📅 Kalender" }];
+    if (afterData.Ort) {
+      actions.push({ action: "open_maps", title: "🗺️ Navigation" });
+    }
+
     await broadcastPushNotification(
       {
         title: "Termin aktualisiert 🔄",
         body: `'${titel}' wurde aktualisiert.`,
         url: "./index.html",
+        icon,
+        mapsQuery: afterData.Ort || "",
+        actions,
         tag: `event-updated-${docId}`,
       },
       ersteller,
@@ -173,7 +217,191 @@ exports.onEventDeleted = functions
   });
 
 /**
- * 4. Zeitgesteuerte Terminerinnerungen (alle 15 Minuten)
+ * 4. Stauder-Kiste geholt -> Push an alle Handys (Vorschlag 1: Stauder-Alarm)
+ */
+exports.onStauderKisteCreated = functions
+  .region("europe-west1")
+  .firestore.document("data_stauder_kisten/{docId}")
+  .onCreate(async (snap, context) => {
+    const docId = context.params.docId;
+    const data = snap.data();
+    if (!data) return null;
+
+    const kaeufer = data.kaeufer || "Jemand";
+    const anzahl = Number(data.anzahl) || 1;
+    const kistenText = anzahl === 1 ? "1 Kiste" : `${anzahl} Kisten`;
+
+    console.log(`Neue Stauder-Kiste erfasst: ${kistenText} von ${kaeufer}`);
+
+    // Monatsstatistik live ermitteln
+    let monthCount = 0;
+    try {
+      const currentMonthKey = new Date().toISOString().slice(0, 7);
+      const kistenSnap = await db.collection("data_stauder_kisten").get();
+      kistenSnap.forEach((doc) => {
+        const d = doc.data();
+        if (d.datum && d.datum.startsWith(currentMonthKey)) {
+          monthCount += Number(d.anzahl) || 1;
+        }
+      });
+    } catch (e) {
+      console.warn("Fehler beim Abrufen der Monatskisten:", e);
+    }
+
+    const countInfo =
+      monthCount > 0
+        ? `\n📦 Monatsstand: ${monthCount} Kiste${monthCount === 1 ? "" : "n"}`
+        : "";
+
+    await broadcastPushNotification(
+      {
+        title: "🍺 Stauder-Alarm: Nachschub ist da!",
+        body: `${kaeufer} hat ${kistenText} Stauder geholt! 🍻${countInfo}`,
+        url: "./index.html#stauder",
+        icon: "images/stauder.webp",
+        tag: `stauder-kiste-${docId}`,
+        actions: [
+          { action: "prost", title: "🍻 Prost!" },
+          { action: "open_stauder", title: "📦 Kisten-Verlauf" },
+        ],
+      },
+      kaeufer,
+    );
+    return null;
+  });
+
+/**
+ * 5. Kassen-Buchung erfasst -> Push an alle Handys (Vorschlag 3: Kassen-Radar)
+ */
+exports.onKasseBookingCreated = functions
+  .region("europe-west1")
+  .firestore.document("data_kasse/{docId}")
+  .onCreate(async (snap, context) => {
+    const docId = context.params.docId;
+    const data = snap.data();
+    if (!data) return null;
+
+    const typ = data.typ || "einnahme";
+    const betrag = Number(data.betrag) || 0;
+    const formattedBetrag =
+      betrag.toLocaleString("de-DE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + " €";
+    const zweck = data.zweck || (typ === "einnahme" ? "Einzahlung" : "Ausgabe");
+
+    console.log(`Neue Kassen-Buchung: ${typ} ${formattedBetrag} (${zweck})`);
+
+    // Gesamt-Kassenstand berechnen
+    let totalSaldo = 0;
+    try {
+      const kasseSnap = await db.collection("data_kasse").get();
+      kasseSnap.forEach((docSnap) => {
+        const b = docSnap.data();
+        const amt = Number(b.betrag) || 0;
+        if (b.typ === "einnahme") totalSaldo += amt;
+        else if (b.typ === "ausgabe") totalSaldo -= amt;
+      });
+    } catch (e) {
+      console.warn("Fehler beim Abrufen des Kassenstands:", e);
+    }
+
+    const saldoText =
+      totalSaldo.toLocaleString("de-DE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + " €";
+
+    let title = "💰 Kasse: Neue Buchung";
+    let body = `${formattedBetrag} für ${zweck}\nNeuer Kontostand: ${saldoText}`;
+
+    if (typ === "einnahme") {
+      title = `💰 Kasse: +${formattedBetrag} eingezahlt!`;
+      body = `Zahler: ${zweck}\nNeuer Kontostand: ${saldoText}`;
+    } else {
+      title = `💸 Kasse: -${formattedBetrag} ausgegeben`;
+      body = `Zweck: ${zweck}\nNeuer Kontostand: ${saldoText}`;
+    }
+
+    await broadcastPushNotification(
+      {
+        title,
+        body,
+        url: "./index.html#kasse",
+        tag: `kasse-booking-${docId}`,
+        actions: [{ action: "open_kasse", title: "💳 Kasse ansehen" }],
+      },
+      typ === "einnahme" ? zweck : null,
+    );
+    return null;
+  });
+
+/**
+ * 6. Neue Anschaffung / Wunschliste -> Push an alle Handys
+ */
+exports.onAnschaffungCreated = functions
+  .region("europe-west1")
+  .firestore.document("data_anschaffungen/{docId}")
+  .onCreate(async (snap, context) => {
+    const docId = context.params.docId;
+    const data = snap.data();
+    if (!data || !data.titel) return null;
+
+    const titel = data.titel;
+    const preis = Number(data.preis);
+    const preisText =
+      !isNaN(preis) && preis > 0
+        ? ` (~${preis.toFixed(2).replace(".", ",")} €)`
+        : "";
+
+    console.log(`Neue Anschaffung: "${titel}"`);
+
+    await broadcastPushNotification({
+      title: "🛒 Neue Anschaffung!",
+      body: `'${titel}' wurde auf die Wunschliste gesetzt!${preisText}`,
+      url: "./index.html",
+      tag: `anschaffung-${docId}`,
+    });
+    return null;
+  });
+
+/**
+ * 7. Neues Lokal / Restaurant -> Push an alle Handys
+ */
+exports.onLokalCreated = functions
+  .region("europe-west1")
+  .firestore.document("data_einkehr/{docId}")
+  .onCreate(async (snap, context) => {
+    const docId = context.params.docId;
+    const data = snap.data();
+    if (!data || !data.name) return null;
+
+    const name = data.name;
+    const ort = data.ort ? ` in ${data.ort}` : "";
+    const author = data.author || "Jemand";
+    const isGeplant = data.status === "geplant";
+
+    console.log(`Neues Lokal eingetragen: "${name}" von ${author}`);
+
+    const title = isGeplant
+      ? "📌 Neues Wunsch-Lokal!"
+      : "🍽️ Neues Lokal im Guide!";
+    const body = `${author} hat '${name}'${ort} ${isGeplant ? "vorgemerkt" : "eingetragen und bewertet"}.`;
+
+    await broadcastPushNotification(
+      {
+        title,
+        body,
+        url: "./index.html",
+        tag: `lokal-${docId}`,
+      },
+      author,
+    );
+    return null;
+  });
+
+/**
+ * 8. Zeitgesteuerte Terminerinnerungen (alle 15 Minuten)
  * Erinnert 2 Stunden vor Startzeit bzw. am Vorabend um 20:00 Uhr bei ganztägigen Terminen
  */
 exports.checkScheduledReminders = onSchedule(
@@ -215,10 +443,21 @@ exports.checkScheduledReminders = onSchedule(
           now <= eveReminderEnd &&
           !sentReminders[reminderKey]
         ) {
+          const eveActions = [];
+          if (ev.Ort) {
+            eveActions.push({ action: "open_maps", title: "🧭 Route planen" });
+          }
+          eveActions.push({
+            action: "open_tasks",
+            title: "📋 Aufgaben prüfen",
+          });
+
           await broadcastPushNotification({
             title: `☀️ Morgen: ${ev.Titel}`,
             body: `Morgen steht '${ev.Titel}' an!${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
             url: "./index.html",
+            mapsQuery: ev.Ort || "",
+            actions: eveActions,
             tag: reminderKey,
           });
           sentReminders[reminderKey] = now.toISOString();
@@ -244,10 +483,21 @@ exports.checkScheduledReminders = onSchedule(
           now <= reminderWindowEnd &&
           !sentReminders[reminderKey]
         ) {
+          const timedActions = [];
+          if (ev.Ort) {
+            timedActions.push({
+              action: "open_maps",
+              title: "🧭 Route starten",
+            });
+          }
+          timedActions.push({ action: "open_tasks", title: "📋 Was fehlt?" });
+
           await broadcastPushNotification({
             title: `⏰ In 2 Stunden: ${ev.Titel}`,
             body: `Um ${ev.Uhrzeit} Uhr geht's los: '${ev.Titel}'${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
             url: "./index.html",
+            mapsQuery: ev.Ort || "",
+            actions: timedActions,
             tag: reminderKey,
           });
           sentReminders[reminderKey] = now.toISOString();
