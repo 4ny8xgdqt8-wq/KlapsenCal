@@ -3,16 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lokale-Karten Kompakt-Vorschau</title>
+    <title>KlapsenCal Design-Ideen & Labor</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
       body {
-        background: #0b0f19;
+        background: #090d16;
         color: #f8fafc;
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
           Arial, sans-serif;
-        padding: 24px 16px;
+        padding: 24px 16px 80px 16px;
         margin: 0;
         display: flex;
         flex-direction: column;
@@ -24,378 +24,814 @@
       }
       .preview-header {
         text-align: center;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 16px;
       }
       .preview-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         margin: 0 0 6px 0;
-        color: #fff;
+        background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
       .preview-header p {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         color: #94a3b8;
         margin: 0;
       }
-      .variant-label {
-        display: inline-flex;
+      .section-divider {
+        margin: 36px 0 16px 0;
+        display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.82rem;
+        gap: 10px;
+      }
+      .section-divider-title {
+        font-size: 0.95rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 5px 12px;
-        border-radius: 20px;
-        margin: 22px 0 8px 0;
+        letter-spacing: 0.8px;
+        color: #e2e8f0;
+        white-space: nowrap;
       }
-      .badge-va {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-        border: 1px solid rgba(245, 158, 11, 0.4);
-      }
-      .badge-vb {
-        background: rgba(16, 185, 129, 0.2);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.4);
-      }
-      .badge-vc {
-        background: rgba(59, 130, 246, 0.2);
-        color: #60a5fa;
-        border: 1px solid rgba(59, 130, 246, 0.4);
+      .section-divider-line {
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
       }
 
-      /* ── VORSCHLAG A: All-in-One Compact Banner (Score im Banner) ── */
-      .banner-compact-a {
+      /* ── BEREICH 1: MODERNE ANSCHAFFUNGEN-KARTEN ── */
+      .purchase-card-v2 {
         background: linear-gradient(
-          135deg,
-          rgba(245, 158, 11, 0.14) 0%,
-          rgba(255, 255, 255, 0.03) 100%
+          145deg,
+          rgba(255, 255, 255, 0.05) 0%,
+          rgba(255, 255, 255, 0.02) 100%
         );
-        border: 1px solid rgba(245, 158, 11, 0.32);
-        border-radius: 14px;
-        padding: 8px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-left: 5px solid var(--prio-color, #10b981);
+        border-radius: 16px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-        margin-bottom: 8px;
+        gap: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
       }
-      .banner-a-left {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-width: 0;
+      .purchase-card-v2:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
       }
-      .banner-a-icon {
-        font-size: 1.5rem;
-        line-height: 1;
-        flex-shrink: 0;
+      .purchase-card-v2.prio-hoch {
+        --prio-color: #ef4444;
       }
-      .banner-a-title {
-        font-size: 1.28rem;
-        font-weight: 900;
-        color: #ffffff;
-        margin: 0;
-        line-height: 1.15;
+      .purchase-card-v2.prio-mittel {
+        --prio-color: #f59e0b;
       }
-      .banner-a-sub {
-        font-size: 0.74rem;
-        color: #fbbf24;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+      .purchase-card-v2.prio-idee {
+        --prio-color: #3b82f6;
       }
-      .banner-a-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-shrink: 0;
-      }
-      .banner-a-score {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: #0b0f19;
-        font-weight: 900;
-        font-size: 1.05rem;
-        padding: 4px 9px;
+
+      .checkbox-v2 {
+        width: 28px;
+        height: 28px;
         border-radius: 9px;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.04);
         display: flex;
         align-items: center;
-        gap: 3px;
-        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+        justify-content: center;
+        font-size: 15px;
+        color: transparent;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        flex-shrink: 0;
+      }
+      .checkbox-v2:hover {
+        border-color: #10b981;
+        transform: scale(1.08);
+      }
+      .checkbox-v2.checked {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-color: #10b981;
+        color: white;
+        box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
       }
 
-      /* ── VORSCHLAG B: Schlanker Single-Row Header (Kein Box-in-Box) ── */
-      .header-compact-b {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 6px;
-      }
-      .hb-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+      .p-v2-info {
+        flex: 1;
         min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
-      .hb-icon-box {
-        width: 44px;
-        height: 44px;
+      .p-v2-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.25;
+      }
+      .p-v2-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .prio-badge-v2 {
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .prio-badge-v2.hoch {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+      }
+      .prio-badge-v2.mittel {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fde047;
+        border: 1px solid rgba(245, 158, 11, 0.35);
+      }
+      .prio-badge-v2.idee {
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+      }
+
+      .p-v2-price {
+        font-size: 0.76rem;
+        font-weight: 800;
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 2px 7px;
+        border-radius: 6px;
+      }
+      .p-v2-author {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.74rem;
+        color: #94a3b8;
+      }
+      .p-v2-author img {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+      }
+
+      /* ── BEREICH 2: STAUDER LIQUID-PROGRESS & SPARZIEL ── */
+      .stauder-goal-card-v2 {
+        background: linear-gradient(
+          145deg,
+          rgba(20, 50, 36, 0.5) 0%,
+          rgba(10, 25, 18, 0.7) 100%
+        );
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        border-radius: 20px;
+        padding: 16px;
+        box-shadow:
+          0 10px 30px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        margin-bottom: 12px;
+      }
+      .goal-header-v2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .goal-title-v2 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 800;
+        font-size: 1.05rem;
+        color: #fff;
+      }
+      .goal-pct-pill {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 900;
+        padding: 3px 9px;
         border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+      }
+      /* Liquid Progress Bar */
+      .liquid-progress-track {
+        height: 22px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+        margin-bottom: 10px;
+      }
+      .liquid-progress-fill {
+        height: 100%;
+        width: 68%;
+        background: linear-gradient(
+          90deg,
+          #d97706 0%,
+          #f59e0b 50%,
+          #fbbf24 100%
+        );
+        border-radius: 10px;
+        position: relative;
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+        transition: width 0.8s ease;
+      }
+      /* Bierschaum-Kante */
+      .liquid-progress-fill::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 8px;
+        background: #ffffff;
+        border-radius: 3px;
+        box-shadow: 0 0 8px #ffffff;
+      }
+      .liquid-milestones {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 700;
+        padding: 0 4px;
+      }
+
+      /* ── BEREICH 3: KALENDER-WIDGET MIT MULTI-DOTS ── */
+      .cal-widget-v2 {
+        background: linear-gradient(
+          180deg,
+          rgba(20, 32, 28, 0.85) 0%,
+          rgba(12, 20, 17, 0.9) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      }
+      .cal-grid-v2 {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        text-align: center;
+      }
+      .cal-day-cell {
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #cbd5e1;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .cal-day-cell:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .cal-day-cell.selected {
+        background: rgba(16, 185, 129, 0.25);
+        color: #ffffff;
+        border: 1.5px solid #10b981;
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+      }
+      .cal-day-cell.today {
+        color: #34d399;
+        font-weight: 900;
+      }
+      .cal-dot-container {
+        display: flex;
+        gap: 3px;
+        margin-top: 2px;
+      }
+      .cal-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+      }
+      .dot-geburtstag {
+        background: #eab308;
+        box-shadow: 0 0 4px #eab308;
+      }
+      .dot-wandern {
+        background: #10b981;
+        box-shadow: 0 0 4px #10b981;
+      }
+      .dot-einkehr {
+        background: #f97316;
+        box-shadow: 0 0 4px #f97316;
+      }
+
+      /* ── BEREICH 4: FLOATING SEGMENTED FILTER-SLIDER ── */
+      .filter-track-v2 {
+        display: flex;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 3px;
+        gap: 4px;
+        position: relative;
+      }
+      .filter-pill-v2 {
+        flex: 1;
+        padding: 8px 4px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+      .filter-pill-v2:hover {
+        color: #fff;
+      }
+      .filter-pill-v2.active {
         background: linear-gradient(
           135deg,
-          rgba(245, 158, 11, 0.25),
-          rgba(245, 158, 11, 0.08)
+          rgba(255, 255, 255, 0.15),
+          rgba(255, 255, 255, 0.05)
         );
-        border: 1.5px solid rgba(245, 158, 11, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        flex-shrink: 0;
-        box-shadow: 0 3px 10px rgba(245, 158, 11, 0.2);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
       }
-      .hb-text {
+    </style>
+      /* ── BEREICH 0: KISTEN-VERLAUF HEADER-LAYOUT (NEU) ── */
+      .stauder-kisten-header-grid-demo {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .stauder-kisten-header-left-demo {
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 4px;
         min-width: 0;
       }
-      .hb-title {
-        font-size: 1.35rem;
-        font-weight: 900;
-        color: #ffffff;
-        margin: 0;
-        line-height: 1.15;
-      }
-      .hb-meta {
+      .stauder-kisten-header-left-demo .stauder-kisten-title-wrap {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 6px;
-        font-size: 0.76rem;
-        color: #94a3b8;
-        font-weight: 600;
       }
-      .hb-score-badge {
+      .stauder-kisten-header-left-demo .stauder-kisten-substats {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        line-height: 1.25;
+        margin: 0;
+      }
+      .stauder-stat-card-header-demo {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 8px 8px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        min-width: 0;
+      }
+      .stauder-stat-card-header-demo .stauder-stat-card-top {
+        display: flex;
+        align-items: center;
         justify-content: center;
-        background: rgba(245, 158, 11, 0.15);
-        border: 1.5px solid rgba(245, 158, 11, 0.45);
-        border-radius: 12px;
-        padding: 4px 10px;
-        flex-shrink: 0;
-        min-width: 46px;
+        gap: 5px;
+        margin-bottom: 2px;
       }
-      .hb-score-val {
-        font-size: 1.25rem;
-        font-weight: 900;
-        color: #fbbf24;
-        line-height: 1;
-      }
-      .hb-score-stars {
+      .stauder-stat-card-header-demo .stauder-stat-title {
         font-size: 0.65rem;
-        color: #f59e0b;
-      }
-
-      /* ── VORSCHLAG C: Ultra-flaches Slim-Banner ── */
-      .banner-compact-c {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-left: 4px solid #f59e0b;
-        border-radius: 10px;
-        padding: 6px 10px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-      .hc-title-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .hc-title {
-        font-size: 1.2rem;
-        font-weight: 900;
-        color: #ffffff;
-        margin: 0;
-      }
-      .hc-cat-pill {
-        font-size: 0.72rem;
-        padding: 2px 6px;
-        border-radius: 6px;
-        background: rgba(245, 158, 11, 0.15);
-        color: #fbbf24;
         font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .stauder-stat-card-header-demo .stauder-stat-highlight {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #f8fafc;
+        line-height: 1.15;
+        margin: 2px 0;
+        white-space: nowrap;
+      }
+      .stauder-stat-card-header-demo .stauder-stat-detail {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #34d399;
+        line-height: 1.2;
+      }
+      .stauder-kisten-header-right-demo {
+        display: flex;
+        justify-content: flex-end;
+        min-width: 0;
+      }
+      .width-toggle-bar {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .width-toggle-btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .width-toggle-btn.active {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: #10b981;
+        color: #a7f3d0;
       }
     </style>
   </head>
   <body>
-    <div class="preview-container">
+    <div class="preview-container" id="preview-main-container">
       <div class="preview-header">
-        <h1>🍽️ Lokale-Karten: Kompakte Vorschläge</h1>
+        <h1>🎨 KlapsenCal Design-Labor</h1>
         <p>
-          Vergleich am Beispiel „Dali“ (Dorsten): deutlich flacher, aufgeräumter
-          und ohne Leerraum
+          Experimentelle Entwürfe für mehr App-Feeling, Übersicht und Eleganz
         </p>
       </div>
 
-      <!-- ── VORSCHLAG A ── -->
-      <div class="variant-label badge-va">
-        Vorschlag A: All-in-One Compact Banner (Score im Schild)
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 0. KISTEN-VERLAUF MIT GETRUNKEN-KACHEL IM HEADER -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-title"
+          >📦 NEU: Kisten-Verlauf Header (Getrunken über Diesen Monat)</span
+        >
+        <div class="section-divider-line"></div>
       </div>
-      <div class="lokal-card" style="border-left-color: #f59e0b">
-        <!-- Nur ein einziges kompaktes Banner: Name + Küche + Ort + Score nebeneinander -->
-        <div class="banner-compact-a">
-          <div class="banner-a-left">
-            <span class="banner-a-icon">🥘</span>
-            <div>
-              <h3 class="banner-a-title">Dali</h3>
-              <div class="banner-a-sub">
-                <span>Spanisch / Tapas</span>
-              </div>
+
+      <!-- Ansichtsbreite umschalten -->
+      <div class="width-toggle-bar">
+        <button
+          class="width-toggle-btn active"
+          onclick="setContainerWidth('620px', this)"
+        >
+          🖥️ Desktop / Tablet (620px)
+        </button>
+        <button
+          class="width-toggle-btn"
+          onclick="setContainerWidth('390px', this)"
+        >
+          📱 Smartphone (390px)
+        </button>
+      </div>
+
+      <div
+        style="
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 18px;
+          padding: 14px;
+          margin-bottom: 24px;
+        "
+      >
+        <!-- ROW 1: 3-Spalten Header-Grid -->
+        <div class="stauder-kisten-header-grid-demo">
+          <!-- Spalte 1: Titel, Badge & Substats -->
+          <div class="stauder-kisten-header-left-demo">
+            <div class="stauder-kisten-title-wrap">
+              <span class="stauder-kisten-title">📦 Kisten-Verlauf</span>
+              <span class="stauder-kisten-badge">2 Kisten</span>
+            </div>
+            <div class="stauder-kisten-substats">
+              Zuletzt: Vor 2 Tagen (11.09.2026) von Peter
             </div>
           </div>
-          <div class="banner-a-right">
-            <a href="#" class="lokal-location-link" style="padding: 3px 7px"
-              ><span>📍</span><span>Dorsten</span></a
-            >
-            <div class="banner-a-score" title="5 von 5 Sternen">
-              <span>★</span><span>5.0</span>
+
+          <!-- Spalte 2: Getrunken-Kachel (exakt über 'Diesen Monat', gleiche Breite) -->
+          <div class="stauder-stat-card-header-demo">
+            <div class="stauder-stat-card-top">
+              <span class="stauder-stat-icon">🍾</span>
+              <span class="stauder-stat-title">Getrunken</span>
+            </div>
+            <div class="stauder-stat-highlight">40 Flaschen</div>
+            <div class="stauder-stat-detail">~20 Liter Stauder (20x0,5l)</div>
+          </div>
+
+          <!-- Spalte 3: Kiste eintragen Button -->
+          <div class="stauder-kisten-header-right-demo">
+            <button type="button" class="btn-stauder-add-kiste">
+              ➕ Kiste eintragen
+            </button>
+          </div>
+        </div>
+
+        <!-- ROW 2: 3 KPI-Kacheln zur Verbrauchsanalyse -->
+        <div class="stauder-kisten-kpi-grid" style="margin-bottom: 0">
+          <div class="stauder-kisten-kpi-card">
+            <span class="stauder-kpi-label">Gesamt</span>
+            <span class="stauder-kpi-val">2</span>
+            <span class="stauder-kpi-unit">Kisten</span>
+          </div>
+          <div
+            class="stauder-kisten-kpi-card"
+            style="border-color: rgba(16, 185, 129, 0.4)"
+          >
+            <span class="stauder-kpi-label">Diesen Monat</span>
+            <span class="stauder-kpi-val">2</span>
+            <span class="stauder-kpi-unit">im September</span>
+          </div>
+          <div class="stauder-kisten-kpi-card">
+            <span class="stauder-kpi-label">Ø Rhythmus</span>
+            <span class="stauder-kpi-val">--</span>
+            <span class="stauder-kpi-unit">Tage / Kiste</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 1. ANSCHAFFUNGEN & AUFGABEN -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-title"
+          >🛒 1. Anschaffungen &amp; Aufgaben (Prio-Karten)</span
+        >
+        <div class="section-divider-line"></div>
+      </div>
+
+      <!-- Karte 1: Dringend -->
+      <div class="purchase-card-v2 prio-hoch">
+        <div class="checkbox-v2" onclick="this.classList.toggle('checked')">
+          ✓
+        </div>
+        <div class="p-v2-info">
+          <div class="p-v2-title">Neuer Pavillon für Wandertag 3x3m</div>
+          <div class="p-v2-meta">
+            <span class="prio-badge-v2 hoch">🔥 Dringend</span>
+            <span class="p-v2-price">~89,00 €</span>
+            <span class="p-v2-author">
+              <img
+                src="avatars/Thorsten.webp"
+                onerror="this.src = 'logo.png'"
+                alt="Thorsten"
+              />
+              <span>Thorsten</span>
+            </span>
+          </div>
+        </div>
+        <button class="btn-tx-action" style="font-size: 1rem">✏️</button>
+      </div>
+
+      <!-- Karte 2: Wichtig -->
+      <div class="purchase-card-v2 prio-mittel">
+        <div
+          class="checkbox-v2 checked"
+          onclick="this.classList.toggle('checked')"
+        >
+          ✓
+        </div>
+        <div class="p-v2-info">
+          <div
+            class="p-v2-title"
+            style="text-decoration: line-through; opacity: 0.7"
+          >
+            Glühweinkocher 10 Liter
+          </div>
+          <div class="p-v2-meta">
+            <span class="prio-badge-v2 mittel">⚡ Wichtig</span>
+            <span class="p-v2-price">~45,00 €</span>
+            <span class="p-v2-author">
+              <img
+                src="avatars/Carsten.webp"
+                onerror="this.src = 'logo.png'"
+                alt="Carsten"
+              />
+              <span>Carsten</span>
+            </span>
+          </div>
+        </div>
+        <button class="btn-tx-action" style="font-size: 1rem">✏️</button>
+      </div>
+
+      <!-- Karte 3: Idee -->
+      <div class="purchase-card-v2 prio-idee">
+        <div class="checkbox-v2" onclick="this.classList.toggle('checked')">
+          ✓
+        </div>
+        <div class="p-v2-info">
+          <div class="p-v2-title">Tragbare Bluetooth-Soundbox JBL</div>
+          <div class="p-v2-meta">
+            <span class="prio-badge-v2 idee">💡 Idee</span>
+            <span class="p-v2-price">~120,00 €</span>
+            <span class="p-v2-author">
+              <img
+                src="avatars/Stefan.webp"
+                onerror="this.src = 'logo.png'"
+                alt="Stefan"
+              />
+              <span>Stefan</span>
+            </span>
+          </div>
+        </div>
+        <button class="btn-tx-action" style="font-size: 1rem">✏️</button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 2. STAUDER LIQUID PROGRESS & SPARZIEL -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-title"
+          >🍺 2. Stauder Sparziel: Liquid Bier-Fortschritt</span
+        >
+        <div class="section-divider-line"></div>
+      </div>
+
+      <div class="stauder-goal-card-v2">
+        <div class="goal-header-v2">
+          <div class="goal-title-v2">
+            <span>❄️ Sparziel Kühlschrank</span>
+          </div>
+          <span class="goal-pct-pill">523 / 770 (68 %)</span>
+        </div>
+
+        <!-- Bier-Fortschrittsbalken mit bernsteinfarbenem Verlauf und Schaum-Lichtkante -->
+        <div class="liquid-progress-track">
+          <div class="liquid-progress-fill" style="width: 68%"></div>
+        </div>
+
+        <div class="liquid-milestones">
+          <span>0</span>
+          <span>192 (25%)</span>
+          <span>385 (50%)</span>
+          <span>577 (75%)</span>
+          <span>770 🎯</span>
+        </div>
+        <div
+          style="
+            font-size: 0.78rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 10px;
+          "
+        >
+          Noch <strong>247 Kronkorken</strong> bis zum Kühlschrank! 🍻
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 3. MONATSKALENDER MIT MULTI-DOTS -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-title"
+          >📅 3. Monatskalender mit Kategorie-Dots</span
+        >
+        <div class="section-divider-line"></div>
+      </div>
+
+      <div class="cal-widget-v2">
+        <div class="calendar-header" style="margin-bottom: 8px">
+          <span class="calendar-month-title">September 2026</span>
+          <div style="display: flex; gap: 4px">
+            <button class="calendar-nav-btn">‹</button>
+            <button class="calendar-nav-btn">›</button>
+          </div>
+        </div>
+
+        <!-- Wochentage -->
+        <div
+          class="cal-grid-v2"
+          style="font-size: 0.72rem; color: #64748b; margin-bottom: 6px"
+        >
+          <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span
+          ><span>Fr</span><span style="color: #f87171">Sa</span
+          ><span style="color: #f87171">So</span>
+        </div>
+
+        <!-- Kalendertage -->
+        <div class="cal-grid-v2">
+          <div class="cal-day-cell">1</div>
+          <div class="cal-day-cell">2</div>
+          <div class="cal-day-cell">
+            3
+            <div class="cal-dot-container">
+              <span class="cal-dot dot-geburtstag"></span>
             </div>
           </div>
-        </div>
-
-        <!-- Direkt die 4 Kriterien - keine Leerräume mehr! -->
-        <div class="lokal-score-grid">
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">🍽️</span
-            ><span class="lokal-score-pill-label">Essen</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">😊</span
-            ><span class="lokal-score-pill-label">Service</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">✨</span
-            ><span class="lokal-score-pill-label">Ambiente</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">💶</span
-            ><span class="lokal-score-pill-label">Preis</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── VORSCHLAG B ── -->
-      <div class="variant-label badge-vb">
-        Vorschlag B: Schlanker Single-Row Header (Keine Box-in-Box)
-      </div>
-      <div class="lokal-card" style="border-left-color: #10b981">
-        <!-- Eine nahtlose Zeile: Links Icon-Box, Mitte Name & Ort, Rechts Score-Badge -->
-        <div class="header-compact-b">
-          <div class="hb-left">
-            <div class="hb-icon-box">🥘</div>
-            <div class="hb-text">
-              <h3 class="hb-title">Dali</h3>
-              <div class="hb-meta">
-                <span style="color: #cbd5e1">Spanisch / Tapas</span>
-                <span>•</span>
-                <a
-                  href="#"
-                  class="lokal-location-link"
-                  style="padding: 1px 6px; font-size: 0.72rem"
-                  ><span>📍</span><span>Dorsten</span></a
-                >
-              </div>
+          <div class="cal-day-cell">4</div>
+          <div class="cal-day-cell">5</div>
+          <div class="cal-day-cell">6</div>
+          <div class="cal-day-cell">7</div>
+          <div class="cal-day-cell">8</div>
+          <div class="cal-day-cell">9</div>
+          <div class="cal-day-cell">10</div>
+          <div class="cal-day-cell">11</div>
+          <div class="cal-day-cell selected">
+            12
+            <div class="cal-dot-container">
+              <span class="cal-dot dot-wandern"></span>
+              <span class="cal-dot dot-einkehr"></span>
             </div>
           </div>
-          <div class="hb-score-badge">
-            <span class="hb-score-val">5.0</span>
-            <span class="hb-score-stars">★★★★★</span>
+          <div class="cal-day-cell today">
+            13
+            <div class="cal-dot-container">
+              <span class="cal-dot dot-geburtstag"></span>
+            </div>
           </div>
+          <div class="cal-day-cell">14</div>
         </div>
 
-        <div class="lokal-score-grid">
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">🍽️</span
-            ><span class="lokal-score-pill-label">Essen</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">😊</span
-            ><span class="lokal-score-pill-label">Service</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">✨</span
-            ><span class="lokal-score-pill-label">Ambiente</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">💶</span
-            ><span class="lokal-score-pill-label">Preis</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 10px;
+            font-size: 0.72rem;
+            color: #94a3b8;
+          "
+        >
+          <span style="display: flex; align-items: center; gap: 4px"
+            ><span class="cal-dot dot-geburtstag"></span> Geburtstag</span
+          >
+          <span style="display: flex; align-items: center; gap: 4px"
+            ><span class="cal-dot dot-wandern"></span> Wandern</span
+          >
+          <span style="display: flex; align-items: center; gap: 4px"
+            ><span class="cal-dot dot-einkehr"></span> Einkehr</span
+          >
         </div>
       </div>
 
-      <!-- ── VORSCHLAG C ── -->
-      <div class="variant-label badge-vc">
-        Vorschlag C: Ultra-flaches Slim-Banner
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 4. FLOATING FILTER-SLIDER -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="section-divider">
+        <span class="section-divider-title"
+          >🎛️ 4. Floating Filter-Slider (iOS Style)</span
+        >
+        <div class="section-divider-line"></div>
       </div>
-      <div class="lokal-card" style="border-left-color: #3b82f6">
-        <div class="banner-compact-c">
-          <div class="hc-title-row">
-            <span style="font-size: 1.2rem">🥘</span>
-            <h3 class="hc-title">Dali</h3>
-            <span class="hc-cat-pill">Spanisch / Tapas</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px">
-            <a
-              href="#"
-              class="lokal-location-link"
-              style="padding: 2px 6px; font-size: 0.72rem"
-              ><span>📍</span><span>Dorsten</span></a
-            >
-            <span style="font-size: 1rem; font-weight: 900; color: #fbbf24"
-              >★ 5.0</span
-            >
-          </div>
-        </div>
 
-        <div class="lokal-score-grid">
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">🍽️</span
-            ><span class="lokal-score-pill-label">Essen</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">😊</span
-            ><span class="lokal-score-pill-label">Service</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">✨</span
-            ><span class="lokal-score-pill-label">Ambiente</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-          <div class="lokal-score-pill high">
-            <span class="lokal-score-pill-icon">💶</span
-            ><span class="lokal-score-pill-label">Preis</span
-            ><span class="lokal-score-pill-val">5</span>
-          </div>
-        </div>
+      <div class="filter-track-v2">
+        <button class="filter-pill-v2 active" onclick="selectFilter(this)">
+          <span>⚡</span><span>30 Tage</span>
+        </button>
+        <button class="filter-pill-v2" onclick="selectFilter(this)">
+          <span>⏱️</span><span>60 Tage</span>
+        </button>
+        <button class="filter-pill-v2" onclick="selectFilter(this)">
+          <span>📅</span><span>2026</span>
+        </button>
+        <button class="filter-pill-v2" onclick="selectFilter(this)">
+          <span>🔮</span><span>2027</span>
+        </button>
+        <button class="filter-pill-v2" onclick="selectFilter(this)">
+          <span>🌐</span><span>Alle</span>
+        </button>
       </div>
     </div>
+
+    <script>
+      function setContainerWidth(width, btn) {
+        document.getElementById("preview-main-container").style.maxWidth = width;
+        btn.parentElement
+          .querySelectorAll(".width-toggle-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      }
+
+      function selectFilter(btn) {
+        btn.parentElement
+          .querySelectorAll(".filter-pill-v2")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      }
+    </script>
   </body>
 </html>

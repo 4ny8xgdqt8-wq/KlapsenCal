@@ -37,27 +37,6 @@ body {
   position: relative;
 }
 
-/* Dynamisches Wasserzeichen im Hintergrund auf jeder Tabseite */
-body::before {
-  content: "";
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80vw;
-  max-width: 440px;
-  height: 80vw;
-  max-height: 440px;
-  background-image: url("../logo.png?v=2.3.6");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  opacity: 0.1;
-  pointer-events: none;
-  z-index: 0;
-  filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.3));
-}
-
 /* Top Header */
 header {
   position: sticky;
@@ -2536,17 +2515,44 @@ select.form-control {
 
 .stauder-progress-bar-bg {
   width: 100%;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  position: relative;
   overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  margin-bottom: 8px;
 }
 
 .stauder-progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
-  border-radius: 6px;
-  transition: width 0.35s ease;
+  background: linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stauder-progress-bar-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  background: #ffffff;
+  border-radius: 3px;
+  box-shadow: 0 0 8px #ffffff;
+}
+
+.stauder-milestones {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 700;
+  padding: 0 4px;
 }
 
 .btn-stauder-shop {
@@ -2589,17 +2595,26 @@ select.form-control {
   margin-top: 18px;
 }
 
-.stauder-kisten-header {
-  display: flex;
+.stauder-kisten-header-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
 }
 
-.stauder-kisten-title-wrap {
+.stauder-kisten-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stauder-kisten-header-left .stauder-kisten-title-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .stauder-kisten-title {
@@ -2616,6 +2631,61 @@ select.form-control {
   border: 1px solid rgba(52, 211, 153, 0.35);
   padding: 2px 8px;
   border-radius: 12px;
+}
+
+.stauder-kisten-header-left .stauder-kisten-substats {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.stauder-stat-card.stauder-stat-card-header {
+  padding: 8px 6px;
+  border-radius: 12px;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+}
+
+.stauder-stat-card-header .stauder-stat-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.stauder-stat-card-header .stauder-stat-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stauder-stat-card-header .stauder-stat-highlight {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.15;
+  margin: 2px 0;
+  white-space: nowrap;
+}
+
+.stauder-stat-card-header .stauder-stat-detail {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #34d399;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.stauder-kisten-header-right {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .btn-stauder-add-kiste {
@@ -2640,13 +2710,6 @@ select.form-control {
 
 .btn-stauder-add-kiste:active {
   transform: translateY(0);
-}
-
-.stauder-kisten-substats {
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: #94a3b8;
-  margin-bottom: 10px;
 }
 
 .stauder-kisten-kpi-grid {
@@ -2701,13 +2764,6 @@ select.form-control {
   margin-bottom: 12px;
 }
 
-.stauder-stats-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
 .stauder-stat-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2718,6 +2774,32 @@ select.form-control {
   -webkit-backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 480px) {
+  .stauder-kisten-header-left .stauder-kisten-title {
+    font-size: 0.88rem;
+  }
+  .stauder-kisten-header-left .stauder-kisten-badge {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+  }
+  .stauder-kisten-header-left .stauder-kisten-substats {
+    font-size: 0.68rem;
+  }
+  .stauder-stat-card.stauder-stat-card-header {
+    padding: 6px 4px;
+  }
+  .stauder-stat-card-header .stauder-stat-highlight {
+    font-size: 0.95rem;
+  }
+  .stauder-stat-card-header .stauder-stat-detail {
+    font-size: 0.62rem;
+  }
+  .btn-stauder-add-kiste {
+    padding: 6px 6px;
+    font-size: 0.74rem;
+  }
 }
 
 .stauder-stat-card-header {
@@ -3026,21 +3108,46 @@ select.form-control {
    15. Offene Anschaffungen Styles
    ========================================== */
 .purchase-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.055) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 5px solid var(--prio-color, #10b981);
   border-radius: 16px;
   padding: 12px 14px;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.25s ease;
   animation: fadeIn 0.25s ease;
+}
+
+.purchase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.purchase-card.prio-hoch {
+  --prio-color: #ef4444;
+}
+.purchase-card.prio-mittel {
+  --prio-color: #f59e0b;
+}
+.purchase-card.prio-idee {
+  --prio-color: #3b82f6;
 }
 
 .purchase-card.checked {
   opacity: 0.55;
   background: rgba(255, 255, 255, 0.02);
+  transform: none;
 }
 
 .purchase-card.checked .purchase-title {
@@ -3049,24 +3156,31 @@ select.form-control {
 }
 
 .purchase-checkbox {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  border: 2px solid var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   color: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   flex-shrink: 0;
 }
 
+.purchase-checkbox:hover {
+  border-color: #10b981;
+  transform: scale(1.08);
+}
+
 .purchase-card.checked .purchase-checkbox {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
   color: white;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
 }
 
 .purchase-info {
@@ -3074,59 +3188,60 @@ select.form-control {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
 }
 
 .purchase-title {
-  font-size: 0.92rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .purchase-meta {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: #94a3b8;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .prio-badge {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 5px;
+  padding: 2px 7px;
+  border-radius: 6px;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 .prio-badge.hoch {
   background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.35);
 }
 .prio-badge.mittel {
   background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  color: #fde047;
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
 .prio-badge.idee {
-  background: rgba(14, 165, 233, 0.2);
-  color: #38bdf8;
-  border: 1px solid rgba(14, 165, 233, 0.35);
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .purchase-price-badge {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 800;
-  color: var(--primary-color);
-  background: rgba(16, 185, 129, 0.12);
-  padding: 1px 6px;
-  border-radius: 5px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .purchase-right {

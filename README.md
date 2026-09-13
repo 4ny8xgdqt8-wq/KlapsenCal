@@ -2,10 +2,10 @@
 
 ### 1. 🍺 Stauder Kronkorken-Tracker, Kühlschrank-Sparziel & Kisten-Verlauf (Im Tab Anschaffungen)
 
-- **Neuer 3. Switch mit Stauder-Emblem**: Direkt im Tab Anschaffungen neben _„🛒 Anschaffungen“_ und _„📋 Für Termine“_. Das Original-Stauder-Logo ist als gestochen scharfe Grafik im Switcher eingebunden.
+- **Stauder-Emblem im Switcher**: Direkt im Tab Anschaffungen an 2. Stelle (Reihenfolge: _„🛒 Anschaffungen“_, _„🍺 Stauder“_, _„📋 Für Termine“_). Das Original-Stauder-Logo ist als gestochen scharfe Grafik im Switcher eingebunden.
 - **Kronkorken-Zähler mit 1-Klick-Steppern**: Mit `+` und `−` lässt sich die Anzahl der gesammelten Kronkorken im ultra-kompakten Zähler sekundenschnell hoch- und runterzählen.
 - **Direkteingabe**: Durch Antippen der großen Ziffer kann der Kronkorken-Stand bei Bedarf auch direkt als Zahl eingetippt werden.
-- **❄️ Sparziel Kühlschrank**: Eigene Kachel für das Sammelziel von 770 Kronkorken. Zeigt live die benötigte Menge (`770`), die noch fehlenden Kronkorken und einen Fortschrittsbalken mit Prozentanzeige an.
+- **❄️ Sparziel Kühlschrank**: Eigene Kachel für das Sammelziel von 770 Kronkorken. Zeigt live die benötigte Menge (`770`), die noch fehlenden Kronkorken und einen plastischen Liquid-Bier-Fortschrittsbalken mit bernsteingoldenem Verlauf, leuchtend weißer Schaumkante und Meilenstein-Skala (`0`, `25%`, `50%`, `75%`, `770 🎯`) an.
 - **🎁 Direktlink zum Stauder Kronshop**: Komfortabler Aktions-Button zum direkten Aufrufen des offiziellen Prämienkatalogs.
 - **📦 Kisten-Verlauf (Wer hat wann Nachschub geholt?)**: Protokollierung jedes Kistenkaufs mit Käufer-Avatar, Datum und Anzahl (unabhängig vom Kronkorken-Zähler, da nur Aktions-Kronkorken zählen). Jeder Eintrag kann bei Bedarf über `✏️` nachträglich bearbeitet oder über `🗑️` gelöscht werden.
 - **📊 Bier-Verbrauchsanalyse & Kennzahlen**: 3 übersichtliche Sofort-Kennzahlen direkt im Kistenbereich:
@@ -13,7 +13,7 @@
   - **Diesen Monat:** Aktueller Monatsverbrauch im laufenden Monat.
   - **Ø Rhythmus:** Wie lange reicht eine Kiste im Schnitt (in Tagen pro Kiste).
   - **Relative Statuszeile:** Zeigt sofort, wann die letzte Kiste geholt wurde (z. B. _„Heute“_, _„Gestern“_ oder _„Vor 4 Tagen von Thorsten“_).
-- **🍾 Flaschen- & Liter-Zähler**: Automatische Hochrechnung des Gesamtvolumens auf Basis der getrunkenen Kisten (z. B. _240 Flaschen_ bzw. _~120 Liter Stauder_).
+- **🍾 Flaschen- & Liter-Zähler im Kisten-Header**: Automatische Hochrechnung des Gesamtvolumens auf Basis der getrunkenen Kisten (z. B. _240 Flaschen_ bzw. _~120 Liter Stauder_), jetzt ergonomisch und aufgeräumt direkt im Header der Kistenliste mittig über der Kachel „Diesen Monat“ platziert.
 - **📈 Monats-Balkendiagramm**: Integriertes Säulendiagramm der letzten 6 Monate mit dynamischer Skalierung und Hervorhebung des laufenden Monats.
 - **Echtzeit-Synchronisierung**: Alle Änderungen werden sofort live für alle Gruppenmitglieder in Firebase gespeichert.
 
@@ -84,7 +84,9 @@
 - **Optimierte 5-Tab Navigationsleiste**: Der Tab heißt weiterhin vertraut **„Anschaffungen“** und öffnet standardmäßig direkt die Wunschliste & den Kassen-Budgetrechner. Alle 5 Tabs haben ideale 20 % Bildschirmbreite für eine komfortable Daumenbedienung.
 - **Segmented Switcher (Schnell-Umschalter)**:
   - **🛒 Anschaffungen (Standard)**: Gemeinsame Wunschliste (Pavillon, Grill, Soundbox) mit Prioritäten (🔥 Dringend, ⚡ Wichtig, 💡 Idee), Shop-Links und Live-Budgetrechner (Vergleich des Gemeinschaftskassen-Saldos mit den offenen Anschaffungskosten – Defizit in Rot, Guthaben in Grün).
+  - **🍺 Stauder**: Kronkorken-Zähler, Sparziel-Kühlschrank mit Liquid-Bierbalken und Kisten-Verlauf mit Konsumstatistiken.
   - **📋 Für Termine**: Zentraler Überblick über alle Mitbringsel und Aufgaben anstehender Termine mit interaktiven Abhakhäkchen und _„➕ Weiteren Punkt hinzufügen“_.
+- **Modernisierte Prio-Karten**: Anschaffungskarten besitzen farbige linke Prio-Ränder (Rot = Dringend, Gelb = Wichtig, Blau = Idee), vergrößerte animierte Checkboxen mit grünem Erfolgs-Leuchten und smaragdgrüne Preis-Badges.
 - **Intelligente Zähler & Badges**: Sowohl die einzelnen Segmente als auch der Haupt-Tab in der Navigationsleiste zeigen live die Anzahl noch offener Anschaffungen und Besorgungen an.
 
 ---
@@ -100,7 +102,7 @@
 ### 9. 🎨 Premium UI/UX & PWA
 
 - **Brandneues Logo**: „Klapse hat Wandertag“ Stick-Badge mit freundlichem Wander-Häuschen.
-- **Dynamisches Wasserzeichen**: Dezentes Logo im Hintergrund auf allen Tabs, dynamisch an jede Bildschirmbreite angepasst.
+- **Klares Dark-Design**: Reduzierter, edler Hintergrund ohne ablenkende Grafiken für beste Lesbarkeit und maximalen Kontrast auf allen Tabs.
 - **Frosted-Glass-Design**: iOS-inspirierte Glas-Effekte mit dezenten Lichtkanten und Smaragd-Glow.
 - **Vollwertige PWA**: Offline-fähig, installierbar auf Homescreen (iOS & Android) mit hochauflösenden Icons.
 
@@ -203,4 +205,4 @@ Jede Terminkategorie besitzt nun ein eigenes, passendes Symbol, das überall in 
 
 - **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla JavaScript (ES Modules).
 - **Backend / Realtime Database**: Firebase Firestore (`data_termine`, `data_kasse`, `data_anschaffungen`, `data_einkehr`, `data_rezepte`, `data_stauder`, `data_stauder_kisten`).
-- **Service Worker**: PWA Cache v4.21 mit Network-First Strategie für App-Ressourcen.
+- **Service Worker**: PWA Cache v4.25 mit Network-First Strategie für App-Ressourcen.

@@ -3253,20 +3253,20 @@ function renderPurchasesView() {
 
   filtered.forEach((p) => {
     const card = document.createElement("div");
-    card.className = `purchase-card ${p.erledigt ? "checked" : ""}`;
     const prioClass = p.prio || "hoch";
     const prioText = prioLabels[prioClass] || "Wichtig";
+    card.className = `purchase-card prio-${prioClass} ${p.erledigt ? "checked" : ""}`;
 
     card.innerHTML = `
             <div class="purchase-checkbox" onclick="window.togglePurchaseStatus('${p.id}')" title="${p.erledigt ? "Als offen markieren" : "Als angeschafft markieren"}">
                 ✓
             </div>
             <div class="purchase-info" onclick="window.togglePurchaseStatus('${p.id}')">
-                <div class="purchase-title">${p.titel}</div>
+                <div class="purchase-title">${escapeLokalHtml(p.titel)}</div>
                 <div class="purchase-meta">
                     <span class="prio-badge ${prioClass}">${prioText}</span>
                     ${p.preis ? `<span class="purchase-price-badge">~${formatEuro(p.preis)}</span>` : ""}
-                    ${p.notiz ? `<span>• 📝 ${p.notiz}</span>` : ""}
+                    ${p.notiz ? `<span>• 📝 ${escapeLokalHtml(p.notiz)}</span>` : ""}
                 </div>
             </div>
             <div class="purchase-right">

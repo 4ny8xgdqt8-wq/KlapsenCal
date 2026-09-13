@@ -645,17 +645,6 @@
           <button
             type="button"
             class="segmented-control-btn"
-            id="seg-btn-tasks"
-            onclick="window.switchAufgabenSubTab('termine')"
-          >
-            <span>📋 Für Termine</span>
-            <span id="seg-badge-tasks" class="seg-badge" style="display: none"
-              >0</span
-            >
-          </button>
-          <button
-            type="button"
-            class="segmented-control-btn"
             id="seg-btn-stauder"
             onclick="window.switchAufgabenSubTab('stauder')"
             title="Stauder Vorrats-Tracker"
@@ -666,6 +655,17 @@
               class="stauder-switcher-img"
             />
             <span id="seg-badge-stauder" class="seg-badge" style="display: none"
+              >0</span
+            >
+          </button>
+          <button
+            type="button"
+            class="segmented-control-btn"
+            id="seg-btn-tasks"
+            onclick="window.switchAufgabenSubTab('termine')"
+          >
+            <span>📋 Für Termine</span>
+            <span id="seg-badge-tasks" class="seg-badge" style="display: none"
               >0</span
             >
           </button>
@@ -882,6 +882,15 @@
                 style="width: 0%"
               ></div>
             </div>
+
+            <!-- Meilensteine -->
+            <div class="stauder-milestones">
+              <span>0</span>
+              <span>192 (25%)</span>
+              <span>385 (50%)</span>
+              <span>577 (75%)</span>
+              <span>770 🎯</span>
+            </div>
           </div>
 
           <!-- Direktlink zum Stauder Kronshop -->
@@ -898,26 +907,50 @@
 
           <!-- Kistenverfolgung Section -->
           <div class="stauder-kisten-section">
-            <div class="stauder-kisten-header">
-              <div class="stauder-kisten-title-wrap">
-                <span class="stauder-kisten-title">📦 Kisten-Verlauf</span>
-                <span
-                  id="stauder-kisten-stats-badge"
-                  class="stauder-kisten-badge"
-                  >0 Kisten</span
+            <!-- 3-Spalten Header-Grid: Kisten-Verlauf (links) | Getrunken (Mitte über 'Diesen Monat') | Kiste eintragen (rechts) -->
+            <div class="stauder-kisten-header-grid">
+              <!-- Spalte 1: Titel, Badge & Substats -->
+              <div class="stauder-kisten-header-left">
+                <div class="stauder-kisten-title-wrap">
+                  <span class="stauder-kisten-title">📦 Kisten-Verlauf</span>
+                  <span
+                    id="stauder-kisten-stats-badge"
+                    class="stauder-kisten-badge"
+                    >0 Kisten</span
+                  >
+                </div>
+                <div
+                  class="stauder-kisten-substats"
+                  id="stauder-kisten-substats"
                 >
+                  Noch keine Kisten eingetragen
+                </div>
               </div>
-              <button
-                type="button"
-                class="btn-stauder-add-kiste"
-                onclick="window.openStauderKisteModal()"
-              >
-                ➕ Kiste eintragen
-              </button>
-            </div>
 
-            <div class="stauder-kisten-substats" id="stauder-kisten-substats">
-              Noch keine Kisten eingetragen
+              <!-- Spalte 2: Getrunken-Kachel (Flaschen & Liter, exakt über 'Diesen Monat') -->
+              <div class="stauder-stat-card stauder-stat-card-header">
+                <div class="stauder-stat-card-top">
+                  <span class="stauder-stat-icon">🍾</span>
+                  <span class="stauder-stat-title">Getrunken</span>
+                </div>
+                <div id="stauder-stat-bottles" class="stauder-stat-highlight">
+                  0 Flaschen
+                </div>
+                <div id="stauder-stat-liters" class="stauder-stat-detail">
+                  ~0 Liter Stauder (20x0,5l)
+                </div>
+              </div>
+
+              <!-- Spalte 3: Kiste eintragen Button -->
+              <div class="stauder-kisten-header-right">
+                <button
+                  type="button"
+                  class="btn-stauder-add-kiste"
+                  onclick="window.openStauderKisteModal()"
+                >
+                  ➕ Kiste eintragen
+                </button>
+              </div>
             </div>
 
             <!-- 3 KPI-Kacheln zur Verbrauchsanalyse -->
@@ -943,24 +976,8 @@
               </div>
             </div>
 
-            <!-- Erweiterte Bier-Statistiken (Flaschen, Quote & Monatsverlauf) -->
+            <!-- Erweiterte Bier-Statistiken (Monatsverlauf) -->
             <div class="stauder-stats-container">
-              <!-- Statistik-Karte: Flaschen & Liter -->
-              <div class="stauder-stats-grid">
-                <div class="stauder-stat-card">
-                  <div class="stauder-stat-card-header">
-                    <span class="stauder-stat-icon">🍾</span>
-                    <span class="stauder-stat-title">Getrunken</span>
-                  </div>
-                  <div id="stauder-stat-bottles" class="stauder-stat-highlight">
-                    0 Flaschen
-                  </div>
-                  <div id="stauder-stat-liters" class="stauder-stat-detail">
-                    ~0 Liter Bier
-                  </div>
-                </div>
-              </div>
-
               <!-- Monats-Balkendiagramm (Letzte 6 Monate) -->
               <div class="stauder-chart-card">
                 <div class="stauder-chart-header">
