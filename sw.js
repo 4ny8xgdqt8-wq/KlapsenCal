@@ -1,4 +1,4 @@
-const VERSION = "4.27";
+const VERSION = "5.0";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -133,6 +133,35 @@ self.addEventListener("fetch", (event) => {
       });
     }),
   );
+});
+
+// Web Push Event Handling (Server-seitige Hintergrund-Mitteilungen)
+self.addEventListener("push", (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { body: event.data.text() };
+    }
+  }
+
+  const title = data.title || "Klapsentouren 📅";
+  const options = {
+    body: data.body || "Es gibt Neuigkeiten in deiner Tour-Gruppe!",
+    icon: data.icon || "logo.png",
+    badge: data.badge || "icons/icon-192.png",
+    vibrate: [200, 100, 200],
+    tag: data.tag || "klapsencal-notification",
+    renotify: true,
+    data: {
+      url: data.url || "./index.html",
+      dateOfArrival: Date.now(),
+      primaryKey: data.id || "1",
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 // Notification Click Handling

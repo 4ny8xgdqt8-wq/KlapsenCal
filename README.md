@@ -1,4 +1,4 @@
-## 🚀 Was ist neu & Feature-Übersicht
+## 🚀 Was ist neu & Feature-Übersicht (Version 5.0)
 
 ### 1. 🍺 Stauder Kronkorken-Tracker, Kühlschrank-Sparziel & Kisten-Verlauf (Im Tab Anschaffungen)
 
@@ -109,6 +109,9 @@
 - **Klares Dark-Design**: Reduzierter, edler Hintergrund ohne ablenkende Grafiken für beste Lesbarkeit und maximalen Kontrast auf allen Tabs.
 - **Frosted-Glass-Design**: iOS-inspirierte Glas-Effekte mit dezenten Lichtkanten und Smaragd-Glow.
 - **🔝 Automatischer Scroll-to-Top bei Tab-Wechsel**: Beim Wechsel zwischen den Tabs (_Termine_, _Lokale_, _Rezepte_, _Anschaffungen_, _Kasse_) sowie den Sub-Tabs startet die Seite ab sofort immer automatisch ganz oben. Ein erneutes Antippen des bereits aktiven Tabs scrollt die Ansicht wie bei einer nativen iOS-App sanft zurück an den Anfang (_Tap-to-Top_).
+- **🔔 Echte Hintergrund-Mitteilungen (Push mit 1-Klick-Toggle)**: Benachrichtigungen bei neuen Terminen, Änderungen oder Vorabend-Erinnerungen erreichen das Smartphone ab sofort auch dann verlässlich, wenn die App geschlossen oder der Bildschirm gesperrt ist.
+  - _1-Klick-Bedienung_: Über das Glocken-Symbol in der Titelleiste lassen sich Mitteilungen mit einem einzigen Antippen an- (`🔔`) und ausschalten (`🔕`).
+  - _Wichtig für Apple iPhone (iOS)_: Web-Push funktioniert auf iOS erst, wenn die App über Safari mit _„Zum Home-Bildschirm“_ installiert wurde.
 - **Vollwertige PWA**: Offline-fähig, installierbar auf Homescreen (iOS & Android) mit hochauflösenden Icons.
 
 ---

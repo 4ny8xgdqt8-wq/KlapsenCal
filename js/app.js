@@ -249,56 +249,191 @@ const WEEKDAY_NAMES_LONG = [
 ];
 
 // ==========================================
-// 3. Benachrichtigungen (Push & Local)
+// 3. Echte Web-Push-Benachrichtigungen (APNs & FCM via Cloud Functions)
 // ==========================================
+const VAPID_PUBLIC_KEY =
+  "BBoShmX0jnhjLknD_zoYn5qdmjfzChdDWGaiKnPM3avttbI7WcZRe6N-dT5JxpoQLk0dCwOtXNGKrnIEVnTwNO8";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Registrierung beim Web-Push-Dienst und Speichern in Firestore "push_subscriptions"
+async function subscribeUserToPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    console.warn("Push-Manager wird von diesem Browser nicht unterstützt.");
+    return null;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+
+    if (!subscription) {
+      const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey,
+      });
+    }
+
+    if (subscription) {
+      const subJson = subscription.toJSON();
+      const subDocId = btoa(subscription.endpoint)
+        .slice(-40)
+        .replace(/[/+=]/g, "_");
+      const author = localStorage.getItem("selected_author") || "Unbekannt";
+
+      await setDoc(
+        doc(db, "push_subscriptions", subDocId),
+        {
+          endpoint: subscription.endpoint,
+          keys: subJson.keys || {},
+          author: author,
+          userAgent: navigator.userAgent,
+          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      console.log("✅ Web-Push-Abonnement aktiv in Firestore:", subDocId);
+      return subscription;
+    }
+  } catch (err) {
+    console.error("Fehler bei Web-Push-Registrierung:", err);
+  }
+  return null;
+}
+
+async function unsubscribeUserFromPush() {
+  try {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.getSubscription();
+    if (subscription) {
+      const subDocId = btoa(subscription.endpoint)
+        .slice(-40)
+        .replace(/[/+=]/g, "_");
+      await deleteDoc(doc(db, "push_subscriptions", subDocId)).catch(() => {});
+      await subscription.unsubscribe();
+      console.log("Web-Push-Abonnement abgemeldet.");
+    }
+  } catch (e) {
+    console.warn("Fehler beim Abmelden von Push:", e);
+  }
+}
+
 window.requestNotificationPermission = async function () {
   if (!("Notification" in window)) {
     window.showAppModal(
       "Nicht unterstützt",
-      "Dieser Browser unterstützt leider keine Benachrichtigungen.",
+      "Dieser Browser unterstützt leider keine Push-Mitteilungen. Auf dem iPhone (iOS) bitte die App über Safari mit 'Zum Home-Bildschirm' installieren!",
     );
     return;
   }
 
+  const isMuted = localStorage.getItem("klapsen_push_disabled") === "true";
+  let hasActiveSub = false;
+
+  if ("serviceWorker" in navigator && "PushManager" in window) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      hasActiveSub = !!sub;
+    } catch (e) {}
+  }
+
+  // Wenn aktuell aktiv: 1-KLICK DEAKTIVIEREN
+  if (Notification.permission === "granted" && !isMuted && hasActiveSub) {
+    localStorage.setItem("klapsen_push_disabled", "true");
+    await unsubscribeUserFromPush();
+    await updateNotificationButton();
+    window.showAppModal(
+      "Mitteilungen deaktiviert 🔕",
+      "Mitteilungen wurden für dieses Gerät ausgeschaltet. Du kannst sie jederzeit durch erneutes Antippen der Glocke wieder aktivieren.",
+    );
+    return;
+  }
+
+  // Andernfalls: 1-KLICK AKTIVIEREN
+  localStorage.removeItem("klapsen_push_disabled");
+
   try {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
+      const sub = await subscribeUserToPush();
+      await updateNotificationButton();
       window.showAppModal(
         "Aktiviert! 🔔",
-        "Du erhältst nun Benachrichtigungen, wenn Termine eingetragen oder geändert werden.",
+        "Perfekt! Du erhältst jetzt echte Hintergrund-Mitteilungen auf dein Smartphone, auch wenn die App geschlossen oder das Handy gesperrt ist.",
       );
-      updateNotificationButton();
       sendLocalNotification(
         "Klapsentouren 🔔",
-        "Benachrichtigungen sind erfolgreich aktiviert!",
+        "Hintergrund-Mitteilungen sind erfolgreich aktiv!",
       );
     } else if (permission === "denied") {
+      localStorage.setItem("klapsen_push_disabled", "true");
+      await updateNotificationButton();
       window.showAppModal(
         "Deaktiviert",
-        "Benachrichtigungen wurden blockiert. Du kannst sie in den Browser-Einstellungen freigeben.",
+        "Mitteilungen wurden blockiert. Du kannst sie in den Handy- bzw. Browser-Einstellungen freigeben.",
       );
-      updateNotificationButton();
     }
   } catch (e) {
     console.error("Fehler bei Benachrichtigungs-Berechtigung:", e);
+    await updateNotificationButton();
   }
 };
 
-function updateNotificationButton() {
+async function updateNotificationButton() {
   const btn = document.getElementById("btn-toggle-notifications");
   if (!btn) return;
-  if ("Notification" in window && Notification.permission === "granted") {
+
+  const isMuted = localStorage.getItem("klapsen_push_disabled") === "true";
+
+  if (
+    isMuted ||
+    !("Notification" in window) ||
+    Notification.permission !== "granted"
+  ) {
+    btn.textContent = "🔕";
+    btn.title = "Mitteilungen aktivieren";
+    btn.style.opacity = "0.55";
+    return;
+  }
+
+  let hasSub = false;
+  if ("serviceWorker" in navigator && "PushManager" in window) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      hasSub = !!sub;
+    } catch (e) {
+      hasSub = false;
+    }
+  }
+
+  if (hasSub) {
     btn.textContent = "🔔";
-    btn.title = "Benachrichtigungen aktiv";
+    btn.title = "Hintergrund-Mitteilungen aktiv (Tippen zum Deaktivieren)";
     btn.style.opacity = "1";
   } else {
     btn.textContent = "🔕";
-    btn.title = "Benachrichtigungen aktivieren";
-    btn.style.opacity = "0.6";
+    btn.title = "Mitteilungen aktivieren";
+    btn.style.opacity = "0.55";
   }
 }
 
+// Lokale Sofort-Benachrichtigung (Fallback für Vordergrund)
 async function sendLocalNotification(title, body) {
+  if (localStorage.getItem("klapsen_push_disabled") === "true") return;
   if (!("Notification" in window) || Notification.permission !== "granted")
     return;
 
@@ -321,7 +456,7 @@ async function sendLocalNotification(title, body) {
       icon: "logo.png",
     });
   } catch (e) {
-    console.warn("Konnte Benachrichtigung nicht senden:", e);
+    console.warn("Konnte lokale Benachrichtigung nicht senden:", e);
   }
 }
 
@@ -329,6 +464,7 @@ async function sendLocalNotification(title, body) {
 // 3.1 Automatische Terminerinnerungen (2h vorher / Vorabend 20 Uhr)
 // ==========================================
 function checkUpcomingReminders() {
+  if (localStorage.getItem("klapsen_push_disabled") === "true") return;
   if (!("Notification" in window) || Notification.permission !== "granted")
     return;
 
@@ -6392,6 +6528,15 @@ renderStauderKistenView();
 renderLokaleView();
 renderRezepteView();
 updateNotificationButton();
+if (
+  localStorage.getItem("klapsen_push_disabled") !== "true" &&
+  "Notification" in window &&
+  Notification.permission === "granted"
+) {
+  setTimeout(() => {
+    subscribeUserToPush().catch(() => {});
+  }, 2500);
+}
 renderFormParticipants();
 renderLokalParticipants();
 renderFormGuests();
