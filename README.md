@@ -1,4 +1,16 @@
-## 🚀 Was ist neu & Feature-Übersicht (Version 5.2)
+## 🚀 Was ist neu & Feature-Übersicht (Version 5.3)
+
+### 🌟 Neuer atmosphärischer Ladebildschirm („Emerald Brew“)
+
+- **🍺 Bier- & Tour-Identität ab der ersten Sekunde**: Der Ladebildschirm erstrahlt im tiefdunklen Smaragd-Look mit sanft aufsteigenden goldenen Kohlensäure-Bläschen.
+- **💫 Rotierende Licht-Aura**: Das KlapsenCal-Wappen pulsiert dezent im Zentrum, umgeben von einem rotierenden Smaragd-Gold-Lichtkranz.
+- **🌊 Liquid-Bier-Welle mit Schaumkante**: Der Ladebalken füllt sich wie ein frisch gezapftes Bier mit bernsteingoldenem Verlauf und weißer Schaumkante.
+- **🔄 Live-Feature-Ticker**: Zeigt während des Startvorgangs den Status der App-Bereiche an (_„Lade Termine & Kalender...“ $\rightarrow$ „Prüfe Stauder-Vorrat...“ $\rightarrow$ „Kassenstand synchronisieren...“ $\rightarrow$ „Tour-Zentrale startklar!“_).
+- **✨ Weicher App-Übergang**: Sanfter Übergang mit leichtem Tiefen-Zoom direkt in die Kalender- und Tour-Übersicht.
+
+---
+
+## 🚀 Vorherige Neuerungen (Version 5.2)
 
 ### 📲 Smarte Push-Mitteilungen & Interaktive Schnell-Aktionen
 

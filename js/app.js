@@ -6674,7 +6674,7 @@ window.openReadmeModal = async function () {
   modal.style.display = "flex";
   if (verEl) {
     const appVer =
-      document.getElementById("app-version")?.textContent || "Version 5.2";
+      document.getElementById("app-version")?.textContent || "Version 5.3";
     verEl.textContent = appVer;
   }
 
