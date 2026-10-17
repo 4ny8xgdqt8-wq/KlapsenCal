@@ -31,6 +31,92 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+function uiIcon(name) {
+  const paths = {
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>',
+    delete: '<path d="M3 6h18M8 6V4h8v2m-11 0 1 14h12l1-14M10 11v5M14 11v5"/>',
+    close: '<path d="m18 6-12 12M6 6l12 12"/>',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+    bellOff: '<path d="M18 8a6 6 0 0 0-10.9-3.4M6 8c0 7-3 7-3 9h18c0-1.1-.9-1.8-1.8-3M10 21h4M3 3l18 18"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M8 3.5v3M16 3.5v3M3.5 10h17"/>',
+    pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>',
+    food: '<path d="M3 3v7a3 3 0 0 0 6 0V3M6 3v18M15 3v8a3 3 0 0 0 6 0V3M18 3v18"/>',
+    music: '<path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-3-3c1.66 0 3 1.34 3 3ZM21 16a3 3 0 1 1-3-3c1.66 0 3 1.34 3 3Z"/>',
+    tent: '<path d="m3 20 9-16 9 16M7 20l5-9 5 9M3 20h18"/>',
+    party: '<path d="m4 20 12-12M8 22l12-12M4 20l4 2m8-14 4 2M7 17l4 2m1-5 4 2"/><path d="M12 5V2m4 4 2-2m1 6h3m-6-7 1-2"/>',
+    swords: '<path d="m4 4 16 16M20 4 4 20M3 3l4 1-3 3-1-4ZM21 3l-4 1 3 3 1-4ZM3 21l4-1-3-3-1 4ZM21 21l-4-1 3-3 1 4Z"/>',
+    cake: '<path d="M4 13h16v8H4zM4 13a3 3 0 0 1 6 0 3 3 0 0 1 6 0 3 3 0 0 1 4-2.83M8 8V5M12 8V3M16 8V5"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    dart: '<circle cx="15" cy="9" r="6"/><circle cx="15" cy="9" r="2"/><path d="m4 20 11-11M4 20l1-6 5 5-6 1Z"/>',
+    circle: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>',
+    wallet: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9h18M15.5 14h.01M7 5V4a1 1 0 0 1 1-1h9"/>',
+    cart: '<path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H6M10 21h.01M18 21h.01"/>',
+    package: '<path d="m12 3 9 5-9 5-9-5 9-5ZM3 8v9l9 5 9-5V8M12 13v9"/>',
+    flame: '<path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-3-11-2 2-3 4-3 6-2-1-3-3-3-5-3 3-5 6-5 10a7 7 0 0 0 7 7Z"/>',
+    bolt: '<path d="m13 2-3 9h7l-6 11 2-9H6l7-11Z"/>',
+    sparkle: '<path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3ZM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/>',
+    beef: '<path d="M7 5c2-2 8-2 10 1l2 3c2 3 0 8-3 10-3 2-8 1-10-2l-2-3c-2-3 0-7 3-9Z"/><path d="M9 8c2-1 5 0 6 2s0 5-2 6-5 0-6-2 0-5 2-6Z"/>',
+    burger: '<path d="M4 9a8 8 0 0 1 16 0H4ZM3 12h18v3H3zM4 18h16M7 21h10"/>',
+    bowl: '<path d="M3 11h18a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8ZM7 7h.01M12 5h.01M17 7h.01"/>',
+    leaf: '<path d="M20 4c-8 0-14 3-14 10a6 6 0 0 0 6 6c7 0 10-7 8-16Z"/><path d="M4 21c3-5 7-8 12-11"/>',
+    bread: '<path d="M4 10a8 8 0 0 1 16 0v10H4V10ZM8 10v3M12 9v4M16 10v3"/>',
+    fish: '<path d="M3 12s4-6 10-6c4 0 7 3 8 6-1 3-4 6-8 6-6 0-10-6-10-6Z"/><path d="m3 12-2-4v8l2-4ZM14 10h.01"/>',
+    coffee: '<path d="M4 8h13v9a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8ZM17 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2"/>',
+    beer: '<path d="M5 7h12v14H5zM17 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2"/>',
+    cocktail: '<path d="m4 4 8 9 8-9H4ZM12 13v8M8 21h8M12 7l4 4"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.1 0l3-3A5 5 0 0 0 13 2.9l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    chat: '<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z"/>',
+    smile: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',
+    clipboard: '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>',
+    repeat: '<path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8"/>',
+    gift: '<path d="M20 12v10H4V12M2 7h20v5H2zM12 7v15M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5V7ZM12 7h4.5A2.5 2.5 0 1 0 14 4.5V7Z"/>',
+    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    snowflake: '<path d="M12 2v20M4 7l16 10M4 17 20 7M8 3l4 3 4-3M8 21l4-3 4 3M3 9l1-5 5 1M15 19l5 1-1-5M3 15l1 5 5-1M15 5l5-1-1 5"/>',
+  };
+  const aliases = {
+    "🔎": "search", "🔍": "search", "📅": "calendar", "🗓️": "calendar",
+    "📍": "pin", "📌": "pin", "👥": "users", "👤": "users", "🧒": "users",
+    "🍽️": "food", "🍕": "food", "🥢": "food", "🥘": "bowl", "🌐": "globe",
+    "🎸": "music", "🎪": "tent", "⚔️": "swords", "🎂": "cake", "🎯": "target",
+    "🎱": "circle", "🏖️": "sun", "☀️": "sun", "💰": "wallet", "💶": "wallet",
+    "🛒": "cart", "📦": "package", "📥": "package", "📤": "package", "🔥": "flame",
+    "⚡": "bolt", "✨": "sparkle", "🍖": "beef", "🥩": "beef", "🍔": "burger",
+    "🍲": "bowl", "🥗": "leaf", "🥖": "bread", "🐟": "fish", "☕": "coffee",
+    "🍺": "beer", "🍹": "cocktail", "🔗": "link", "⏱️": "clock", "💬": "chat",
+    "😊": "smile", "📋": "clipboard", "🍳": "food", "🍰": "cake", "🧁": "cake",
+    "🍦": "cake", "🥨": "bread", "🥫": "package", "🌮": "bowl", "🥔": "bowl",
+    "🍢": "food", "🍻": "beer", "📝": "clipboard", "🎒": "package", "➕": "plus", "➖": "minus",
+    "🔁": "repeat", "♾️": "repeat", "📄": "file", "📖": "file", "🎁": "gift",
+    "📈": "chart", "🧹": "close", "🎉": "sparkle", "🌟": "sparkle", "⏰": "clock",
+  };
+  const icon = paths[aliases[name] || name];
+  return icon
+    ? `<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${icon}</svg>`
+    : "";
+}
+
+function hydrateStaticUiIcons() {
+  document.querySelectorAll("[data-ui-icon]").forEach((placeholder) => {
+    const classes = placeholder.className ? ` ${placeholder.className}` : "";
+    const markup = uiIcon(placeholder.dataset.uiIcon).replace(
+      'class="ui-icon"',
+      `class="ui-icon${classes}"`,
+    );
+    if (markup) placeholder.outerHTML = markup;
+  });
+}
+
+hydrateStaticUiIcons();
+
 // Helper: Sicherstellen, dass stets eine gültige Firebase Auth Session aktiv ist
 async function ensureAuth() {
   if (!auth.currentUser) {
@@ -115,55 +201,55 @@ const CATEGORY_COLORS = {
     color: "#f97316",
     bg: "rgba(249, 115, 22, 0.18)",
     border: "rgba(249, 115, 22, 0.45)",
-    icon: "🍽️",
+    icon: "food",
   },
   Konzert: {
     color: "#a855f7",
     bg: "rgba(168, 85, 247, 0.18)",
     border: "rgba(168, 85, 247, 0.45)",
-    icon: "🎸",
+    icon: "music",
   },
   Veranstaltung: {
     color: "#0ea5e9",
     bg: "rgba(14, 165, 233, 0.18)",
     border: "rgba(14, 165, 233, 0.45)",
-    icon: "🎪",
+    icon: "party",
   },
   Mittelalter: {
     color: "#d97706",
     bg: "rgba(217, 119, 6, 0.20)",
     border: "rgba(217, 119, 6, 0.50)",
-    icon: "⚔️",
+    icon: "swords",
   },
   Geburtstag: {
     color: "#ec4899",
     bg: "rgba(236, 72, 153, 0.18)",
     border: "rgba(236, 72, 153, 0.45)",
-    icon: "🎂",
+    icon: "cake",
   },
   Dart: {
     color: "#eab308",
     bg: "rgba(234, 179, 8, 0.18)",
     border: "rgba(234, 179, 8, 0.45)",
-    icon: "🎯",
+    icon: "dart",
   },
   Billard: {
     color: "#10b981",
     bg: "rgba(16, 185, 129, 0.18)",
     border: "rgba(16, 185, 129, 0.45)",
-    icon: "🎱",
+    icon: "circle",
   },
   "Urlaub / Abwesend": {
     color: "#ef4444",
     bg: "rgba(239, 68, 68, 0.22)",
     border: "rgba(239, 68, 68, 0.65)",
-    icon: "🏖️",
+    icon: "sun",
   },
   Sonstiges: {
     color: "#94a3b8",
     bg: "rgba(148, 163, 184, 0.18)",
     border: "rgba(148, 163, 184, 0.45)",
-    icon: "📌",
+    icon: "pin",
   },
 };
 
@@ -173,7 +259,7 @@ function getCategoryColor(cat) {
       color: "#10b981",
       bg: "rgba(16, 185, 129, 0.18)",
       border: "rgba(16, 185, 129, 0.45)",
-      icon: "📌",
+      icon: "pin",
     }
   );
 }
@@ -356,7 +442,7 @@ window.requestNotificationPermission = async function () {
     await unsubscribeUserFromPush();
     await updateNotificationButton();
     window.showAppModal(
-      "Mitteilungen deaktiviert 🔕",
+      "Mitteilungen deaktiviert",
       "Mitteilungen wurden für dieses Gerät ausgeschaltet. Du kannst sie jederzeit durch erneutes Antippen der Glocke wieder aktivieren.",
     );
     return;
@@ -371,11 +457,11 @@ window.requestNotificationPermission = async function () {
       const sub = await subscribeUserToPush();
       await updateNotificationButton();
       window.showAppModal(
-        "Aktiviert! 🔔",
+        "Aktiviert!",
         "Perfekt! Du erhältst jetzt echte Hintergrund-Mitteilungen auf dein Smartphone, auch wenn die App geschlossen oder das Handy gesperrt ist.",
       );
       sendLocalNotification(
-        "Klapsentouren 🔔",
+        "Klapsentouren",
         "Hintergrund-Mitteilungen sind erfolgreich aktiv!",
       );
     } else if (permission === "denied") {
@@ -403,7 +489,7 @@ async function updateNotificationButton() {
     !("Notification" in window) ||
     Notification.permission !== "granted"
   ) {
-    btn.textContent = "🔕";
+    btn.innerHTML = uiIcon("bellOff");
     btn.title = "Mitteilungen aktivieren";
     btn.style.opacity = "0.55";
     return;
@@ -421,11 +507,11 @@ async function updateNotificationButton() {
   }
 
   if (hasSub) {
-    btn.textContent = "🔔";
+    btn.innerHTML = uiIcon("bell");
     btn.title = "Hintergrund-Mitteilungen aktiv (Tippen zum Deaktivieren)";
     btn.style.opacity = "1";
   } else {
-    btn.textContent = "🔕";
+    btn.innerHTML = uiIcon("bellOff");
     btn.title = "Mitteilungen aktivieren";
     btn.style.opacity = "0.55";
   }
@@ -507,9 +593,9 @@ function checkUpcomingReminders() {
           now.getMonth() === month &&
           now.getDate() === day - 1;
         const titleText = isEve
-          ? `☀️ Erinnerung für morgen: ${ev.Titel}`
-          : `☀️ Heute ganztägig: ${ev.Titel}`;
-        const bodyText = `${isEve ? "Morgen" : "Heute"} steht '${ev.Titel}' an!${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`;
+          ? `Erinnerung für morgen: ${ev.Titel}`
+          : `Heute ganztägig: ${ev.Titel}`;
+        const bodyText = `${isEve ? "Morgen" : "Heute"} steht '${ev.Titel}' an!${ev.Ort ? " (" + ev.Ort + ")" : ""}`;
 
         sendLocalNotification(titleText, bodyText);
         sentReminders[reminderKey] = Date.now();
@@ -533,7 +619,7 @@ function checkUpcomingReminders() {
         !sentReminders[reminderKey]
       ) {
         const titleText = `⏰ In 2 Stunden: ${ev.Titel}`;
-        const bodyText = `Um ${ev.Uhrzeit} Uhr: '${ev.Titel}'${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`;
+        const bodyText = `Um ${ev.Uhrzeit} Uhr: '${ev.Titel}'${ev.Ort ? " (" + ev.Ort + ")" : ""}`;
 
         sendLocalNotification(titleText, bodyText);
         sentReminders[reminderKey] = Date.now();
@@ -707,24 +793,24 @@ function initCategoriesListener() {
       }
 
       // Filter Chips in der Hauptansicht
-      filterCont.innerHTML = `<div class="filter-chip ${selectedCategory === "Alle" ? "active" : ""}" onclick="window.selectCategory('Alle', this)">🌐 Alle</div>`;
+      filterCont.innerHTML = `<div class="filter-chip ${selectedCategory === "Alle" ? "active" : ""}" onclick="window.selectCategory('Alle', this)">${uiIcon("globe")} Alle</div>`;
       formChipsCont.innerHTML = "";
 
       allCategories.forEach((cat, idx) => {
         const cStyle = getCategoryColor(cat);
-        const icon = cStyle.icon || "📌";
+        const icon = cStyle.icon || "pin";
 
         // Filter Chip
         const fChip = document.createElement("div");
         fChip.className = `filter-chip ${selectedCategory === cat ? "active" : ""}`;
-        fChip.innerHTML = `<span style="margin-right:5px; font-size:0.9rem;">${icon}</span>${cat}`;
+        fChip.innerHTML = `${uiIcon(icon)}${escapeLokalHtml(cat)}`;
         fChip.onclick = (e) => window.selectCategory(cat, e.currentTarget);
         filterCont.appendChild(fChip);
 
         // Formular Chip
         const sChip = document.createElement("div");
         sChip.className = `selectable-chip ${selectedType === cat ? "selected" : idx === 0 && !selectedType ? "selected" : ""}`;
-        sChip.innerHTML = `<span style="margin-right:6px; font-size:0.95rem;">${icon}</span>${cat}`;
+        sChip.innerHTML = `${uiIcon(icon)}${escapeLokalHtml(cat)}`;
         sChip.dataset.name = cat;
         sChip.onclick = () => {
           selectedType = cat;
@@ -841,7 +927,7 @@ function updateCategoryDependentFields() {
     if (endDateGroup) endDateGroup.style.display = "flex";
     if (dateLabel) dateLabel.textContent = "Startdatum";
     if (participantsLabel)
-      participantsLabel.textContent = "🏖️ Wer ist abwesend? (Personen)";
+      participantsLabel.textContent = "Wer ist abwesend? (Personen)";
 
     // 2. Nicht benötigte Felder (Uhrzeit, Ganztägig, Ort, Link) ausblenden
     if (timeGroup) timeGroup.style.display = "none";
@@ -878,7 +964,7 @@ function updateCategoryDependentFields() {
 
     if (dateLabel) dateLabel.textContent = "Datum";
     if (participantsLabel)
-      participantsLabel.textContent = "👥 Wer ist dabei? (Teilnehmer)";
+      participantsLabel.textContent = "Wer ist dabei? (Teilnehmer)";
     if (titleInput)
       titleInput.placeholder = "z.B. Sommerfest & Grillen, Wanderung...";
     const endDateInput = document.getElementById("event-end-date");
@@ -1097,7 +1183,7 @@ function initEventsListener() {
                   ? `im Zeitraum ${formatDateObj(item.Datum).formattedLong} bis ${formatDateObj(item.Enddatum).formattedLong}`
                   : item.Datum || "noch ohne Datum";
                 sendLocalNotification(
-                  `Neuer Termin! 📅`,
+                  "Neuer Termin!",
                   `${item.Ersteller || "Jemand"} hat '${item.Titel}' (${dateDescription}) eingetragen.`,
                 );
               }
@@ -1107,7 +1193,7 @@ function initEventsListener() {
             ) {
               if (isRecent) {
                 sendLocalNotification(
-                  `Termin aktualisiert 🔄`,
+                  "Termin aktualisiert",
                   `'${item.Titel}' wurde aktualisiert.`,
                 );
               }
@@ -1245,7 +1331,7 @@ function renderEmptyState(container, options) {
   const iconEl = document.createElement("div");
   iconEl.className = "empty-state-icon";
   iconEl.setAttribute("aria-hidden", "true");
-  iconEl.textContent = icon;
+  iconEl.innerHTML = uiIcon(icon) || escapeLokalHtml(icon);
 
   const titleEl = document.createElement("h3");
   titleEl.className = "empty-state-title";
@@ -1314,34 +1400,33 @@ function renderUndatedEvents(events) {
     card.style.setProperty("--evt-border", catStyle.border);
     card.onclick = () => showEventDetails(item);
 
-    const categoryPill = `<span class="event-pill event-pill-cat">${catStyle.icon ? `${catStyle.icon} ` : ""}${escapeLokalHtml(item.Kategorie || "Sonstiges")}</span>`;
+    const categoryPill = `<span class="event-pill event-pill-cat">${uiIcon(catStyle.icon)}${escapeLokalHtml(item.Kategorie || "Sonstiges")}</span>`;
     const locationPill = item.Ort
-      ? `<span class="event-pill event-pill-meta">📍 ${escapeLokalHtml(item.Ort)}</span>`
+      ? `<span class="event-pill event-pill-meta">${uiIcon("pin")}${escapeLokalHtml(item.Ort)}</span>`
       : "";
     const windowStart = item.Datum ? formatDateObj(item.Datum) : null;
     const windowEnd = item.Enddatum ? formatDateObj(item.Enddatum) : null;
     const windowPill =
       item.DatumFlexibel && windowStart && windowEnd
-        ? `<span class="event-pill event-pill-meta">🗓️ ${windowStart.day}.${windowStart.monthShort} – ${windowEnd.day}.${windowEnd.monthShort}</span>`
+        ? `<span class="event-pill event-pill-meta">${uiIcon("calendar")} ${windowStart.day}.${windowStart.monthShort} – ${windowEnd.day}.${windowEnd.monthShort}</span>`
         : "";
     const undatedStatus = item.DatumFlexibel ? "Zeitraum offen" : "Datum offen";
     const dateBoxLabel = item.DatumFlexibel ? "VON–BIS" : "OFFEN";
 
     card.innerHTML = `
       <div class="event-undated-date-box" aria-label="${undatedStatus}">
-        <span>📅</span>
+        <span>${uiIcon("calendar")}</span>
         <small>${dateBoxLabel}</small>
       </div>
       <div class="event-info">
         <div class="event-title-row">
           <h3 class="event-title">${escapeLokalHtml(item.Titel || "Termin")}</h3>
-          <span class="event-undated-status">${undatedStatus}</span>
         </div>
         <div class="event-meta">
           ${categoryPill}
           ${windowPill}
           ${locationPill}
-          <span class="event-pill event-pill-meta">👤 ${escapeLokalHtml(item.Ersteller || "Unbekannt")}</span>
+          <span class="event-pill event-pill-meta">${uiIcon("users")} ${escapeLokalHtml(item.Ersteller || "Unbekannt")}</span>
         </div>
       </div>
       <button type="button" class="event-set-date-button">Datum festlegen</button>
@@ -1460,12 +1545,12 @@ function renderEvents(events) {
     const dateParts = formatDateObj(item.Datum);
     const isAllDay = item.isAllDay || !item.Uhrzeit;
     const timeStr = isAllDay
-      ? " • ☀️ Ganztägig"
+      ? ` • ${uiIcon("sun")} Ganztägig`
       : item.Uhrzeit
         ? ` • ⏰ ${item.Uhrzeit} Uhr`
         : "";
     const locationStr = item.Ort
-      ? `<span class="event-location">📍 ${item.Ort}</span>`
+      ? `<span class="event-location">${uiIcon("pin")}${item.Ort}</span>`
       : "";
 
     const rsvp = item.Teilnehmer || {};
@@ -1488,11 +1573,11 @@ function renderEvents(events) {
       ticket.onclick = () => showEventDetails(item);
 
       const catStyle = getCategoryColor(item.Kategorie);
-      const catIcon = catStyle.icon ? `${catStyle.icon} ` : "";
+      const catIcon = catStyle.icon ? uiIcon(catStyle.icon) : "";
 
-      let countdownText = `⏳ In ${countdown.daysDiff} Tagen`;
-      if (countdown.daysDiff === 0) countdownText = "🔥 Heute!";
-      else if (countdown.daysDiff === 1) countdownText = "⚡ Morgen!";
+      let countdownText = `${uiIcon("clock")} In ${countdown.daysDiff} Tagen`;
+      if (countdown.daysDiff === 0) countdownText = `${uiIcon("flame")} Heute!`;
+      else if (countdown.daysDiff === 1) countdownText = `${uiIcon("bolt")} Morgen!`;
 
       let rsvpStackHtml = "";
       if (totalParticipants > 0) {
@@ -1586,17 +1671,17 @@ function renderEvents(events) {
           age === 75 ||
           age === 85 ||
           age === 95;
-        birthdayBadgeHtml = `<span class="birthday-age-pill ${isRound ? "round-jubilee" : ""}" title="${age}. Geburtstag (Geb. ${bYear})">🎂 ${age}. Geb.</span>`;
+        birthdayBadgeHtml = `<span class="birthday-age-pill ${isRound ? "round-jubilee" : ""}" title="${age}. Geburtstag (Geb. ${bYear})">${uiIcon("cake")} ${age}. Geb.</span>`;
       }
     }
 
     const catStyle = getCategoryColor(item.Kategorie);
-    const catIcon = catStyle.icon ? `${catStyle.icon} ` : "";
+    const catIcon = catStyle.icon ? uiIcon(catStyle.icon) : "";
     const dateRangeBadgeHtml =
       item.Kategorie === "Urlaub / Abwesend" &&
       item.Enddatum &&
       item.Enddatum > item.Datum
-        ? `<span class="event-tag" style="color: ${catStyle.color}; background: ${catStyle.bg}; border: 1px solid ${catStyle.border}; font-weight: 700;">🏖️ Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
+        ? `<span class="event-tag" style="color: ${catStyle.color}; background: ${catStyle.bg}; border: 1px solid ${catStyle.border}; font-weight: 700;">${uiIcon("sun")} Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
         : "";
 
     // CSS-Variablen für Kategorie-Farben direkt am Element setzen
@@ -1610,18 +1695,18 @@ function renderEvents(events) {
     card.style.setProperty("--evt-shadow", `${catStyle.color}44`);
 
     // Kategorie-Pill
-    const catPillHtml = `<span class="event-pill event-pill-cat">${catStyle.icon ? catStyle.icon + " " : ""}${item.Kategorie || "Sonstiges"}</span>`;
+    const catPillHtml = `<span class="event-pill event-pill-cat">${uiIcon(catStyle.icon)}${escapeLokalHtml(item.Kategorie || "Sonstiges")}</span>`;
 
     // Zeit-Pill
     const timePillHtml = isAllDay
-      ? `<span class="event-pill event-pill-meta">☀️ Ganztägig</span>`
+      ? `<span class="event-pill event-pill-meta">${uiIcon("sun")} Ganztägig</span>`
       : item.Uhrzeit
         ? `<span class="event-pill event-pill-meta">⏰ ${item.Uhrzeit} Uhr</span>`
         : "";
 
     // Ort-Pill
     const ortPillHtml = item.Ort
-      ? `<span class="event-pill event-pill-meta">📍 ${item.Ort}</span>`
+      ? `<span class="event-pill event-pill-meta">${uiIcon("pin")}${escapeLokalHtml(item.Ort)}</span>`
       : "";
 
     // Urlaub-Zeitraum-Badge
@@ -1629,7 +1714,7 @@ function renderEvents(events) {
       item.Kategorie === "Urlaub / Abwesend" &&
       item.Enddatum &&
       item.Enddatum > item.Datum
-        ? `<span class="event-pill event-pill-meta">🏖️ Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
+        ? `<span class="event-pill event-pill-meta">${uiIcon("sun")} Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
         : "";
 
     // Avatar-Stack (Teilnehmer)
@@ -1675,7 +1760,7 @@ function renderEvents(events) {
           ${ortPillHtml}
           ${dateRangePillHtml}
           ${birthdayBadgeHtml}
-          ${item.Wiederholung && item.Wiederholung !== "none" ? '<span class="event-pill event-pill-meta">🔁 Serie</span>' : ""}
+        ${item.Wiederholung && item.Wiederholung !== "none" ? `<span class="event-pill event-pill-meta">${uiIcon("repeat")} Serie</span>` : ""}
         </div>
         ${avatarStackHtml}
       </div>
@@ -1688,7 +1773,7 @@ function renderEvents(events) {
     const addMoreBtn = document.createElement("button");
     addMoreBtn.type = "button";
     addMoreBtn.className = "btn-day-add-event";
-    addMoreBtn.innerHTML = `<span>➕</span> <span>Weiteren Termin am ${formatted} anlegen</span>`;
+    addMoreBtn.innerHTML = `${uiIcon("plus")} <span>Weiteren Termin am ${formatted} anlegen</span>`;
     addMoreBtn.onclick = () => window.openNewEventModal(selectedCalendarDate);
     container.appendChild(addMoreBtn);
   }
@@ -1832,14 +1917,14 @@ function renderCalendarWidget() {
           const uniqueIcons = [];
           eventsOnDay.forEach((ev) => {
             const catStyle = getCategoryColor(ev.Kategorie);
-            const icon = catStyle.icon || "📌";
+            const icon = catStyle.icon || "pin";
             if (!uniqueIcons.includes(icon)) uniqueIcons.push(icon);
           });
 
           uniqueIcons.slice(0, 2).forEach((icon) => {
             const iconSpan = document.createElement("span");
             iconSpan.className = "cal-day-icon";
-            iconSpan.textContent = icon;
+            iconSpan.innerHTML = uiIcon(icon) || escapeLokalHtml(icon);
             iconsRow.appendChild(iconSpan);
           });
 
@@ -2037,7 +2122,16 @@ function filterAndRender() {
   const searchEl = document.getElementById("event-search");
   const sortEl = document.getElementById("event-sort");
   const sectionTitleEl = document.getElementById("events-section-title");
+  const sectionCountEl = document.getElementById("events-section-count");
   const clearBtn = document.getElementById("btn-clear-date-filter");
+  const eventsTabEl = document.getElementById("termine");
+
+  if (eventsTabEl) {
+    eventsTabEl.classList.toggle(
+      "has-selected-calendar-day",
+      Boolean(selectedCalendarDate),
+    );
+  }
 
   const query = (searchEl ? searchEl.value : "").toLowerCase().trim();
   const sortType = sortEl ? sortEl.value : "upcoming";
@@ -2066,10 +2160,10 @@ function filterAndRender() {
       (ev) => isFixedDateEvent(ev) && ev.Datum === selectedCalendarDate,
     );
     const formatted = formatDateObj(selectedCalendarDate).formattedLong;
-    if (sectionTitleEl) sectionTitleEl.textContent = `Termine am ${formatted}`;
+    if (sectionTitleEl) sectionTitleEl.textContent = formatted;
     if (clearBtn) {
       clearBtn.style.display = "inline-block";
-      clearBtn.textContent = "✕ Filter zurücksetzen";
+      clearBtn.innerHTML = `${uiIcon("close")} Filter zurücksetzen`;
     }
   } else {
     // Zeitraum-Filterung (oder Vollsuche bei Query/Sortierung)
@@ -2132,7 +2226,7 @@ function filterAndRender() {
     const fullA = `${dateA}T${timeA}`;
     const fullB = `${dateB}T${timeB}`;
 
-    if (sortType === "upcoming") {
+    if (selectedCalendarDate || sortType === "upcoming") {
       return fullA.localeCompare(fullB);
     } else if (sortType === "newest") {
       const tA =
@@ -2145,6 +2239,16 @@ function filterAndRender() {
     }
     return 0;
   });
+
+  if (sectionCountEl) {
+    if (selectedCalendarDate) {
+      sectionCountEl.textContent = `${filtered.length} ${filtered.length === 1 ? "Termin" : "Termine"}`;
+      sectionCountEl.style.display = "inline-flex";
+    } else {
+      sectionCountEl.textContent = "";
+      sectionCountEl.style.display = "none";
+    }
+  }
 
   if (!selectedCalendarDate && query && sectionTitleEl) {
     sectionTitleEl.textContent = `Suchergebnisse (${filtered.length})`;
@@ -2180,7 +2284,10 @@ function showEventDetails(data) {
 
   const catTag = document.getElementById("detail-category-tag");
   const catColor = getCategoryColor(data.Kategorie);
-  catTag.textContent = `${catColor.icon ? catColor.icon + " " : ""}${data.Kategorie || "Sonstiges"}`;
+  catTag.innerHTML = `${catColor.icon ? uiIcon(catColor.icon) : ""}${escapeLokalHtml(data.Kategorie || "Sonstiges")}`;
+  catTag.style.display = "inline-flex";
+  catTag.style.alignItems = "center";
+  catTag.style.gap = "4px";
   catTag.style.color = catColor.color;
   catTag.style.background = catColor.bg;
   catTag.style.borderColor = catColor.border;
@@ -2202,9 +2309,9 @@ function showEventDetails(data) {
           age === 75 ||
           age === 85 ||
           age === 95;
-        ageTag.textContent = isRound
-          ? `🎉 ${age}. Geburtstag (Runder Jubeltag!)`
-          : `🎂 ${age}. Geburtstag (Geb. ${bYear})`;
+        ageTag.innerHTML = isRound
+          ? `${uiIcon("sparkle")} ${age}. Geburtstag (Runder Jubeltag!)`
+          : `${uiIcon("cake")} ${age}. Geburtstag (Geb. ${bYear})`;
         ageTag.className = `age-badge ${isRound ? "round-jubilee" : ""}`;
         ageTag.style.display = "inline-flex";
       } else {
@@ -2218,15 +2325,15 @@ function showEventDetails(data) {
   const recTag = document.getElementById("detail-recurrence-tag");
   if (recTag) {
     const recLabels = {
-      weekly: "🔁 Wöchentlich",
-      biweekly: "🔁 Alle 2 Wochen",
-      monthly: "🔁 Monatlich",
-      every2months: "🔁 Alle 2 Monate",
-      every3months: "🔁 Alle 3 Monate",
-      yearly: "🔁 Jährlich",
+      weekly: "Wöchentlich",
+      biweekly: "Alle 2 Wochen",
+      monthly: "Monatlich",
+      every2months: "Alle 2 Monate",
+      every3months: "Alle 3 Monate",
+      yearly: "Jährlich",
     };
     if (!data.DatumFlexibel && data.Wiederholung && recLabels[data.Wiederholung]) {
-      recTag.textContent = recLabels[data.Wiederholung];
+      recTag.innerHTML = `${uiIcon("repeat")} ${recLabels[data.Wiederholung]}`;
       recTag.style.display = "inline-flex";
     } else {
       recTag.style.display = "none";
@@ -2241,7 +2348,7 @@ function showEventDetails(data) {
       data.Enddatum &&
       data.Enddatum > data.Datum
     ) {
-      dateRangeTag.textContent = `🏖️ Bis ${formatDateObj(data.Enddatum).day}.${formatDateObj(data.Enddatum).monthShort}`;
+      dateRangeTag.innerHTML = `${uiIcon("sun")} Bis ${formatDateObj(data.Enddatum).day}.${formatDateObj(data.Enddatum).monthShort}`;
       dateRangeTag.style.display = "inline-flex";
       dateRangeTag.style.color = catColor.color;
       dateRangeTag.style.background = catColor.bg;
@@ -2281,7 +2388,7 @@ function showEventDetails(data) {
     !data.Datum || data.DatumFlexibel
       ? "Uhrzeit noch offen"
       : isAllDay
-        ? "☀️ Ganztägig"
+        ? "Ganztägig"
         : `${data.Uhrzeit} Uhr`;
   document.getElementById("detail-location-str").textContent =
     data.Ort || "Wird noch bekanntgegeben";
@@ -2421,10 +2528,10 @@ function renderDetailRSVP(data) {
 
   const rsvpTitle = document.getElementById("detail-rsvp-title");
   if (rsvpTitle) {
-    rsvpTitle.textContent =
+      rsvpTitle.innerHTML =
       data.Kategorie === "Urlaub / Abwesend"
-        ? "🏖️ Wer ist abwesend?"
-        : "👥 Wer ist dabei?";
+        ? `${uiIcon("sun")} Wer ist abwesend?`
+        : `${uiIcon("users")} Wer ist dabei?`;
   }
 
   const guests = data.Gäste || { adults: 0, children: 0 };
@@ -2448,7 +2555,7 @@ function renderDetailRSVP(data) {
   if (yesMembers.length === 0 && gAdults + gChildren === 0) {
     container.innerHTML = `
             <div style="grid-column: 1 / -1; color: #94a3b8; font-size: 0.82rem; font-style: italic; padding: 4px 0;">
-                Noch keine Teilnehmer ausgewählt. (Über ✏️ Bearbeiten anpassen)
+                Noch keine Teilnehmer ausgewählt. Zum Anpassen bitte „Bearbeiten“ öffnen.
             </div>
         `;
     return;
@@ -2480,7 +2587,7 @@ function renderDetailRSVP(data) {
     const guestCard = document.createElement("div");
     guestCard.className = "rsvp-card rsvp-card-guest rsvp-card-readonly";
     guestCard.innerHTML = `
-            <div style="font-size: 1.5rem;">🎉</div>
+            <div class="rsvp-empty-icon">${uiIcon("sparkle")}</div>
             <div class="rsvp-info">
                 <span class="rsvp-name" style="color: #34d399;">Gäste (${totalGuests})</span>
                 <span style="font-size: 0.68rem; color: #cbd5e1;">${gAdults} Erw. • ${gChildren} Ki.</span>
@@ -2677,11 +2784,11 @@ function renderAllTasks() {
     card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin-bottom: 8px;">
                 <h4 style="margin: 0; color: var(--accent-color); font-size: 1rem; font-weight: 800;">${ev.Titel}</h4>
-                <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${formatDateObj(ev.Datum).formattedLong}</span>
+                <span style="font-size: 0.75rem; color: #94a3b8;">${uiIcon("calendar")} ${formatDateObj(ev.Datum).formattedLong}</span>
             </div>
             <div>${itemsHtml}</div>
             <button type="button" class="btn-add-item" onclick="window.editEventById('${ev.baseId || ev.id}', true)" style="margin-top: 8px; padding: 8px 12px; font-size: 0.82rem; width: 100%; justify-content: center;">
-                ➕ Weiteren Punkt hinzufügen
+                ${uiIcon("plus")} Weiteren Punkt hinzufügen
             </button>
         `;
     container.appendChild(card);
@@ -2701,7 +2808,7 @@ window.editEventById = function (
   const overlay = document.getElementById("event-form-overlay");
   if (overlay) overlay.style.display = "flex";
   const titleEl = document.getElementById("event-modal-title");
-  if (titleEl) titleEl.textContent = "✏️ Termin bearbeiten";
+  if (titleEl) titleEl.innerHTML = `${uiIcon("edit")} Termin bearbeiten`;
 
   document.getElementById("event-author").value = data.Ersteller || "";
   document.getElementById("event-author").dispatchEvent(new Event("change"));
@@ -3013,7 +3120,7 @@ window.addItemBuilderRow = function (name = "") {
 
   row.innerHTML = `
         <input type="text" class="form-control item-name-input" placeholder="z.B. Grillkohle, Salat, Kasten Bier, Zelt..." value="${name}" style="flex: 1;" required>
-        <button type="button" class="btn-remove-item" onclick="this.closest('.item-builder-row').remove()" title="Entfernen">✕</button>
+        <button type="button" class="btn-remove-item" onclick="this.closest('.item-builder-row').remove()" title="Entfernen" aria-label="Punkt entfernen">${uiIcon("close")}</button>
     `;
   container.appendChild(row);
 };
@@ -3091,7 +3198,7 @@ window.openNewEventModal = function (prefilledDate = null, startAsUndated = fals
     dateOpenToggle.dispatchEvent(new Event("change"));
   }
   const titleEl = document.getElementById("event-modal-title");
-  if (titleEl) titleEl.textContent = "➕ Neuer Termin";
+  if (titleEl) titleEl.innerHTML = `${uiIcon("plus")} Neuer Termin`;
   const submitBtn = document.getElementById("submit-event-btn");
   if (submitBtn) submitBtn.textContent = "Termin speichern";
   const cancelBtn = document.getElementById("cancel-edit-btn");
@@ -3263,14 +3370,14 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
     const isVacation = selectedType === "Urlaub / Abwesend";
     const successMsg = editingEventId
       ? isVacation
-        ? "Urlaub / Abwesenheit wurde erfolgreich aktualisiert! 🏖️"
+        ? "Urlaub / Abwesenheit wurde erfolgreich aktualisiert!"
         : "Termin wurde erfolgreich aktualisiert!"
       : isDateOpen
         ? hasOpenRange
           ? "Vormerkung mit Zeitraum wurde gespeichert. Du kannst später ein konkretes Datum festlegen."
           : "Vormerkung wurde gespeichert. Du kannst später ein Datum festlegen."
         : isVacation
-        ? "Urlaub / Abwesenheit wurde erfolgreich im Kalender gespeichert! 🏖️"
+        ? "Urlaub / Abwesenheit wurde erfolgreich im Kalender gespeichert!"
         : "Termin wurde erfolgreich im Kalender gespeichert!";
     window.showAppModal("Erfolg", successMsg);
 
@@ -3477,7 +3584,7 @@ function createKasseBookingCard(booking) {
     ? `<span class="kasse-tx-person"><img src="avatars/${escapeLokalHtml(booking.ersteller)}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-tx-person-avatar" alt="${escapeLokalHtml(booking.ersteller)}" title="${escapeLokalHtml(booking.ersteller)}"><span>${escapeLokalHtml(booking.ersteller)}</span></span>`
     : "";
   const noteHtml = booking.notiz
-    ? `<span class="kasse-tx-note">📝 ${escapeLokalHtml(booking.notiz)}</span>`
+    ? `<span class="kasse-tx-note">${uiIcon("file")} ${escapeLokalHtml(booking.notiz)}</span>`
     : "";
 
   card.innerHTML = `
@@ -3500,8 +3607,8 @@ function createKasseBookingCard(booking) {
         ${isIncome ? "+" : "-"}${formatEuro(booking.betrag)}
       </span>
       <div class="kasse-tx-actions">
-        <button class="btn-tx-action" onclick="window.openKasseModalById('${booking.id}')" title="Bearbeiten" aria-label="Buchung bearbeiten">✏️</button>
-        <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${booking.id}')" title="Löschen" aria-label="Buchung löschen">🗑️</button>
+        <button class="btn-tx-action" onclick="window.openKasseModalById('${booking.id}')" title="Bearbeiten" aria-label="Buchung bearbeiten">${uiIcon("edit")}</button>
+        <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${booking.id}')" title="Löschen" aria-label="Buchung löschen">${uiIcon("delete")}</button>
       </div>
     </div>
   `;
@@ -3523,7 +3630,13 @@ function createKasseFamilyGroup(familyName, bookings) {
   const familyTotalTone =
     familyTotal > 0 ? "positive" : familyTotal < 0 ? "negative" : "neutral";
   const latestAmountSign = latestIsIncome ? "+" : "−";
-  const latestDate = formatDateObj(latestBooking.datum).formattedLong;
+  const latestDateParts = formatDateObj(latestBooking.datum);
+  const latestDate =
+    latestDateParts.day === "--"
+      ? "--"
+      : `${latestDateParts.day}. ${latestDateParts.monthShort}`;
+  const latestDateFull = latestDateParts.formattedLong;
+  const bookingCountLabel = `${bookings.length} ${bookings.length === 1 ? "Buchung" : "Buchungen"}`;
   const familyInitial = familyName.replace(/^Familie\s+/i, "").charAt(0);
   const familyMembers = kasseFamilyMembers[familyName] || [];
   const familyAvatarHtml = familyMembers.length
@@ -3541,15 +3654,14 @@ function createKasseFamilyGroup(familyName, bookings) {
       <span class="kasse-family-info">
         <strong class="kasse-family-name">${escapeLokalHtml(familyName)}</strong>
         <span class="kasse-family-latest">
-          <span class="kasse-family-latest-label">Zuletzt</span>
-          <span class="kasse-family-latest-date">${escapeLokalHtml(latestDate)}</span>
-          <span class="kasse-tx-kind ${latestIsIncome ? "positive" : "negative"}">${latestIsIncome ? "Einnahme" : "Ausgabe"}</span>
+          <span class="kasse-family-latest-label">Letzte Buchung</span>
+          <time class="kasse-family-latest-date" datetime="${escapeLokalHtml(latestBooking.datum || "")}" title="${escapeLokalHtml(latestDateFull)}">${escapeLokalHtml(latestDate)}</time>
           <span class="kasse-family-latest-amount ${latestIsIncome ? "positive" : "negative"}">${latestAmountSign}${formatEuro(latestAmount)}</span>
         </span>
       </span>
       <span class="kasse-family-total-wrap">
         <strong class="kasse-family-total ${familyTotalTone}">${familyTotalSign}${formatEuro(Math.abs(familyTotal))}</strong>
-        <small>Gesamtbetrag</small>
+        <small>Saldo · ${escapeLokalHtml(bookingCountLabel)}</small>
       </span>
       <span class="kasse-family-chevron" aria-hidden="true">⌄</span>
     </summary>
@@ -3749,8 +3861,8 @@ window.openKasseModal = function (bookingOrType = null) {
   if (bookingOrType && typeof bookingOrType === "object") {
     const booking = bookingOrType;
     editingKasseBookingId = booking.id;
-    document.getElementById("kasse-modal-title").textContent =
-      "✏️ Buchung bearbeiten";
+    document.getElementById("kasse-modal-title").innerHTML =
+      `${uiIcon("edit")} Buchung bearbeiten`;
     document.getElementById("kasse-amount").value =
       parseFloat(booking.betrag) || "";
     const purpose = normalizeKassePurpose(booking.zweck);
@@ -3767,10 +3879,10 @@ window.openKasseModal = function (bookingOrType = null) {
       (bookingOrType === "ausgabe" || bookingOrType === "einnahme")
         ? bookingOrType
         : "einnahme";
-    document.getElementById("kasse-modal-title").textContent =
+    document.getElementById("kasse-modal-title").innerHTML =
       defaultType === "ausgabe"
-        ? "🔴 Ausgabe erfassen"
-        : "🟢 Einzahlung erfassen";
+        ? `${uiIcon("minus")} Ausgabe erfassen`
+        : `${uiIcon("plus")} Einzahlung erfassen`;
     document.getElementById("kasse-amount").value = "";
     document.getElementById("kasse-purpose").value = "";
     document.getElementById("kasse-purpose-preset").value = "";
@@ -3961,12 +4073,12 @@ function renderPurchasesView() {
       labelEl.textContent = "Kassen-Deckung";
       diffEl.textContent = "0,00 €";
       diffEl.className = "purchases-budget-status-value covered";
-      subEl.textContent = "Keine offenen Wünsche mit Preisangabe 🎉";
+      subEl.textContent = "Keine offenen Wünsche mit Preisangabe.";
     } else if (diff >= 0) {
       labelEl.textContent = "Kassen-Deckung";
       diffEl.textContent = "+" + formatEuro(diff);
       diffEl.className = "purchases-budget-status-value covered";
-      subEl.textContent = `Kasse deckt alles ab (${formatEuro(diff)} Puffer übrig) 🥳`;
+      subEl.textContent = `Kasse deckt alles ab (${formatEuro(diff)} Puffer übrig).`;
     } else {
       const missingAmount = Math.abs(diff);
       labelEl.textContent = "Fehlender Kassenbetrag";
@@ -4028,15 +4140,15 @@ function renderPurchasesView() {
   }
 
   const prioLabels = {
-    hoch: "🔥 Dringend",
-    mittel: "⚡ Wichtig",
-    idee: "💡 Idee",
+    hoch: { label: "Dringend", icon: "flame" },
+    mittel: { label: "Wichtig", icon: "bolt" },
+    idee: { label: "Idee", icon: "sparkle" },
   };
 
   filtered.forEach((p) => {
     const card = document.createElement("div");
     const prioClass = p.prio || "hoch";
-    const prioText = prioLabels[prioClass] || "Wichtig";
+    const prio = prioLabels[prioClass] || prioLabels.mittel;
     card.className = `purchase-card prio-${prioClass} ${p.erledigt ? "checked" : ""}`;
 
     card.innerHTML = `
@@ -4046,15 +4158,15 @@ function renderPurchasesView() {
             <div class="purchase-info" onclick="window.togglePurchaseStatus('${p.id}')">
                 <div class="purchase-title">${escapeLokalHtml(p.titel)}</div>
                 <div class="purchase-meta">
-                    <span class="prio-badge ${prioClass}">${prioText}</span>
+                    <span class="prio-badge ${prioClass}">${uiIcon(prio.icon)} ${prio.label}</span>
                     ${p.preis ? `<span class="purchase-price-badge">~${formatEuro(p.preis)}</span>` : ""}
-                    ${p.notiz ? `<span>• 📝 ${escapeLokalHtml(p.notiz)}</span>` : ""}
+                    ${p.notiz ? `<span>• ${uiIcon("file")} ${escapeLokalHtml(p.notiz)}</span>` : ""}
                 </div>
             </div>
             <div class="purchase-right">
-                ${p.link ? `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="btn-purchase-link" title="Weblink öffnen">🔗</a>` : ""}
-                <button class="btn-tx-action" onclick="window.openPurchaseModalById('${p.id}')" title="Bearbeiten">✏️</button>
-                <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deletePurchase('${p.id}')" title="Löschen">🗑️</button>
+                ${p.link ? `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="btn-purchase-link" title="Weblink öffnen" aria-label="Weblink öffnen">${uiIcon("link")}</a>` : ""}
+                <button class="btn-tx-action" onclick="window.openPurchaseModalById('${p.id}')" title="Bearbeiten" aria-label="Anschaffung bearbeiten">${uiIcon("edit")}</button>
+                <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deletePurchase('${p.id}')" title="Löschen" aria-label="Anschaffung löschen">${uiIcon("delete")}</button>
             </div>
         `;
     container.appendChild(card);
@@ -4096,8 +4208,8 @@ window.openPurchaseModal = function (item = null) {
 
   if (item) {
     editingPurchaseId = item.id;
-    document.getElementById("purchase-modal-title").textContent =
-      "✏️ Anschaffung bearbeiten";
+    document.getElementById("purchase-modal-title").innerHTML =
+      `${uiIcon("edit")} Anschaffung bearbeiten`;
     document.getElementById("purchase-title").value = item.titel || "";
     document.getElementById("purchase-price").value = item.preis
       ? parseFloat(item.preis)
@@ -4107,8 +4219,8 @@ window.openPurchaseModal = function (item = null) {
     window.setPurchasePrio(item.prio || "hoch");
   } else {
     editingPurchaseId = null;
-    document.getElementById("purchase-modal-title").textContent =
-      "🛒 Neue Anschaffung";
+    document.getElementById("purchase-modal-title").innerHTML =
+      `${uiIcon("cart")} Neue Anschaffung`;
     document.getElementById("purchase-title").value = "";
     document.getElementById("purchase-price").value = "";
     document.getElementById("purchase-link").value = "";
@@ -4270,7 +4382,7 @@ function renderStauderView() {
   const diffEl = document.getElementById("stauder-kuehlschrank-diff");
   if (diffEl) {
     if (diff === 0) {
-      diffEl.textContent = "0 🎉 Erreicht!";
+      diffEl.textContent = "0 ✓ Erreicht!";
       diffEl.style.color = "#34d399";
     } else {
       diffEl.textContent = diff;
@@ -4650,16 +4762,18 @@ function renderStauderKistenView() {
           class="btn-stauder-kiste-edit"
           onclick="window.openStauderKisteModal('${kiste.id}')"
           title="Eintrag bearbeiten"
+          aria-label="Kisteneintrag bearbeiten"
         >
-          ✏️
+          ${uiIcon("edit")}
         </button>
         <button
           type="button"
           class="btn-stauder-kiste-delete"
           onclick="window.deleteStauderKiste('${kiste.id}')"
           title="Eintrag löschen"
+          aria-label="Kisteneintrag löschen"
         >
-          🗑️
+          ${uiIcon("delete")}
         </button>
       </div>
     `;
@@ -4685,7 +4799,7 @@ function openStauderKisteModal(id = null) {
     const existing = allStauderKisten.find((k) => k.id === id);
     if (!existing) return;
     editingStauderKisteId = id;
-    if (modalTitle) modalTitle.textContent = "✏️ Kiste bearbeiten";
+    if (modalTitle) modalTitle.innerHTML = `${uiIcon("edit")} Kiste bearbeiten`;
     if (submitBtn) submitBtn.textContent = "Änderungen speichern";
 
     stauderKisteCurrentCount = parseInt(existing.anzahl) || 1;
@@ -4698,7 +4812,7 @@ function openStauderKisteModal(id = null) {
     stauderKisteSelectedBuyer = existing.kaeufer || adults[0] || "Thorsten";
   } else {
     editingStauderKisteId = null;
-    if (modalTitle) modalTitle.textContent = "📦 Kiste eintragen";
+    if (modalTitle) modalTitle.innerHTML = `${uiIcon("package")} Kiste eintragen`;
     if (submitBtn) submitBtn.textContent = "Kiste speichern";
 
     stauderKisteCurrentCount = 1;
@@ -4860,24 +4974,44 @@ let editingLokalId = null;
 let lokalParticipants = {}; // { [name]: "yes" }
 
 const lokalCatLabels = {
-  Deutsch: "🍽️ Deutsche Küche",
-  Italienisch: "🍕 Italienisch",
-  "Steak & Burger": "🥩 Steak & Burger",
-  Griechisch: "🇬🇷 Griechisch",
-  Brauhaus: "🍺 Brauhaus / Biergarten",
-  Asiatisch: "🥢 Asiatisch",
-  Kneipe: "🍻 Kneipe / Bar",
-  Café: "☕ Café & Brunch",
-  "Fast Food": "🍔 Imbiss & Fast Food",
-  Spanisch: "🥘 Spanisch / Tapas",
-  Mexikanisch: "🌮 Mexikanisch",
-  Eisdiele: "🍦 Eisdiele",
-  International: "🌐 International / Sonstiges",
+  Deutsch: "Deutsche Küche",
+  Italienisch: "Italienisch",
+  "Steak & Burger": "Steak & Burger",
+  Griechisch: "Griechisch",
+  Brauhaus: "Brauhaus / Biergarten",
+  Asiatisch: "Asiatisch",
+  Kneipe: "Kneipe / Bar",
+  Café: "Café & Brunch",
+  "Fast Food": "Imbiss & Fast Food",
+  Spanisch: "Spanisch / Tapas",
+  Mexikanisch: "Mexikanisch",
+  Eisdiele: "Eisdiele",
+  International: "International / Sonstiges",
   // Kompatibilität mit alten Einträgen
-  Biergarten: "🍺 Brauhaus / Biergarten",
-  Restaurant: "🍽️ Restaurant",
-  Spiele: "🎯 Dart & Billard",
-  Event: "🎪 Fest & Event",
+  Biergarten: "Brauhaus / Biergarten",
+  Restaurant: "Restaurant",
+  Spiele: "Dart & Billard",
+  Event: "Fest & Event",
+};
+
+const lokalCatIcons = {
+  Deutsch: "food",
+  Italienisch: "food",
+  "Steak & Burger": "beef",
+  Griechisch: "globe",
+  Brauhaus: "beer",
+  Asiatisch: "bowl",
+  Kneipe: "beer",
+  Café: "coffee",
+  "Fast Food": "burger",
+  Spanisch: "bowl",
+  Mexikanisch: "bowl",
+  Eisdiele: "cake",
+  International: "globe",
+  Biergarten: "beer",
+  Restaurant: "food",
+  Spiele: "target",
+  Event: "tent",
 };
 
 function escapeLokalHtml(str) {
@@ -5005,30 +5139,31 @@ window.setLokalStatus = function (status) {
 
   const pLabel = document.getElementById("lokal-participants-label");
   if (pLabel) {
-    pLabel.textContent =
-      status === "besucht"
-        ? "👥 Wer war alles dabei?"
-        : "🙋 Wer möchte alles mit? / Interesse";
+    pLabel.innerHTML = status === "besucht"
+      ? `${uiIcon("users")} Wer war alles dabei?`
+      : `${uiIcon("users")} Wer möchte alles mit? / Interesse`;
   }
 
   const modalTitle = document.getElementById("lokal-modal-title");
   if (modalTitle) {
-    modalTitle.textContent =
+    const title =
       status === "besucht"
         ? editingLokalId
-          ? "✏️ Lokal bearbeiten"
-          : "🍽️ Restaurant / Lokal bewerten"
+          ? "Lokal bearbeiten"
+          : "Restaurant / Lokal bewerten"
         : editingLokalId
-          ? "✏️ Geplantes Lokal bearbeiten"
-          : "📌 Geplantes Lokal vormerken";
+          ? "Geplantes Lokal bearbeiten"
+          : "Geplantes Lokal vormerken";
+    const icon = editingLokalId ? "edit" : status === "besucht" ? "food" : "pin";
+    modalTitle.innerHTML = `${uiIcon(icon)} ${title}`;
   }
 
   const submitBtn = document.getElementById("submit-lokal-btn");
   if (submitBtn) {
-    submitBtn.textContent =
+    submitBtn.innerHTML =
       status === "besucht"
         ? "Lokal & Bewertung speichern"
-        : "📌 Auf Wunschliste speichern";
+        : `${uiIcon("pin")} Auf Wunschliste speichern`;
   }
 };
 
@@ -5166,16 +5301,15 @@ function renderLokaleView() {
     const isGeplant = item.status === "geplant";
     card.className = `lokal-card ${isGeplant ? "geplant" : ""}`;
 
-    const catBadgeText =
-      lokalCatLabels[item.kategorie] || item.kategorie || "🍽️ Restaurant";
-    const catIcon = (catBadgeText || "").split(" ")[0] || "🍽️";
-    const cleanCatLabel = (catBadgeText || "").replace(/^[^\p{L}]+\s*/u, "");
+    const cleanCatLabel =
+      lokalCatLabels[item.kategorie] || item.kategorie || "Restaurant";
+    const catIcon = uiIcon(lokalCatIcons[item.kategorie] || "food");
     const overallScore = item.gesamtRating || item.rating || "4.5";
     const starsHtml = renderStarsString(overallScore);
 
     let linksHtml = "";
     if (item.webLink) {
-      linksHtml += `<a href="${item.webLink}" target="_blank" rel="noopener noreferrer" class="btn-lokal-link">📋 Speisekarte / Website ↗</a>`;
+      linksHtml += `<a href="${item.webLink}" target="_blank" rel="noopener noreferrer" class="btn-lokal-link">${uiIcon("clipboard")} Speisekarte / Website ↗</a>`;
     }
 
     const authorAvatar = item.author
@@ -5190,7 +5324,7 @@ function renderLokaleView() {
       );
       locationLinkHtml = `
         <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer" class="lokal-location-link" title="In Google Maps öffnen">
-          <span>📍</span><span>${escapeLokalHtml(item.ort)}</span>
+          ${uiIcon("pin")}<span>${escapeLokalHtml(item.ort)}</span>
         </a>
       `;
     }
@@ -5247,22 +5381,22 @@ function renderLokaleView() {
       criteriaRowHtml = `
         <div class="lokal-score-grid">
           <div class="lokal-score-pill ${scoreClass(rEssen)}" title="Essen & Trinken: ${rEssen} / 5">
-            <span class="lokal-score-pill-icon">🍽️</span>
+            <span class="lokal-score-pill-icon">${uiIcon("food")}</span>
             <span class="lokal-score-pill-label">Essen</span>
             <span class="lokal-score-pill-val">${rEssen.toFixed(1).replace(".0", "")}</span>
           </div>
           <div class="lokal-score-pill ${scoreClass(rService)}" title="Service & Freundlichkeit: ${rService} / 5">
-            <span class="lokal-score-pill-icon">😊</span>
+            <span class="lokal-score-pill-icon">${uiIcon("smile")}</span>
             <span class="lokal-score-pill-label">Service</span>
             <span class="lokal-score-pill-val">${rService.toFixed(1).replace(".0", "")}</span>
           </div>
           <div class="lokal-score-pill ${scoreClass(rSauberkeit)}" title="Sauberkeit & Ambiente: ${rSauberkeit} / 5">
-            <span class="lokal-score-pill-icon">✨</span>
+            <span class="lokal-score-pill-icon">${uiIcon("sparkle")}</span>
             <span class="lokal-score-pill-label">Ambiente</span>
             <span class="lokal-score-pill-val">${rSauberkeit.toFixed(1).replace(".0", "")}</span>
           </div>
           <div class="lokal-score-pill ${scoreClass(rPreis)}" title="Preis-Leistung: ${rPreis} / 5">
-            <span class="lokal-score-pill-icon">💶</span>
+            <span class="lokal-score-pill-icon">${uiIcon("wallet")}</span>
             <span class="lokal-score-pill-label">Preis</span>
             <span class="lokal-score-pill-val">${rPreis.toFixed(1).replace(".0", "")}</span>
           </div>
@@ -5271,7 +5405,7 @@ function renderLokaleView() {
     } else {
       criteriaRowHtml = `
         <div class="lokal-planned-info-row">
-          <span>🌟 Geplante Einkehr / Vormerkung auf der Wunschliste</span>
+        <span>${uiIcon("sparkle")} Geplante Einkehr / Vormerkung auf der Wunschliste</span>
         </div>
       `;
     }
@@ -5283,7 +5417,7 @@ function renderLokaleView() {
         <details class="lokal-notes-accordion">
           <summary class="lokal-notes-summary">
             <span class="lokal-notes-summary-label">
-              <span class="notes-icon">💬</span>
+              <span class="notes-icon">${uiIcon("chat")}</span>
               <span>Erfahrungsbericht &amp; Notizen</span>
             </span>
             <span class="lokal-notes-chevron">▾</span>
@@ -5315,7 +5449,7 @@ function renderLokaleView() {
                    <span>★</span><span>${overallScore}</span>
                  </div>`
               : `<div class="lokal-planned-badge-compact">
-                   <span>📌 Wunschliste</span>
+                   <span>${uiIcon("pin")} Wunschliste</span>
                  </div>`
           }
         </div>
@@ -5339,8 +5473,8 @@ function renderLokaleView() {
         <div class="lokal-footer-actions">
           ${linksHtml}
           <div class="lokal-action-btns">
-            <button type="button" class="btn-card-action" onclick="window.openLokalModal('${item.id}')" title="Lokal bearbeiten">✏️</button>
-            <button type="button" class="btn-card-action btn-card-action-del" onclick="window.deleteLokal('${item.id}')" title="Lokal löschen">🗑️</button>
+            <button type="button" class="btn-card-action" onclick="window.openLokalModal('${item.id}')" title="Lokal bearbeiten" aria-label="Lokal bearbeiten">${uiIcon("edit")}</button>
+            <button type="button" class="btn-card-action btn-card-action-del" onclick="window.deleteLokal('${item.id}')" title="Lokal löschen" aria-label="Lokal löschen">${uiIcon("delete")}</button>
           </div>
         </div>
       </div>
@@ -5573,11 +5707,11 @@ window.saveLokalEntry = async function () {
       "Erfolg",
       status === "geplant"
         ? id
-          ? "Geplantes Lokal wurde aktualisiert! 📌"
-          : "Lokal wurde auf die Wunschliste gesetzt! 📌"
+          ? "Geplantes Lokal wurde aktualisiert!"
+          : "Lokal wurde auf die Wunschliste gesetzt!"
         : id
-          ? "Lokal & Bewertung wurden erfolgreich aktualisiert! 🍽️"
-          : "Neues Lokal wurde erfolgreich im Guide gespeichert! 🍽️",
+          ? "Lokal & Bewertung wurden erfolgreich aktualisiert!"
+          : "Neues Lokal wurde erfolgreich im Guide gespeichert!",
     );
   } catch (err) {
     console.error("Fehler beim Speichern des Lokals:", err);
@@ -5945,12 +6079,12 @@ function filterAndRenderRezepte() {
     }
 
     const timeBadge = isLink
-      ? `<span class="rezept-time-badge" style="border-color: rgba(14, 165, 233, 0.4); color: #38bdf8;">🌐 Web-Link</span>`
-      : `<span class="rezept-time-badge">⏱️ ${escapeLokalHtml(time)}</span>`;
+      ? `<span class="rezept-time-badge" style="border-color: rgba(14, 165, 233, 0.4); color: #38bdf8;">${uiIcon("globe")} Web-Link</span>`
+      : `<span class="rezept-time-badge">${uiIcon("clock")} ${escapeLokalHtml(time)}</span>`;
 
     const portionBadge = isLink
       ? ""
-      : `<span class="rezept-portion-badge">👥 ${escapeLokalHtml(String(portions))} Port.</span>`;
+      : `<span class="rezept-portion-badge">${uiIcon("users")} ${escapeLokalHtml(String(portions))} Port.</span>`;
 
     html += `
       <div class="rezept-card" onclick="window.openRecipeDetail('${r.id}')">
@@ -5973,7 +6107,7 @@ function filterAndRenderRezepte() {
         </div>
         <div class="rezept-card-body">
           <h3 class="rezept-card-title">
-            ${escapeLokalHtml(r.Titel || "")}${isLink ? `<span style="margin-left: 6px; font-size: 0.9rem; opacity: 0.9;">🔗</span>` : ""}
+            ${escapeLokalHtml(r.Titel || "")}${isLink ? `<span class="rezept-link-icon">${uiIcon("link")}</span>` : ""}
           </h3>
           <div class="rezept-card-meta">
             <div class="rezept-author-box">
@@ -6051,7 +6185,7 @@ function openRecipeDetail(recipeId) {
     if (linkBtn) linkBtn.href = r.link || "#";
     if (classicContent) classicContent.style.display = "none";
     if (addCartBtn) addCartBtn.style.display = "none";
-    if (timeEl) timeEl.textContent = "🔗 Web-Link";
+    if (timeEl) timeEl.innerHTML = `${uiIcon("link")} Web-Link`;
   } else {
     if (linkContainer) linkContainer.style.display = "none";
     if (classicContent) classicContent.style.display = "block";
@@ -6276,7 +6410,7 @@ function renderCart() {
           ${displayAmount ? `<span class="cart-item-amount">${escapeLokalHtml(displayAmount)}</span>` : ""}
           <span class="cart-item-name">${escapeLokalHtml(item.name || "")}</span>
         </div>
-        <button type="button" class="btn-remove-cart-item" onclick="event.stopPropagation(); window.removeFromCart(${idx});" title="Entfernen">✕</button>
+        <button type="button" class="btn-remove-cart-item" onclick="event.stopPropagation(); window.removeFromCart(${idx});" title="Entfernen" aria-label="Zutat entfernen">${uiIcon("close")}</button>
       </div>
     `;
     })
@@ -6878,7 +7012,7 @@ function openRecipeModal(recipeId = null) {
   if (recipeId) {
     const r = allRecipes.find((x) => x.id === recipeId);
     if (r) {
-      titleEl.textContent = "✏️ Rezept bearbeiten";
+      titleEl.innerHTML = `${uiIcon("edit")} Rezept bearbeiten`;
       document.getElementById("recipe-input-title").value = r.Titel || "";
       if (authorSelect && r.Ersteller) authorSelect.value = r.Ersteller;
 
@@ -6915,7 +7049,7 @@ function openRecipeModal(recipeId = null) {
         r["Zusätzliche Hinweise"] || r.Hinweise || "";
     }
   } else {
-    titleEl.textContent = "📖 Neues Rezept anlegen";
+    titleEl.innerHTML = `${uiIcon("file")} Neues Rezept anlegen`;
     if (isLinkCheckbox) isLinkCheckbox.checked = false;
     toggleRecipeLinkMode(false);
 
@@ -6956,7 +7090,7 @@ function addIngredientRow(amount = "", unit = "", name = "") {
       ${unitOptions}
     </select>
     <input type="text" class="form-control ing-name" placeholder="Zutat (z. B. Zwiebeln)" value="${escapeLokalHtml(String(name || ""))}" required>
-    <button type="button" class="btn-remove-ing-row" onclick="this.parentElement.remove()" title="Zeile löschen">✕</button>
+    <button type="button" class="btn-remove-ing-row" onclick="this.parentElement.remove()" title="Zeile löschen" aria-label="Zutat entfernen">${uiIcon("close")}</button>
   `;
   container.appendChild(row);
 }

@@ -4,8 +4,8 @@
   "description": "Gruppen-Kalender & Event-Planer für die Klapse",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0d1412",
-  "theme_color": "#10b981",
+  "background_color": "#111522",
+  "theme_color": "#111522",
   "orientation": "portrait-primary",
   "icons": [
     {

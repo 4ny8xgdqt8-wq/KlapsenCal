@@ -10,7 +10,7 @@
 
     <!-- PWA & Icon Meta Tags -->
     <link rel="manifest" href="manifest.json?v=2.5.0" />
-    <meta name="theme-color" content="#10b981" />
+    <meta name="theme-color" content="#111522" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
@@ -61,7 +61,7 @@
 
       <!-- Feature Ticker -->
       <div class="splash-feature-ticker">
-        <span id="splash-ticker-text">📅 Lade Termine & Kalender...</span>
+        <span id="splash-ticker-text">Lade Termine & Kalender...</span>
       </div>
 
       <div class="version" id="app-version">Lade...</div>
@@ -83,14 +83,14 @@
           onclick="window.requestNotificationPermission()"
           title="Benachrichtigungen aktivieren"
         >
-          🔔
+          <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
         </button>
         <button
           class="btn-header-action"
           onclick="window.forceUpdate()"
           title="Update suchen"
         >
-          🔄
+          <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg>
         </button>
       </div>
     </header>
@@ -144,13 +144,19 @@
           <div id="events-section-title" class="section-title">
             Anstehend (nächste 30 Tage)
           </div>
+          <span
+            id="events-section-count"
+            class="events-section-count"
+            style="display: none"
+            aria-live="polite"
+          ></span>
           <button
             id="btn-clear-date-filter"
             class="btn-clear-filter"
             style="display: none"
             onclick="window.clearDateFilter()"
           >
-            ✕ 30 Tage anzeigen
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg> 30 Tage anzeigen
           </button>
         </div>
 
@@ -206,7 +212,7 @@
         <!-- Suche & Sortierung (Kompakt) -->
         <div class="event-search-row">
           <div class="search-container event-search-grow">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg></span>
             <input
               type="text"
               id="event-search"
@@ -220,9 +226,9 @@
             class="sort-select event-sort-select"
             onchange="filterAndRender()"
           >
-            <option value="upcoming">🗓️ Chronologisch</option>
-            <option value="newest">✨ Neueste</option>
-            <option value="alpha">🔤 A-Z</option>
+            <option value="upcoming">Chronologisch</option>
+            <option value="newest">Neueste</option>
+            <option value="alpha">A-Z</option>
           </select>
         </div>
 
@@ -245,11 +251,11 @@
             class="btn-submit undated-tab-add-button"
             onclick="window.openNewUndatedEventModal()"
           >
-            ➕ Vormerkung anlegen
+            <span data-ui-icon="plus"></span> Vormerkung anlegen
           </button>
           <div class="event-search-row">
             <div class="search-container event-search-grow">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg></span>
               <input
                 type="text"
                 id="undated-event-search"
@@ -278,7 +284,7 @@
               id="lokal-stat-planned"
               >0</span
             >
-            <span class="lokal-stat-lbl">📌 Geplant</span>
+            <span class="lokal-stat-lbl"><span data-ui-icon="pin"></span> Geplant</span>
           </div>
           <div class="lokal-stat-divider"></div>
           <div class="lokal-stat-item">
@@ -297,18 +303,21 @@
           class="btn-submit lokal-add-button"
           onclick="window.openLokalModal()"
         >
-          ➕ Neues Restaurant / Lokal eintragen
+          <span data-ui-icon="plus"></span> Neues Restaurant / Lokal eintragen
         </button>
 
         <!-- Suchfeld & Filter -->
         <div class="search-sort-bar list-search-row">
-          <input
-            type="text"
-            id="lokal-search"
-            class="search-input"
-            placeholder="🔍 Lokal, Küche oder Ort suchen..."
-            oninput="window.filterAndRenderLokale()"
-          />
+          <div class="search-container list-search-grow">
+            <span class="search-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg></span>
+            <input
+              type="text"
+              id="lokal-search"
+              class="search-input"
+              placeholder="Lokal, Küche oder Ort suchen..."
+              oninput="window.filterAndRenderLokale()"
+            />
+          </div>
         </div>
 
         <!-- Filter Chips -->
@@ -317,94 +326,94 @@
             class="filter-chip active"
             onclick="window.filterLokale('alle', this)"
           >
-            🌐 Alle
+            <span data-ui-icon="globe"></span> Alle
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('besucht', this)"
           >
-            🍽️ Besucht
+            <span data-ui-icon="food"></span> Besucht
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('geplant', this)"
           >
-            📌 Geplant / Wunschliste
+            <span data-ui-icon="pin"></span> Geplant / Wunschliste
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Deutsch', this)"
           >
-            🍽️ Deutsche Küche
+            <span data-ui-icon="food"></span> Deutsche Küche
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Italienisch', this)"
           >
-            🍕 Italienisch
+            <span data-ui-icon="food"></span> Italienisch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Steak & Burger', this)"
           >
-            🥩 Steak &amp; Burger
+            <span data-ui-icon="beef"></span> Steak &amp; Burger
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Griechisch', this)"
           >
-            🇬🇷 Griechisch
+            <span data-ui-icon="globe"></span> Griechisch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Brauhaus', this)"
           >
-            🍺 Brauhaus / Biergarten
+            <span data-ui-icon="beer"></span> Brauhaus / Biergarten
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Asiatisch', this)"
           >
-            🥢 Asiatisch
+            <span data-ui-icon="bowl"></span> Asiatisch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Kneipe', this)"
           >
-            🍻 Kneipe / Bar
+            <span data-ui-icon="beer"></span> Kneipe / Bar
           </div>
           <div class="filter-chip" onclick="window.filterLokale('Café', this)">
-            ☕ Café &amp; Brunch
+            <span data-ui-icon="coffee"></span> Café &amp; Brunch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Fast Food', this)"
           >
-            🍔 Imbiss &amp; Fast Food
+            <span data-ui-icon="burger"></span> Imbiss &amp; Fast Food
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Spanisch', this)"
           >
-            🥘 Spanisch / Tapas
+            <span data-ui-icon="bowl"></span> Spanisch / Tapas
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Mexikanisch', this)"
           >
-            🌮 Mexikanisch
+            <span data-ui-icon="bowl"></span> Mexikanisch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('Eisdiele', this)"
           >
-            🍦 Eisdiele
+            <span data-ui-icon="cake"></span> Eisdiele
           </div>
           <div
             class="filter-chip"
             onclick="window.filterLokale('International', this)"
           >
-            🌐 International / Sonstiges
+            <span data-ui-icon="globe"></span> International / Sonstiges
           </div>
         </div>
 
@@ -447,37 +456,40 @@
             class="btn-submit recipe-action-primary"
             onclick="window.openRecipeModal()"
           >
-            ➕ Neues Rezept eintragen
+            <span data-ui-icon="plus"></span> Neues Rezept eintragen
           </button>
           <button
             type="button"
             class="btn-submit recipe-action-secondary"
             onclick="window.openCartModal()"
           >
-            🛒 Einkaufszettel
+            <span data-ui-icon="cart"></span> Einkaufszettel
             <span id="cart-badge" class="cart-badge-pill">0</span>
           </button>
         </div>
 
         <!-- Such- & Sortierfeld -->
         <div class="search-sort-bar list-search-row recipe-search-row">
-          <input
-            type="text"
-            id="recipe-search"
-            class="search-input"
-            placeholder="🔍 Gericht, Zutat oder Koch suchen..."
-            oninput="window.filterAndRenderRezepte()"
-          />
+          <div class="search-container list-search-grow">
+            <span class="search-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg></span>
+            <input
+              type="text"
+              id="recipe-search"
+              class="search-input"
+              placeholder="Gericht, Zutat oder Koch suchen..."
+              oninput="window.filterAndRenderRezepte()"
+            />
+          </div>
           <select
             id="recipe-sort"
             class="sort-select recipe-sort-select"
             onchange="window.onRecipeSortChange()"
           >
-            <option value="newest">📅 Neueste zuerst</option>
-            <option value="oldest">⏳ Älteste zuerst</option>
-            <option value="alpha">🔤 Alphabetisch (A-Z)</option>
-            <option value="time-asc">⏱ Zeit (kurz zuerst)</option>
-            <option value="servings-asc">👥 Portionen (wenig zuerst)</option>
+            <option value="newest">Neueste zuerst</option>
+            <option value="oldest">Älteste zuerst</option>
+            <option value="alpha">Alphabetisch (A-Z)</option>
+            <option value="time-asc">Zeit (kurz zuerst)</option>
+            <option value="servings-asc">Portionen (wenig zuerst)</option>
           </select>
         </div>
 
@@ -487,109 +499,109 @@
             class="filter-chip active"
             onclick="window.filterRezepte('alle', this)"
           >
-            🌐 Alle
+            <span data-ui-icon="globe"></span> Alle
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Fleisch', this)"
           >
-            🥩 Fleisch
+            <span data-ui-icon="beef"></span> Fleisch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Grillen', this)"
           >
-            🔥 Grillen
+            <span data-ui-icon="flame"></span> Grillen
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Burger', this)"
           >
-            🍔 Burger
+            <span data-ui-icon="burger"></span> Burger
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Steak', this)"
           >
-            🥩 Steak
+            <span data-ui-icon="beef"></span> Steak
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Suppe', this)"
           >
-            🍲 Suppe
+            <span data-ui-icon="bowl"></span> Suppe
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Salat', this)"
           >
-            🥗 Salat
+            <span data-ui-icon="leaf"></span> Salat
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Vorspeise', this)"
           >
-            🍢 Vorspeise
+            <span data-ui-icon="food"></span> Vorspeise
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Beilagen', this)"
           >
-            🥔 Beilagen
+            <span data-ui-icon="bowl"></span> Beilagen
           </div>
           <div class="filter-chip" onclick="window.filterRezepte('Brot', this)">
-            🥖 Brot
+            <span data-ui-icon="bread"></span> Brot
           </div>
           <div class="filter-chip" onclick="window.filterRezepte('Dips', this)">
-            🥣 Dips
+            <span data-ui-icon="bowl"></span> Dips
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Saucen', this)"
           >
-            🥫 Saucen
+            <span data-ui-icon="package"></span> Saucen
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Dutch', this)"
           >
-            🥘 Dutch
+            <span data-ui-icon="bowl"></span> Dutch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Plancha', this)"
           >
-            🍳 Plancha
+            <span data-ui-icon="food"></span> Plancha
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Fisch', this)"
           >
-            🐟 Fisch
+            <span data-ui-icon="fish"></span> Fisch
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Snack', this)"
           >
-            🥨 Snack
+            <span data-ui-icon="bread"></span> Snack
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Dessert', this)"
           >
-            🍰 Dessert
+            <span data-ui-icon="cake"></span> Dessert
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Backen', this)"
           >
-            🧁 Backen
+            <span data-ui-icon="cake"></span> Backen
           </div>
           <div
             class="filter-chip"
             onclick="window.filterRezepte('Cocktails', this)"
           >
-            🍹 Cocktails
+            <span data-ui-icon="cocktail"></span> Cocktails
           </div>
         </div>
 
@@ -607,7 +619,7 @@
             id="seg-btn-purchases"
             onclick="window.switchAufgabenSubTab('anschaffungen')"
           >
-            <span>🛒 Anschaffungen</span>
+            <span><span data-ui-icon="cart"></span> Anschaffungen</span>
             <span
               id="seg-badge-purchases"
               class="seg-badge"
@@ -637,7 +649,7 @@
             id="seg-btn-tasks"
             onclick="window.switchAufgabenSubTab('termine')"
           >
-            <span>📋 Für Termine</span>
+            <span><span data-ui-icon="clipboard"></span> Für Termine</span>
             <span id="seg-badge-tasks" class="seg-badge" style="display: none"
               >0</span
             >
@@ -650,14 +662,14 @@
             class="subview-heading-row"
           >
             <h2 class="subview-heading">
-              🛒 Offene Anschaffungen
+              <span data-ui-icon="cart"></span> Offene Anschaffungen
             </h2>
             <button
               type="button"
               class="btn-kasse-add"
               onclick="window.openPurchaseModal()"
             >
-              ➕ Neu
+              <span data-ui-icon="plus"></span> Neu
             </button>
           </div>
 
@@ -715,13 +727,13 @@
               class="filter-chip"
               onclick="window.filterPurchases('offen', this)"
             >
-              🟡 Noch zu besorgen
+              <span class="status-dot pending" aria-hidden="true"></span> Noch zu besorgen
             </div>
             <div
               class="filter-chip"
               onclick="window.filterPurchases('erledigt', this)"
             >
-              🟢 Angeschafft ✓
+              <span class="status-dot done" aria-hidden="true"></span> Angeschafft
             </div>
           </div>
 
@@ -741,7 +753,7 @@
               class="btn-header-action"
               title="Aktualisieren"
             >
-              🔄
+              <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg>
             </button>
           </div>
           <div id="all-tasks-container" class="event-list"></div>
@@ -812,7 +824,7 @@
           <!-- Sparziel: Kühlschrank Kachel -->
           <div class="stauder-stock-card stauder-goal-card">
             <div class="stauder-goal-header">
-              <span class="stauder-goal-title">❄️ Kühlschrank</span>
+              <span class="stauder-goal-title"><span data-ui-icon="snowflake"></span> Kühlschrank</span>
               <span id="stauder-goal-badge" class="stauder-goal-badge">0%</span>
             </div>
 
@@ -847,7 +859,7 @@
               <span>192 (25%)</span>
               <span>385 (50%)</span>
               <span>577 (75%)</span>
-              <span>770 🎯</span>
+              <span>770 <span data-ui-icon="target"></span></span>
             </div>
           </div>
 
@@ -859,7 +871,7 @@
             class="btn-stauder-shop"
             title="Stauder Kronshop Prämienkatalog öffnen"
           >
-            <span>🎁 Zum Stauder Kronshop</span>
+            <span><span data-ui-icon="gift"></span> Zum Stauder Kronshop</span>
             <span class="external-icon">↗</span>
           </a>
 
@@ -870,7 +882,7 @@
               <!-- Spalte 1: Titel, Badge & Substats -->
               <div class="stauder-kisten-header-left">
                 <div class="stauder-kisten-title-wrap">
-                  <span class="stauder-kisten-title">📦 Kisten-Verlauf</span>
+                  <span class="stauder-kisten-title"><span data-ui-icon="package"></span> Kisten-Verlauf</span>
                   <span
                     id="stauder-kisten-stats-badge"
                     class="stauder-kisten-badge"
@@ -888,7 +900,7 @@
               <!-- Spalte 2: Getrunken-Kachel (Flaschen & Liter, exakt über 'Diesen Monat') -->
               <div class="stauder-stat-card stauder-stat-card-header">
                 <div class="stauder-stat-card-top">
-                  <span class="stauder-stat-icon">🍾</span>
+                  <span class="stauder-stat-icon" data-ui-icon="beer"></span>
                   <span class="stauder-stat-title">Getrunken</span>
                 </div>
                 <div id="stauder-stat-bottles" class="stauder-stat-highlight">
@@ -906,7 +918,7 @@
                   class="btn-stauder-add-kiste"
                   onclick="window.openStauderKisteModal()"
                 >
-                  ➕ Kiste eintragen
+                  <span data-ui-icon="plus"></span> Kiste eintragen
                 </button>
               </div>
             </div>
@@ -940,7 +952,7 @@
               <div class="stauder-chart-card">
                 <div class="stauder-chart-header">
                   <span class="stauder-chart-title"
-                    >📈 Monats-Verlauf (Kisten)</span
+                    ><span data-ui-icon="chart"></span> Monats-Verlauf (Kisten)</span
                   >
                   <span class="stauder-chart-badge">Letzte 6 Monate</span>
                 </div>
@@ -973,15 +985,28 @@
 
             <div class="wallet-stat-tiles">
               <div class="wallet-stat-tile wallet-stat-in">
-                <span class="wallet-stat-label">📥 Gesamt-Einnahmen</span>
+                <span class="wallet-stat-label"><span data-ui-icon="plus"></span> Gesamt-Einnahmen</span>
                 <span class="wallet-stat-val" id="kasse-total-in">+0,00 €</span>
               </div>
               <div class="wallet-stat-tile wallet-stat-out">
-                <span class="wallet-stat-label">📤 Gesamt-Ausgaben</span>
+                <span class="wallet-stat-label"><span data-ui-icon="minus"></span> Gesamt-Ausgaben</span>
                 <span class="wallet-stat-val" id="kasse-total-out"
                   >-0,00 €</span
                 >
               </div>
+            </div>
+
+            <div class="wallet-treasurer-row">
+              <img
+                src="avatars/Simone.webp"
+                onerror="this.onerror=null; this.src='logo.png';"
+                class="wallet-treasurer-avatar"
+                alt="Simone"
+              />
+              <span class="wallet-treasurer-copy">
+                <small>Kassenwart</small>
+                <strong>MamaMone</strong>
+              </span>
             </div>
           </div>
 
@@ -989,18 +1014,18 @@
           <div class="wallet-quick-actions">
             <button
               type="button"
-              class="wallet-action-btn"
+              class="wallet-action-btn wallet-action-in"
               onclick="window.openKasseModal('einnahme')"
             >
-              <span class="wallet-action-icon">➕</span>
+              <span class="wallet-action-icon" data-ui-icon="plus"></span>
               <span>Einzahlen</span>
             </button>
             <button
               type="button"
-              class="wallet-action-btn"
+              class="wallet-action-btn wallet-action-out"
               onclick="window.openKasseModal('ausgabe')"
             >
-              <span class="wallet-action-icon">➖</span>
+              <span class="wallet-action-icon" data-ui-icon="minus"></span>
               <span>Ausgabe</span>
             </button>
           </div>
@@ -1073,28 +1098,78 @@
     <div class="tab-bar">
       <div id="tab-indicator" class="tab-indicator"></div>
       <div class="tab-item active" onclick="switchTab('termine', this)">
-        <span class="tab-icon">📅</span>
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
+          <path
+            d="M8 3.5v3M16 3.5v3M3.5 10h17M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"
+          />
+        </svg>
         <span>Termine</span>
       </div>
       <div class="tab-item" onclick="switchTab('vormerkungen', this)" title="Vormerkungen">
-        <span class="tab-icon">📝</span>
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="5" y="4" width="14" height="17" rx="2.5" />
+          <path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4" />
+        </svg>
         <span>Vormerk.</span>
       </div>
       <div class="tab-item" onclick="switchTab('lokale', this)">
-        <span class="tab-icon">🍽️</span>
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M6 3v6M9 3v6M6 6h3M7.5 9v12M17 3c-2 2.3-2.5 5-2.5 8h5V3M17 11v10" />
+        </svg>
         <span>Lokale</span>
       </div>
       <div class="tab-item" onclick="switchTab('rezepte', this)">
-        <span class="tab-icon">📖</span>
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M12 7v14M3.5 5.5A2.5 2.5 0 0 1 6 3h3a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3H6a2.5 2.5 0 0 0-2.5 2.5zM20.5 5.5A2.5 2.5 0 0 0 18 3h-3a3 3 0 0 0-3 3"
+          />
+        </svg>
         <span>Rezepte</span>
       </div>
       <div class="tab-item" onclick="switchTab('aufgaben', this)">
-        <span class="tab-icon">🛒</span>
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="4" y="4" width="16" height="16" rx="3" />
+          <path d="m8 12 2.5 2.5L16 9" />
+        </svg>
         <span>Anschaffungen</span>
         <span id="tasks-badge" class="badge-bubble">0</span>
       </div>
       <div class="tab-item" onclick="switchTab('kasse', this)">
-        <span class="tab-icon">💰</span>
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2.5" />
+          <path d="M3 9h18M15.5 14h.01M7 5V4a1 1 0 0 1 1-1h9" />
+        </svg>
         <span>Kasse</span>
       </div>
     </div>
@@ -1113,7 +1188,7 @@
               onclick="editEventFromDetail()"
               title="Bearbeiten"
             >
-              ✏️
+              <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
             </button>
             <button
               class="btn-detail-icon"
@@ -1122,14 +1197,14 @@
               title="Löschen"
               style="color: #ef4444"
             >
-              🗑️
+              <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M8 6V4h8v2m-11 0 1 14h12l1-14M10 11v5M14 11v5"/></svg>
             </button>
             <button
               class="btn-detail-icon"
               onclick="closeEventDetails()"
               title="Schließen"
             >
-              ✕
+              <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="detail-title-section" style="padding-right: 120px">
@@ -1151,14 +1226,14 @@
                 Kategorie
               </div>
               <div id="detail-age-tag" class="age-badge" style="display: none">
-                🎂 Alter
+                <span data-ui-icon="cake"></span> Alter
               </div>
               <div
                 id="detail-recurrence-tag"
                 class="recurrence-tag"
                 style="display: none"
               >
-                🔁 Wöchentlich
+                <span data-ui-icon="repeat"></span> Wöchentlich
               </div>
               <div
                 id="detail-daterange-tag"
@@ -1170,7 +1245,7 @@
                   border-color: rgba(56, 189, 248, 0.4);
                 "
               >
-                🏖️ Zeitraum
+                <span data-ui-icon="sun"></span> Zeitraum
               </div>
             </div>
           </div>
@@ -1180,21 +1255,21 @@
           <!-- Meta Info Box (Datum, Uhrzeit, Ort, Ersteller) -->
           <div class="detail-meta-box">
             <div class="meta-item">
-              <span class="meta-icon">🗓️</span>
+              <span class="meta-icon" data-ui-icon="calendar"></span>
               <div class="meta-text-stack">
                 <span class="meta-label">Wann</span>
                 <span class="meta-value" id="detail-date-str">--.--.----</span>
               </div>
             </div>
             <div class="meta-item">
-              <span class="meta-icon">⏰</span>
+              <span class="meta-icon" data-ui-icon="clock"></span>
               <div class="meta-text-stack">
                 <span class="meta-label">Uhrzeit</span>
                 <span class="meta-value" id="detail-time-str">--:-- Uhr</span>
               </div>
             </div>
             <div class="meta-item">
-              <span class="meta-icon">📍</span>
+              <span class="meta-icon" data-ui-icon="pin"></span>
               <div class="meta-text-stack">
                 <span class="meta-label">Ort</span>
                 <span class="meta-value" id="detail-location-str"
@@ -1237,7 +1312,7 @@
               target="_blank"
               class="btn-action-tile"
             >
-              <span>🔗</span> <span>Weblink / Info öffnen</span>
+              <span data-ui-icon="link"></span> <span>Weblink / Info öffnen</span>
             </a>
           </div>
 
@@ -1245,7 +1320,7 @@
           <div class="rsvp-section" id="detail-rsvp-section">
             <div class="rsvp-header">
               <h4 class="rsvp-title" id="detail-rsvp-title">
-                👥 Wer ist dabei?
+                <span data-ui-icon="users"></span> Wer ist dabei?
               </h4>
             </div>
 
@@ -1260,14 +1335,14 @@
                 <span class="rsvp-summary-count adult" id="rsvp-adults-count"
                   >0</span
                 >
-                <span class="rsvp-summary-label">👤 Erwachsene</span>
+                <span class="rsvp-summary-label"><span data-ui-icon="users"></span> Erwachsene</span>
               </div>
               <div class="rsvp-summary-divider"></div>
               <div class="rsvp-summary-item">
                 <span class="rsvp-summary-count child" id="rsvp-children-count"
                   >0</span
                 >
-                <span class="rsvp-summary-label">🧒 Kinder</span>
+                <span class="rsvp-summary-label"><span data-ui-icon="users"></span> Kinder</span>
               </div>
             </div>
 
@@ -1277,7 +1352,7 @@
           <!-- Was fehlt noch? / Mitbringliste -->
           <div class="detail-checklist-card" id="detail-checklist-section">
             <h4 class="rsvp-title" style="margin-bottom: 10px">
-              📋 Was fehlt noch?
+              <span data-ui-icon="clipboard"></span> Was fehlt noch?
             </h4>
             <div id="detail-checklist-items"></div>
           </div>
@@ -1285,7 +1360,7 @@
           <!-- Beschreibung & Notizen -->
           <div class="detail-checklist-card" id="detail-notes-section">
             <h4 class="rsvp-title" style="margin-bottom: 8px">
-              📝 Details & Infos
+              <span data-ui-icon="file"></span> Details & Infos
             </h4>
             <p
               id="detail-notes"
@@ -1312,7 +1387,7 @@
       <div class="event-modal-card" onclick="event.stopPropagation()">
         <div class="detail-header modal-title-header">
           <h2 id="event-modal-title" class="modal-title">
-            ➕ Neuer Termin
+            <span data-ui-icon="plus"></span> Neuer Termin
           </h2>
           <button
             type="button"
@@ -1320,7 +1395,7 @@
             onclick="window.closeEventModal()"
             title="Schließen"
           >
-            ✕
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg>
           </button>
         </div>
         <div class="event-modal-body">
@@ -1374,7 +1449,7 @@
               id="birth-year-group"
               style="display: none; width: 100%"
             >
-              <label>🎂 Geburtsjahr (für Altersanzeige)</label>
+              <label><span data-ui-icon="cake"></span> Geburtsjahr (für Altersanzeige)</label>
               <input
                 type="number"
                 id="event-birth-year"
@@ -1452,7 +1527,7 @@
                 gap: 8px;
               "
             >
-              <span style="font-size: 1.1rem">🏖️</span>
+              <span data-ui-icon="sun"></span>
               <span id="event-conflict-warning-text"></span>
             </div>
 
@@ -1486,13 +1561,13 @@
                   user-select: none;
                   margin: 0;
                 "
-                >☀️ Ganztägiger Termin (ohne Uhrzeit)</label
+                ><span data-ui-icon="sun"></span> Ganztägiger Termin (ohne Uhrzeit)</label
               >
             </div>
 
             <!-- Wiederholung (Serientermin) -->
             <div class="form-group" id="recurrence-group">
-              <label>🔁 Wiederholung</label>
+              <label><span data-ui-icon="repeat"></span> Wiederholung</label>
               <div
                 class="recurrence-select-row"
                 style="display: flex; gap: 8px; width: 100%"
@@ -1505,19 +1580,19 @@
                   <option value="none" selected>
                     Einmalig (keine Wiederholung)
                   </option>
-                  <option value="weekly">🔁 Wöchentlich</option>
-                  <option value="biweekly">🔁 Alle 2 Wochen</option>
-                  <option value="monthly">🔁 Monatlich</option>
-                  <option value="every2months">🔁 Alle 2 Monate</option>
-                  <option value="every3months">🔁 Alle 3 Monate</option>
-                  <option value="yearly">🔁 Jährlich</option>
+                  <option value="weekly">Wöchentlich</option>
+                  <option value="biweekly">Alle 2 Wochen</option>
+                  <option value="monthly">Monatlich</option>
+                  <option value="every2months">Alle 2 Monate</option>
+                  <option value="every3months">Alle 3 Monate</option>
+                  <option value="yearly">Jährlich</option>
                 </select>
                 <select
                   id="event-recurrence-duration"
                   class="form-control"
                   style="flex: 1; min-width: 0; display: none"
                 >
-                  <option value="forever" selected>♾️ Immer</option>
+                  <option value="forever" selected>Immer</option>
                   <option value="1y">1 Jahr</option>
                   <option value="2y">2 Jahre</option>
                   <option value="6m">6 Monate</option>
@@ -1546,7 +1621,7 @@
                     font-weight: 700;
                     color: #cbd5e1;
                   "
-                  >👥 Wer ist dabei? (Teilnehmer)</label
+                  ><span data-ui-icon="users"></span> Wer ist dabei? (Teilnehmer)</label
                 >
                 <div class="rsvp-quick-actions-bar">
                   <button
@@ -1554,21 +1629,21 @@
                     class="btn-rsvp-quick-action"
                     onclick="window.selectAllParticipants(true)"
                   >
-                    👥 Alle
+                    <span data-ui-icon="users"></span> Alle
                   </button>
                   <button
                     type="button"
                     class="btn-rsvp-quick-action"
                     onclick="window.selectAdultsParticipants()"
                   >
-                    ✨ Nur Erw.
+                    <span data-ui-icon="user"></span> Nur Erw.
                   </button>
                   <button
                     type="button"
                     class="btn-rsvp-quick-action"
                     onclick="window.selectAllParticipants(false)"
                   >
-                    🧹 Keine
+                    <span data-ui-icon="close"></span> Keine
                   </button>
                 </div>
               </div>
@@ -1592,11 +1667,11 @@
                   margin-bottom: 6px;
                   display: block;
                 "
-                >🎉 Zusätzliche Gäste</label
+                ><span data-ui-icon="sparkle"></span> Zusätzliche Gäste</label
               >
               <div class="form-guests-row">
                 <div class="form-guest-stepper-card">
-                  <span class="form-guest-label">👤 Erwachsene</span>
+                  <span class="form-guest-label"><span data-ui-icon="users"></span> Erwachsene</span>
                   <div class="form-stepper-control">
                     <button
                       type="button"
@@ -1620,7 +1695,7 @@
                   </div>
                 </div>
                 <div class="form-guest-stepper-card">
-                  <span class="form-guest-label">🧒 Kinder</span>
+                  <span class="form-guest-label"><span data-ui-icon="users"></span> Kinder</span>
                   <div class="form-stepper-control">
                     <button
                       type="button"
@@ -1687,7 +1762,7 @@
                 class="btn-add-item"
                 onclick="addItemBuilderRow()"
               >
-                ➕ Weiterer Punkt / Was fehlt noch?
+                <span data-ui-icon="plus"></span> Weiterer Punkt / Was fehlt noch?
               </button>
             </div>
 
@@ -1728,7 +1803,7 @@
       <div class="event-modal-card" onclick="event.stopPropagation()">
         <div class="detail-header modal-title-header">
           <h2 id="lokal-modal-title" class="modal-title">
-            🍽️ Restaurant / Lokal bewerten
+            <span data-ui-icon="food"></span> Restaurant / Lokal bewerten
           </h2>
           <button
             type="button"
@@ -1736,7 +1811,7 @@
             onclick="window.closeLokalModal()"
             title="Schließen"
           >
-            ✕
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg>
           </button>
         </div>
         <div class="event-modal-body">
@@ -1765,7 +1840,7 @@
                   class="btn-status-option active"
                   onclick="window.setLokalStatus('besucht')"
                 >
-                  <span>🍽️</span>
+                  <span data-ui-icon="food"></span>
                   <span>Bereits besucht</span>
                 </button>
                 <button
@@ -1774,7 +1849,7 @@
                   class="btn-status-option"
                   onclick="window.setLokalStatus('geplant')"
                 >
-                  <span>📌</span>
+                  <span data-ui-icon="pin"></span>
                   <span>Geplant (Wunschliste)</span>
                 </button>
               </div>
@@ -1824,25 +1899,25 @@
               <label for="lokal-kategorie">Küche / Kategorie</label>
               <select id="lokal-kategorie" class="form-control">
                 <option value="Deutsch">
-                  🍽️ Deutsche Küche / Gutbürgerlich
+                  Deutsche Küche / Gutbürgerlich
                 </option>
                 <option value="Italienisch" selected>
-                  🍕 Italienisch / Pizza &amp; Pasta
+                  Italienisch / Pizza &amp; Pasta
                 </option>
                 <option value="Steak & Burger">
-                  🥩 Steakhaus / Burger / Grill
+                  Steakhaus / Burger / Grill
                 </option>
                 <option value="Griechisch">🇬🇷 Griechisch / Mediterran</option>
-                <option value="Brauhaus">🍺 Brauhaus / Biergarten</option>
-                <option value="Asiatisch">🥢 Asiatisch / Sushi</option>
-                <option value="Kneipe">🍻 Kneipe / Bar / Pub</option>
-                <option value="Café">☕ Café / Frühstück / Brunch</option>
-                <option value="Fast Food">🍔 Imbiss / Döner / Fast Food</option>
-                <option value="Spanisch">🥘 Spanisch / Tapas</option>
-                <option value="Mexikanisch">🌮 Mexikanisch / Tex-Mex</option>
-                <option value="Eisdiele">🍦 Eisdiele / Dessert</option>
+                <option value="Brauhaus">Brauhaus / Biergarten</option>
+                <option value="Asiatisch">Asiatisch / Sushi</option>
+                <option value="Kneipe">Kneipe / Bar / Pub</option>
+                <option value="Café">Café / Frühstück / Brunch</option>
+                <option value="Fast Food">Imbiss / Döner / Fast Food</option>
+                <option value="Spanisch">Spanisch / Tapas</option>
+                <option value="Mexikanisch">Mexikanisch / Tex-Mex</option>
+                <option value="Eisdiele">Eisdiele / Dessert</option>
                 <option value="International">
-                  🌐 International / Sonstiges
+                  International / Sonstiges
                 </option>
               </select>
             </div>
@@ -1878,7 +1953,7 @@
                     font-weight: 700;
                     color: #cbd5e1;
                   "
-                  >👥 Wer war alles dabei?</label
+                  ><span data-ui-icon="users"></span> Wer war alles dabei?</label
                 >
                 <div class="rsvp-quick-actions-bar">
                   <button
@@ -1886,14 +1961,14 @@
                     class="btn-rsvp-quick-action"
                     onclick="window.selectAllLokalParticipants(true)"
                   >
-                    👥 Alle
+                    <span data-ui-icon="users"></span> Alle
                   </button>
                   <button
                     type="button"
                     class="btn-rsvp-quick-action"
                     onclick="window.selectAllLokalParticipants(false)"
                   >
-                    🧹 Keine
+                    <span data-ui-icon="close"></span> Keine
                   </button>
                 </div>
               </div>
@@ -1913,7 +1988,7 @@
                 <div class="criteria-rating-box">
                   <!-- 1. Essen & Trinken -->
                   <div class="criterion-row">
-                    <span class="criterion-label">🍽️ Essen &amp; Trinken</span>
+                    <span class="criterion-label"><span data-ui-icon="food"></span> Essen &amp; Trinken</span>
                     <div class="criterion-stars-wrapper">
                       <span
                         class="star-btn-crit active"
@@ -1959,7 +2034,7 @@
                   <!-- 2. Service & Freundlichkeit -->
                   <div class="criterion-row">
                     <span class="criterion-label"
-                      >😊 Service &amp; Freundlichkeit</span
+                      ><span data-ui-icon="smile"></span> Service &amp; Freundlichkeit</span
                     >
                     <div class="criterion-stars-wrapper">
                       <span
@@ -2006,7 +2081,7 @@
                   <!-- 3. Sauberkeit & Ambiente -->
                   <div class="criterion-row">
                     <span class="criterion-label"
-                      >✨ Sauberkeit &amp; Ambiente</span
+                      ><span data-ui-icon="sparkle"></span> Sauberkeit &amp; Ambiente</span
                     >
                     <div class="criterion-stars-wrapper">
                       <span
@@ -2054,7 +2129,7 @@
 
                   <!-- 4. Preis-Leistung -->
                   <div class="criterion-row">
-                    <span class="criterion-label">💶 Preis-Leistung</span>
+                    <span class="criterion-label"><span data-ui-icon="wallet"></span> Preis-Leistung</span>
                     <div class="criterion-stars-wrapper">
                       <span
                         class="star-btn-crit active"
@@ -2181,7 +2256,7 @@
                 onclick="window.exportRecipePdf()"
                 title="Rezept als PDF speichern"
               >
-                📄
+                <span data-ui-icon="file"></span>
               </button>
               <button
                 class="btn-detail-icon"
@@ -2189,7 +2264,7 @@
                 onclick="window.closeRecipeDetail()"
                 title="Schließen"
               >
-                ✕
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m18 6-12 12M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
@@ -2217,7 +2292,7 @@
                 <span id="recipe-detail-author-name">Autor</span>
               </div>
               <span id="recipe-detail-time" class="rezept-time-badge"
-                >⏱️ 0 Min.</span
+                ><span data-ui-icon="clock"></span> 0 Min.</span
               >
             </div>
           </div>
@@ -2247,7 +2322,7 @@
                   margin-bottom: 4px;
                 "
               >
-                🔗 Externes Web-Rezept
+                <span data-ui-icon="link"></span> Externes Web-Rezept
               </div>
               <div
                 style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 14px"
@@ -2274,7 +2349,7 @@
                   border-radius: 12px;
                 "
               >
-                <span>🌐</span> <span>Rezept im Browser öffnen</span>
+                <span data-ui-icon="globe"></span> <span>Rezept im Browser öffnen</span>
                 <span>↗</span>
               </a>
             </div>
@@ -2285,7 +2360,7 @@
             <!-- Portions Rechner -->
             <div class="portion-calc-bar">
               <span style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem"
-                >👥 Portionen anpassen:</span
+                ><span data-ui-icon="users"></span> Portionen anpassen:</span
               >
               <div class="portion-control-group">
                 <button
@@ -2309,7 +2384,7 @@
             <!-- Zutaten Liste -->
             <div>
               <div class="recipe-section-heading">
-                <span>🛒 Zutaten (antippen zum Abhaken)</span>
+                <span><span data-ui-icon="cart"></span> Zutaten (antippen zum Abhaken)</span>
               </div>
               <div id="recipe-detail-ingredients" class="recipe-ing-list"></div>
             </div>
@@ -2317,7 +2392,7 @@
             <!-- Zubereitung Schritte -->
             <div>
               <div class="recipe-section-heading">
-                <span>👨‍🍳 Zubereitung</span>
+                <span><span data-ui-icon="food"></span> Zubereitung</span>
               </div>
               <div id="recipe-detail-steps" class="recipe-steps-list"></div>
             </div>
@@ -2326,7 +2401,7 @@
           <!-- Zusätzliche Hinweise -->
           <div id="recipe-detail-notes-container" style="display: none">
             <div class="recipe-section-heading">
-              <span>💡 Tipps &amp; Hinweise</span>
+              <span><span data-ui-icon="sparkle"></span> Tipps &amp; Hinweise</span>
             </div>
             <div id="recipe-detail-notes" class="recipe-notes-box"></div>
           </div>
@@ -2354,7 +2429,7 @@
               "
               onclick="window.addToCartFromDetail()"
             >
-              🛒 In den Einkaufswagen
+              <span data-ui-icon="cart"></span> In den Einkaufswagen
             </button>
             <div style="display: flex; gap: 10px">
               <button
@@ -2367,7 +2442,7 @@
                 "
                 onclick="window.editRecipeFromDetail()"
               >
-                ✏️ Rezept bearbeiten
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg> Rezept bearbeiten
               </button>
               <button
                 type="button"
@@ -2380,7 +2455,7 @@
                 "
                 onclick="window.deleteRecipeFromDetail()"
               >
-                🗑️ Löschen
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M8 6V4h8v2m-11 0 1 14h12l1-14M10 11v5M14 11v5"/></svg> Löschen
               </button>
             </div>
           </div>
@@ -2401,7 +2476,7 @@
     >
       <div class="modal-card" onclick="event.stopPropagation()">
         <div class="modal-header">
-          <h3 id="recipe-modal-title">📖 Neues Rezept anlegen</h3>
+          <h3 id="recipe-modal-title"><span data-ui-icon="file"></span> Neues Rezept anlegen</h3>
           <button
             type="button"
             class="btn-close-modal"
@@ -2564,7 +2639,7 @@
                     "
                     onclick="window.addIngredientRow()"
                   >
-                    ➕ Zutat hinzufügen
+                    <span data-ui-icon="plus"></span> Zutat hinzufügen
                   </button>
                 </div>
                 <div id="recipe-ingredients-rows-container"></div>
@@ -2652,7 +2727,7 @@
         onclick="event.stopPropagation()"
       >
         <div class="modal-header">
-          <h3>🛒 Einkaufszettel</h3>
+          <h3><span data-ui-icon="cart"></span> Einkaufszettel</h3>
           <button
             type="button"
             class="btn-close-modal"
@@ -2681,7 +2756,7 @@
                 onclick="window.exportCartPdf()"
                 title="Einkaufsliste als PDF speichern"
               >
-                📄 PDF
+                <span data-ui-icon="file"></span> PDF
               </button>
               <button
                 type="button"
@@ -2689,7 +2764,7 @@
                 onclick="window.clearCart()"
                 title="Liste komplett leeren"
               >
-                🗑️ Leeren
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M8 6V4h8v2m-11 0 1 14h12l1-14M10 11v5M14 11v5"/></svg> Leeren
               </button>
             </div>
           </div>
@@ -2772,7 +2847,7 @@
         style="max-width: 320px"
       >
         <h3>
-          👥 Gäste verwalten
+          <span data-ui-icon="users"></span> Gäste verwalten
         </h3>
         <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 16px">
           Wieviele zusätzliche Gäste kommen mit?
@@ -2792,7 +2867,7 @@
           "
         >
           <span style="font-weight: 700; color: #ffffff; font-size: 0.9rem"
-            >👤 Erwachsene:</span
+            ><span data-ui-icon="users"></span> Erwachsene:</span
           >
           <div style="display: flex; align-items: center; gap: 10px">
             <button
@@ -2837,7 +2912,7 @@
           "
         >
           <span style="font-weight: 700; color: #ffffff; font-size: 0.9rem"
-            >🧒 Kinder:</span
+            ><span data-ui-icon="users"></span> Kinder:</span
           >
           <div style="display: flex; align-items: center; gap: 10px">
             <button
@@ -2902,7 +2977,7 @@
         style="max-width: 360px; text-align: left"
       >
         <h3 id="kasse-modal-title" class="compact-modal-title">
-          💰 Neue Buchung
+          <span data-ui-icon="wallet"></span> Neue Buchung
         </h3>
 
         <!-- Typ Toggle (Einzahlung / Ausgabe) -->
@@ -2913,7 +2988,7 @@
             class="kasse-type-btn active positive"
             onclick="window.setKasseBookingType('einnahme')"
           >
-            🟢 Einzahlung
+            <span data-ui-icon="plus"></span> Einzahlung
           </button>
           <button
             type="button"
@@ -2921,7 +2996,7 @@
             class="kasse-type-btn negative"
             onclick="window.setKasseBookingType('ausgabe')"
           >
-            🔴 Ausgabe
+            <span data-ui-icon="minus"></span> Ausgabe
           </button>
         </div>
 
@@ -3028,7 +3103,7 @@
         style="max-width: 360px; text-align: left"
       >
         <h3 id="purchase-modal-title" class="compact-modal-title">
-          🛒 Neue Anschaffung
+          <span data-ui-icon="cart"></span> Neue Anschaffung
         </h3>
 
         <!-- Titel / Gegenstand -->
@@ -3075,7 +3150,7 @@
               class="kasse-type-btn active"
               onclick="window.setPurchasePrio('hoch')"
             >
-              🔥 Dringend
+              <span data-ui-icon="flame"></span> Dringend
             </button>
             <button
               type="button"
@@ -3083,7 +3158,7 @@
               class="kasse-type-btn"
               onclick="window.setPurchasePrio('mittel')"
             >
-              ⚡ Wichtig
+              <span data-ui-icon="bolt"></span> Wichtig
             </button>
             <button
               type="button"
@@ -3091,7 +3166,7 @@
               class="kasse-type-btn"
               onclick="window.setPurchasePrio('idee')"
             >
-              💡 Idee
+              <span data-ui-icon="sparkle"></span> Idee
             </button>
           </div>
         </div>
@@ -3163,7 +3238,7 @@
         style="max-width: 360px; text-align: left"
       >
         <h3 id="stauder-kiste-modal-title" class="compact-modal-title">
-          📦 Kiste eintragen
+          <span data-ui-icon="package"></span> Kiste eintragen
         </h3>
 
         <!-- Käufer Auswahl -->
@@ -3458,10 +3533,10 @@
       window.splashTargetDuration = 2200;
 
       const tickerSteps = [
-        "📅 Lade Termine & Kalender...",
-        "🍺 Prüfe Stauder-Vorrat...",
-        "💰 Kassenstand synchronisieren...",
-        "✨ Tour-Zentrale startklar!",
+        "Lade Termine & Kalender...",
+        "Prüfe Stauder-Vorrat...",
+        "Kassenstand synchronisieren...",
+        "Tour-Zentrale startklar!",
       ];
 
       const brewFillEl = document.getElementById("splash-brew-fill");
@@ -3495,7 +3570,7 @@
           clearInterval(splashProgressInterval);
           if (brewFillEl) brewFillEl.style.width = "100%";
           if (tickerTextEl)
-            tickerTextEl.textContent = "✨ Tour-Zentrale startklar!";
+            tickerTextEl.textContent = "Tour-Zentrale startklar!";
 
           setTimeout(() => {
             const splash = document.getElementById("splash-screen");
