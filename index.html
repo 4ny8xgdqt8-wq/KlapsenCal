@@ -113,7 +113,7 @@
             <div class="calendar-month-title" id="calendar-month-year">
               Monat 2026
             </div>
-            <div style="display: flex; gap: 6px">
+            <div class="calendar-header-actions">
               <button
                 type="button"
                 class="calendar-today-btn"
@@ -204,8 +204,8 @@
         </div>
 
         <!-- Suche & Sortierung (Kompakt) -->
-        <div style="display: flex; gap: 8px; margin-bottom: 12px">
-          <div class="search-container" style="flex: 1; margin: 0">
+        <div class="event-search-row">
+          <div class="search-container event-search-grow">
             <span class="search-icon">🔍</span>
             <input
               type="text"
@@ -217,14 +217,7 @@
           </div>
           <select
             id="event-sort"
-            class="sort-select"
-            style="
-              margin: 0;
-              width: auto;
-              max-width: 140px;
-              font-size: 0.8rem;
-              padding: 0 10px;
-            "
+            class="sort-select event-sort-select"
             onchange="filterAndRender()"
           >
             <option value="upcoming">🗓️ Chronologisch</option>
@@ -250,7 +243,6 @@
             <span
               class="lokal-stat-val"
               id="lokal-stat-planned"
-              style="color: #60a5fa"
               >0</span
             >
             <span class="lokal-stat-lbl">📌 Geplant</span>
@@ -260,7 +252,6 @@
             <span
               class="lokal-stat-val"
               id="lokal-stat-avg-rating"
-              style="color: #34d399"
               >0.0 ⭐</span
             >
             <span class="lokal-stat-lbl">Ø Gesamtnote</span>
@@ -270,18 +261,14 @@
         <!-- Aktions-Button: Neues Lokal anlegen -->
         <button
           type="button"
-          class="btn-submit"
-          style="
-            margin-bottom: 14px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          "
+          class="btn-submit lokal-add-button"
           onclick="window.openLokalModal()"
         >
           ➕ Neues Restaurant / Lokal eintragen
         </button>
 
         <!-- Suchfeld & Filter -->
-        <div class="search-sort-bar" style="margin-bottom: 10px">
+        <div class="search-sort-bar list-search-row">
           <input
             type="text"
             id="lokal-search"
@@ -292,11 +279,7 @@
         </div>
 
         <!-- Filter Chips -->
-        <div
-          class="filter-chips"
-          id="lokal-filter-chips"
-          style="margin-bottom: 14px; padding: 0"
-        >
+        <div class="filter-chips compact-filter-chips" id="lokal-filter-chips">
           <div
             class="filter-chip active"
             onclick="window.filterLokale('alle', this)"
@@ -409,7 +392,6 @@
             <span
               class="rezepte-stat-val"
               id="rezepte-stat-top-cat"
-              style="color: #f59e0b"
               >-</span
             >
             <span class="rezepte-stat-lbl">Top-Kategorie</span>
@@ -419,7 +401,6 @@
             <span
               class="rezepte-stat-val"
               id="rezepte-stat-top-author"
-              style="color: #34d399"
               >-</span
             >
             <span class="rezepte-stat-lbl">Aktivster Koch</span>
@@ -427,37 +408,17 @@
         </div>
 
         <!-- Aktions-Buttons: Neues Rezept & Einkaufszettel -->
-        <div
-          style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap"
-        >
+        <div class="recipe-action-row">
           <button
             type="button"
-            class="btn-submit"
-            style="
-              flex: 1.2;
-              min-width: 170px;
-              margin-bottom: 0;
-              background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
-            "
+            class="btn-submit recipe-action-primary"
             onclick="window.openRecipeModal()"
           >
             ➕ Neues Rezept eintragen
           </button>
           <button
             type="button"
-            class="btn-submit"
-            style="
-              flex: 1;
-              min-width: 150px;
-              margin-bottom: 0;
-              background: rgba(255, 255, 255, 0.08);
-              border: 1px solid rgba(255, 255, 255, 0.15);
-              color: #f1f5f9;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 8px;
-            "
+            class="btn-submit recipe-action-secondary"
             onclick="window.openCartModal()"
           >
             🛒 Einkaufszettel
@@ -466,22 +427,17 @@
         </div>
 
         <!-- Such- & Sortierfeld -->
-        <div
-          class="search-sort-bar"
-          style="margin-bottom: 10px; display: flex; gap: 8px"
-        >
+        <div class="search-sort-bar list-search-row recipe-search-row">
           <input
             type="text"
             id="recipe-search"
             class="search-input"
-            style="flex: 1"
             placeholder="🔍 Gericht, Zutat oder Koch suchen..."
             oninput="window.filterAndRenderRezepte()"
           />
           <select
             id="recipe-sort"
-            class="sort-select"
-            style="width: auto; min-width: 145px; cursor: pointer"
+            class="sort-select recipe-sort-select"
             onchange="window.onRecipeSortChange()"
           >
             <option value="newest">📅 Neueste zuerst</option>
@@ -493,11 +449,7 @@
         </div>
 
         <!-- Filter Chips -->
-        <div
-          class="filter-chips"
-          id="recipe-filter-chips"
-          style="margin-bottom: 14px; padding: 0"
-        >
+        <div class="filter-chips compact-filter-chips" id="recipe-filter-chips">
           <div
             class="filter-chip active"
             onclick="window.filterRezepte('alle', this)"
@@ -662,16 +614,9 @@
         <!-- SUBVIEW 1: Offene Anschaffungen & Budget (Standard) -->
         <div id="subview-purchases" class="aufgaben-subview">
           <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 12px;
-            "
+            class="subview-heading-row"
           >
-            <h2
-              style="margin: 0; font-size: 1.25rem; color: var(--accent-color)"
-            >
+            <h2 class="subview-heading">
               🛒 Offene Anschaffungen
             </h2>
             <button
@@ -724,9 +669,8 @@
 
           <!-- Filter Chips (Alle / Offen / Angeschafft) -->
           <div
-            class="filter-chips"
+            class="filter-chips compact-filter-chips"
             id="purchase-filter-chips"
-            style="margin-bottom: 12px; padding: 0"
           >
             <div
               class="filter-chip active"
@@ -754,16 +698,9 @@
         <!-- SUBVIEW 2: Was fehlt noch für die Termine -->
         <div id="subview-tasks" class="aufgaben-subview" style="display: none">
           <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 16px;
-            "
+            class="subview-heading-row"
           >
-            <h2
-              style="margin: 0; font-size: 1.25rem; color: var(--accent-color)"
-            >
+            <h2 class="subview-heading">
               Was fehlt noch für die Termine
             </h2>
             <button
@@ -1073,19 +1010,12 @@
 
         <!-- Filter-Leiste für Buchungen -->
         <div
-          class="section-header-row"
-          style="
-            margin-top: 16px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 8px;
-          "
+          class="section-header-row kasse-section-header"
         >
           <div class="section-title">Buchungen & Historie</div>
           <div
-            class="filter-chips"
+            class="filter-chips compact-filter-chips"
             id="kasse-filter-chips"
-            style="margin: 0; padding: 0"
           >
             <div
               class="filter-chip active"
@@ -1350,23 +1280,8 @@
       onclick="if (event.target === this) window.closeEventModal();"
     >
       <div class="event-modal-card" onclick="event.stopPropagation()">
-        <div
-          class="detail-header"
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          "
-        >
-          <h2
-            id="event-modal-title"
-            style="
-              margin: 0;
-              font-size: 1.25rem;
-              color: var(--accent-color);
-              font-weight: 800;
-            "
-          >
+        <div class="detail-header modal-title-header">
+          <h2 id="event-modal-title" class="modal-title">
             ➕ Neuer Termin
           </h2>
           <button
@@ -1754,23 +1669,8 @@
       style="display: none"
     >
       <div class="event-modal-card" onclick="event.stopPropagation()">
-        <div
-          class="detail-header"
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          "
-        >
-          <h2
-            id="lokal-modal-title"
-            style="
-              margin: 0;
-              font-size: 1.25rem;
-              color: var(--accent-color);
-              font-weight: 800;
-            "
-          >
+        <div class="detail-header modal-title-header">
+          <h2 id="lokal-modal-title" class="modal-title">
             🍽️ Restaurant / Lokal bewerten
           </h2>
           <button
@@ -2390,7 +2290,6 @@
               id="btn-recipe-add-cart"
               class="btn-submit"
               style="
-                background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -2673,7 +2572,6 @@
                 id="submit-recipe-btn"
                 style="
                   flex: 1.5;
-                  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
                 "
               >
                 Rezept speichern
@@ -2774,10 +2672,7 @@
       onclick="closeConfirmModal()"
     >
       <div class="custom-modal" onclick="event.stopPropagation()">
-        <h3
-          id="confirm-modal-title"
-          style="color: var(--accent-color); margin-top: 0"
-        >
+        <h3 id="confirm-modal-title">
           Bestätigung
         </h3>
         <p
@@ -2819,9 +2714,7 @@
         onclick="event.stopPropagation()"
         style="max-width: 320px"
       >
-        <h3
-          style="color: var(--accent-color); margin-top: 0; font-size: 1.15rem"
-        >
+        <h3>
           👥 Gäste verwalten
         </h3>
         <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 16px">
@@ -2951,15 +2844,7 @@
         onclick="event.stopPropagation()"
         style="max-width: 360px; text-align: left"
       >
-        <h3
-          id="kasse-modal-title"
-          style="
-            color: var(--accent-color);
-            margin-top: 0;
-            font-size: 1.2rem;
-            text-align: center;
-          "
-        >
+        <h3 id="kasse-modal-title" class="compact-modal-title">
           💰 Neue Buchung
         </h3>
 
@@ -3073,15 +2958,7 @@
         onclick="event.stopPropagation()"
         style="max-width: 360px; text-align: left"
       >
-        <h3
-          id="purchase-modal-title"
-          style="
-            color: var(--accent-color);
-            margin-top: 0;
-            font-size: 1.2rem;
-            text-align: center;
-          "
-        >
+        <h3 id="purchase-modal-title" class="compact-modal-title">
           🛒 Neue Anschaffung
         </h3>
 
@@ -3216,15 +3093,7 @@
         onclick="event.stopPropagation()"
         style="max-width: 360px; text-align: left"
       >
-        <h3
-          id="stauder-kiste-modal-title"
-          style="
-            color: #34d399;
-            margin-top: 0;
-            font-size: 1.2rem;
-            text-align: center;
-          "
-        >
+        <h3 id="stauder-kiste-modal-title" class="compact-modal-title">
           📦 Kiste eintragen
         </h3>
 
