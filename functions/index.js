@@ -11,6 +11,7 @@ function getEventFields(data = {}) {
     titel: data.Titel || data.titel || "",
     datum: data.Datum || data.datum || "",
     enddatum: data.Enddatum || data.enddatum || "",
+    datumFlexibel: !!data.DatumFlexibel,
     uhrzeit: data.Uhrzeit || data.uhrzeit || "",
     ort: data.Ort || data.ort || "",
     ersteller: data.Ersteller || data.ersteller || "Jemand",
@@ -25,9 +26,15 @@ function formatEventDate(date) {
 function describeEvent(fields) {
   const date = formatEventDate(fields.datum);
   const endDate = formatEventDate(fields.enddatum);
-  const dateText = date
-    ? ` am ${date}${endDate && endDate !== date ? `–${endDate}` : ""}`
-    : "";
+  const dateText = fields.datumFlexibel
+    ? date && endDate
+      ? ` (möglicher Zeitraum: ${date} bis ${endDate})`
+      : date
+        ? ` (möglicher Zeitraum ab ${date})`
+        : ""
+    : date
+      ? ` am ${date}${endDate && endDate !== date ? `–${endDate}` : ""}`
+      : "";
   const timeText = fields.uhrzeit ? ` um ${fields.uhrzeit} Uhr` : "";
   const placeText = fields.ort ? ` in ${fields.ort}` : "";
   return `${dateText}${timeText}${placeText}`;
@@ -117,6 +124,9 @@ exports.onEventCreated = functions
     if (!event.titel) return null;
 
     const { titel, ersteller } = event;
+    const actionText = event.datumFlexibel || !event.datum
+      ? "hat einen Termin vorgemerkt"
+      : "hat einen Termin eingetragen";
 
     console.log(`Neuer Termin erstellt: "${titel}" von ${ersteller}`);
 
@@ -142,7 +152,7 @@ exports.onEventCreated = functions
     await broadcastPushNotification(
       {
         title: `📅 Neuer Termin: ${titel}`,
-        body: `${ersteller} hat einen Termin eingetragen${describeEvent(event)}.`,
+        body: `${ersteller} ${actionText}${describeEvent(event)}.`,
         url: "./index.html",
         icon,
         mapsQuery: event.ort,
@@ -175,6 +185,7 @@ exports.onEventUpdated = functions
       beforeEvent.titel === afterEvent.titel &&
       beforeEvent.datum === afterEvent.datum &&
       beforeEvent.enddatum === afterEvent.enddatum &&
+      beforeEvent.datumFlexibel === afterEvent.datumFlexibel &&
       beforeEvent.uhrzeit === afterEvent.uhrzeit &&
       beforeEvent.ort === afterEvent.ort
     ) {
@@ -451,7 +462,7 @@ exports.checkScheduledReminders = onSchedule(
       const fields = getEventFields(rawEvent);
       const ev = { ...rawEvent, Titel: fields.titel, Datum: fields.datum,
         Enddatum: fields.enddatum, Uhrzeit: fields.uhrzeit, Ort: fields.ort };
-      if (!ev.Datum || !ev.Titel) continue;
+      if (!ev.Datum || !ev.Titel || ev.DatumFlexibel) continue;
 
       const parts = ev.Datum.split("-");
       if (parts.length !== 3) continue;

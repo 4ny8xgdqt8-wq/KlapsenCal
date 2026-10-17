@@ -230,6 +230,39 @@
         <div id="event-list-container" class="event-list"></div>
       </div>
 
+      <!-- TAB: Vormerkungen ohne festen Termin -->
+      <div id="vormerkungen" class="tab-content">
+        <section class="undated-tab-header" aria-labelledby="undated-tab-title">
+          <div class="undated-tab-heading-row">
+            <div>
+              <h2 id="undated-tab-title">Vorgemerkte Termine</h2>
+              <p>Hier sammelst du Vorhaben, solange das Datum noch offen ist.</p>
+            </div>
+            <span id="undated-events-count" class="event-undated-count">0</span>
+          </div>
+          <button
+            type="button"
+            class="btn-submit undated-tab-add-button"
+            onclick="window.openNewUndatedEventModal()"
+          >
+            ➕ Vormerkung anlegen
+          </button>
+          <div class="event-search-row">
+            <div class="search-container event-search-grow">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="undated-event-search"
+                class="search-input"
+                placeholder="Vormerkungen durchsuchen..."
+                aria-label="Vormerkungen durchsuchen"
+              />
+            </div>
+          </div>
+        </section>
+        <div id="undated-event-list-container" class="event-list"></div>
+      </div>
+
       <!-- TAB 2: Restaurant- & Lokal-Guide -->
       <div id="lokale" class="tab-content">
         <!-- Dashboard / Stats Bar -->
@@ -1043,6 +1076,10 @@
         <span class="tab-icon">📅</span>
         <span>Termine</span>
       </div>
+      <div class="tab-item" onclick="switchTab('vormerkungen', this)" title="Vormerkungen">
+        <span class="tab-icon">📝</span>
+        <span>Vormerk.</span>
+      </div>
       <div class="tab-item" onclick="switchTab('lokale', this)">
         <span class="tab-icon">🍽️</span>
         <span>Lokale</span>
@@ -1205,7 +1242,7 @@
           </div>
 
           <!-- Teilnehmer-Runde (Wer ist dabei?) -->
-          <div class="rsvp-section">
+          <div class="rsvp-section" id="detail-rsvp-section">
             <div class="rsvp-header">
               <h4 class="rsvp-title" id="detail-rsvp-title">
                 👥 Wer ist dabei?
@@ -1371,6 +1408,33 @@
               </div>
             </div>
 
+            <div class="undated-toggle-row">
+              <label class="undated-toggle-label" for="event-date-open">
+                <input type="checkbox" id="event-date-open" />
+                <span class="undated-toggle-copy">
+                  <strong>Datum noch offen</strong>
+                  <small>Optional Von–Bis angeben. Teilnehmer legst du fest, sobald ein konkretes Datum steht.</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="undated-range-group" id="event-open-range" style="display: none">
+              <div class="undated-range-heading">
+                <strong>Möglicher Zeitraum</strong>
+                <small>Der Termin bleibt dabei unverbindlich.</small>
+              </div>
+              <div class="undated-range-fields">
+                <div class="form-group">
+                  <label for="event-open-from">Von</label>
+                  <input type="date" id="event-open-from" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="event-open-until">Bis</label>
+                  <input type="date" id="event-open-until" class="form-control" />
+                </div>
+              </div>
+            </div>
+
             <!-- Konflikt-Warnung (Urlaub / Abwesenheit) -->
             <div
               id="event-conflict-warning"
@@ -1427,7 +1491,7 @@
             </div>
 
             <!-- Wiederholung (Serientermin) -->
-            <div class="form-group">
+            <div class="form-group" id="recurrence-group">
               <label>🔁 Wiederholung</label>
               <div
                 class="recurrence-select-row"
@@ -1463,7 +1527,7 @@
             </div>
 
             <!-- Wer ist dabei? (Teilnehmer-Auswahl) -->
-            <div class="form-group">
+            <div class="form-group" id="event-attendance-section">
               <div
                 style="
                   display: flex;
@@ -3313,6 +3377,9 @@
         } else if (tabId === "rezepte") {
           if (typeof window.renderRezepteView === "function")
             window.renderRezepteView();
+        } else if (tabId === "vormerkungen") {
+          if (typeof window.filterAndRenderUndated === "function")
+            window.filterAndRenderUndated();
         } else {
           if (typeof window.renderCalendarWidget === "function")
             window.renderCalendarWidget();
@@ -3329,6 +3396,7 @@
 
         const subTitles = {
           termine: "Übersicht & Kalender",
+          vormerkungen: "Noch offene Termine",
           lokale: "Restaurant-Guide & Einkehr",
           rezepte: "Rezepte & Kulinarik",
           aufgaben:
@@ -3349,6 +3417,13 @@
         if (typeof window.filterAndRender === "function")
           window.filterAndRender();
       });
+
+      document
+        .getElementById("undated-event-search")
+        .addEventListener("input", () => {
+          if (typeof window.filterAndRenderUndated === "function")
+            window.filterAndRenderUndated();
+        });
 
       const lokalSearch =
         document.getElementById("lokal-search") ||

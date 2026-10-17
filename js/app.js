@@ -480,7 +480,7 @@ function checkUpcomingReminders() {
   const now = new Date();
 
   allEvents.forEach((ev) => {
-    if (!ev.Datum || !ev.Titel) return;
+    if (!isFixedDateEvent(ev) || !ev.Titel) return;
 
     const isAllDay = !!ev.isAllDay || !ev.Uhrzeit;
     const parts = ev.Datum.split("-");
@@ -784,6 +784,36 @@ function applyFormChipColors() {
 }
 window.applyFormChipColors = applyFormChipColors;
 
+function updateUndatedEventFields() {
+  const isDateOpen = document.getElementById("event-date-open")?.checked || false;
+  const dateInput = document.getElementById("event-date");
+  const dateTimeRow = document.getElementById("date-time-row");
+  const allDayToggleGroup = document.getElementById("all-day-toggle-group");
+  const openRangeGroup = document.getElementById("event-open-range");
+  const recurrenceGroup = document.getElementById("recurrence-group");
+  const attendanceGroup = document.getElementById("event-attendance-section");
+  const guestsGroup = document.getElementById("form-guests-section");
+  const recurrenceSelect = document.getElementById("event-recurrence");
+  const recurrenceDuration = document.getElementById("event-recurrence-duration");
+  const warningBox = document.getElementById("event-conflict-warning");
+
+  if (dateInput) dateInput.required = !isDateOpen;
+  if (dateTimeRow) dateTimeRow.style.display = isDateOpen ? "none" : "grid";
+  if (openRangeGroup) openRangeGroup.style.display = isDateOpen ? "flex" : "none";
+  if (recurrenceGroup) recurrenceGroup.style.display = isDateOpen ? "none" : "flex";
+  if (isDateOpen && allDayToggleGroup) allDayToggleGroup.style.display = "none";
+  if (attendanceGroup) attendanceGroup.style.display = isDateOpen ? "none" : "";
+  if (guestsGroup) guestsGroup.style.display = isDateOpen ? "none" : "";
+
+  if (isDateOpen) {
+    if (recurrenceSelect) recurrenceSelect.value = "none";
+    if (recurrenceDuration) recurrenceDuration.style.display = "none";
+    if (warningBox) warningBox.style.display = "none";
+  } else {
+    checkAbsenceConflicts();
+  }
+}
+
 function updateCategoryDependentFields() {
   const birthYearGroup = document.getElementById("birth-year-group");
   const endDateGroup = document.getElementById("end-date-group");
@@ -856,7 +886,7 @@ function updateCategoryDependentFields() {
   }
 
   applyFormChipColors();
-  checkAbsenceConflicts();
+  updateUndatedEventFields();
 }
 window.updateCategoryDependentFields = updateCategoryDependentFields;
 
@@ -881,7 +911,7 @@ function checkAbsenceConflicts() {
   const absentNames = new Set();
 
   rawEvents.forEach((ev) => {
-    if (ev.Kategorie !== "Urlaub / Abwesend") return;
+    if (ev.Kategorie !== "Urlaub / Abwesend" || ev.DatumFlexibel) return;
     if (
       editingEventId &&
       (ev.id === editingEventId || ev.baseId === editingEventId)
@@ -918,9 +948,24 @@ window.checkAbsenceConflicts = checkAbsenceConflicts;
 // ==========================================
 let rawEvents = [];
 
+function isFixedDateEvent(event) {
+  return !!event?.Datum && !event.DatumFlexibel;
+}
+
 function expandEventInstances(rawEventsList) {
   const expanded = [];
   rawEventsList.forEach((rawDoc) => {
+    // Offene Termine und mögliche Zeiträume bleiben außerhalb des Kalenders.
+    if (!rawDoc.Datum || rawDoc.DatumFlexibel) {
+      expanded.push({
+        ...rawDoc,
+        Wiederholung: "none",
+        Enddatum: rawDoc.DatumFlexibel ? rawDoc.Enddatum || "" : "",
+        baseId: rawDoc.id,
+      });
+      return;
+    }
+
     // 1. Zeitraum-Termin (z. B. Urlaub über mehrere Tage)
     if (rawDoc.Enddatum && rawDoc.Enddatum > rawDoc.Datum) {
       const rangeDates = [];
@@ -1048,9 +1093,12 @@ function initEventsListener() {
             ) {
               knownEventDocIds.add(change.doc.id);
               if (isRecent) {
+                const dateDescription = item.DatumFlexibel && item.Enddatum
+                  ? `im Zeitraum ${formatDateObj(item.Datum).formattedLong} bis ${formatDateObj(item.Enddatum).formattedLong}`
+                  : item.Datum || "noch ohne Datum";
                 sendLocalNotification(
                   `Neuer Termin! 📅`,
-                  `${item.Ersteller || "Jemand"} hat '${item.Titel}' (${item.Datum}) eingetragen.`,
+                  `${item.Ersteller || "Jemand"} hat '${item.Titel}' (${dateDescription}) eingetragen.`,
                 );
               }
             } else if (
@@ -1220,6 +1268,117 @@ function renderEmptyState(container, options) {
 
   container.replaceChildren(state);
 }
+
+function renderUndatedEvents(events) {
+  const container = document.getElementById("undated-event-list-container");
+  if (!container) return;
+
+  const countEl = document.getElementById("undated-events-count");
+  if (countEl) countEl.textContent = String(events.length);
+  container.innerHTML = "";
+
+  if (events.length === 0) {
+    const search = document.getElementById("undated-event-search")?.value.trim() || "";
+    renderEmptyState(container, {
+      icon: search ? "🔎" : "📝",
+      title: search
+        ? "Keine passenden Vormerkungen"
+        : "Noch keine Vormerkungen",
+      description: search
+        ? `Für „${search}“ wurde keine Vormerkung gefunden.`
+        : "Lege hier Vorhaben ab, deren Datum noch nicht feststeht.",
+      actionLabel: search ? "Suche zurücksetzen" : "Vormerkung anlegen",
+      isSearch: !!search,
+      onAction: () => {
+        if (search) {
+          const searchInput = document.getElementById("undated-event-search");
+          if (searchInput) searchInput.value = "";
+          filterAndRenderUndated();
+        } else {
+          window.openNewUndatedEventModal();
+        }
+      },
+    });
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.className = "event-undated-section";
+
+  events.forEach((item) => {
+    const card = document.createElement("article");
+    const catStyle = getCategoryColor(item.Kategorie);
+    card.className = "event-card event-card-undated";
+    card.style.setProperty("--evt-color", catStyle.color);
+    card.style.setProperty("--evt-bg", catStyle.bg);
+    card.style.setProperty("--evt-border", catStyle.border);
+    card.onclick = () => showEventDetails(item);
+
+    const categoryPill = `<span class="event-pill event-pill-cat">${catStyle.icon ? `${catStyle.icon} ` : ""}${escapeLokalHtml(item.Kategorie || "Sonstiges")}</span>`;
+    const locationPill = item.Ort
+      ? `<span class="event-pill event-pill-meta">📍 ${escapeLokalHtml(item.Ort)}</span>`
+      : "";
+    const windowStart = item.Datum ? formatDateObj(item.Datum) : null;
+    const windowEnd = item.Enddatum ? formatDateObj(item.Enddatum) : null;
+    const windowPill =
+      item.DatumFlexibel && windowStart && windowEnd
+        ? `<span class="event-pill event-pill-meta">🗓️ ${windowStart.day}.${windowStart.monthShort} – ${windowEnd.day}.${windowEnd.monthShort}</span>`
+        : "";
+    const undatedStatus = item.DatumFlexibel ? "Zeitraum offen" : "Datum offen";
+    const dateBoxLabel = item.DatumFlexibel ? "VON–BIS" : "OFFEN";
+
+    card.innerHTML = `
+      <div class="event-undated-date-box" aria-label="${undatedStatus}">
+        <span>📅</span>
+        <small>${dateBoxLabel}</small>
+      </div>
+      <div class="event-info">
+        <div class="event-title-row">
+          <h3 class="event-title">${escapeLokalHtml(item.Titel || "Termin")}</h3>
+          <span class="event-undated-status">${undatedStatus}</span>
+        </div>
+        <div class="event-meta">
+          ${categoryPill}
+          ${windowPill}
+          ${locationPill}
+          <span class="event-pill event-pill-meta">👤 ${escapeLokalHtml(item.Ersteller || "Unbekannt")}</span>
+        </div>
+      </div>
+      <button type="button" class="event-set-date-button">Datum festlegen</button>
+    `;
+
+    card.querySelector(".event-set-date-button").addEventListener("click", (event) => {
+      event.stopPropagation();
+      window.editEventById(item.baseId || item.id, false, true);
+    });
+    section.appendChild(card);
+  });
+
+  container.appendChild(section);
+}
+
+function filterAndRenderUndated() {
+  const query =
+    document.getElementById("undated-event-search")?.value.toLowerCase().trim() || "";
+  const undatedEvents = allEvents
+    .filter((event) => !isFixedDateEvent(event))
+    .filter(
+      (event) =>
+        !query ||
+        [event.Titel, event.Ort, event.Ersteller, event.Beschreibung].some(
+          (value) =>
+            typeof value === "string" && value.toLowerCase().includes(query),
+        ),
+    )
+    .sort((a, b) => {
+      const timeA = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+
+  renderUndatedEvents(undatedEvents);
+}
+window.filterAndRenderUndated = filterAndRenderUndated;
 
 function renderEvents(events) {
   const container = document.getElementById("event-list-container");
@@ -1627,7 +1786,7 @@ function renderCalendarWidget() {
         const isToday = dateStr === todayStr;
         const isSelected = dateStr === selectedCalendarDate;
         const eventsOnDay = allEvents.filter(
-          (ev) => ev && ev.Datum === dateStr,
+          (ev) => isFixedDateEvent(ev) && ev.Datum === dateStr,
         );
         const hasEvents = eventsOnDay.length > 0;
 
@@ -1904,7 +2063,7 @@ function filterAndRender() {
   if (selectedCalendarDate) {
     // Bestimmter Tag im Kalender ausgewählt
     filtered = allEvents.filter(
-      (ev) => ev && ev.Datum === selectedCalendarDate,
+      (ev) => isFixedDateEvent(ev) && ev.Datum === selectedCalendarDate,
     );
     const formatted = formatDateObj(selectedCalendarDate).formattedLong;
     if (sectionTitleEl) sectionTitleEl.textContent = `Termine am ${formatted}`;
@@ -1915,7 +2074,7 @@ function filterAndRender() {
   } else {
     // Zeitraum-Filterung (oder Vollsuche bei Query/Sortierung)
     filtered = allEvents.filter((ev) => {
-      if (!ev || !ev.Datum) return false;
+      if (!isFixedDateEvent(ev)) return false;
       if (query || (sortType !== "upcoming" && selectedTimeframe === "all"))
         return true;
 
@@ -1950,7 +2109,7 @@ function filterAndRender() {
   }
 
   // Filter nach Kategorie & Query
-  filtered = filtered.filter((ev) => {
+  const matchesActiveFilters = (ev) => {
     if (!ev) return false;
     const matchesCategory =
       selectedCategory === "Alle" || ev.Kategorie === selectedCategory;
@@ -1961,7 +2120,8 @@ function filterAndRender() {
       (ev.Ersteller && ev.Ersteller.toLowerCase().includes(query)) ||
       (ev.Beschreibung && ev.Beschreibung.toLowerCase().includes(query));
     return matchesCategory && matchesQuery;
-  });
+  };
+  filtered = filtered.filter(matchesActiveFilters);
 
   // Sortierung
   filtered.sort((a, b) => {
@@ -1986,7 +2146,12 @@ function filterAndRender() {
     return 0;
   });
 
+  if (!selectedCalendarDate && query && sectionTitleEl) {
+    sectionTitleEl.textContent = `Suchergebnisse (${filtered.length})`;
+  }
+
   renderEvents(filtered);
+  filterAndRenderUndated();
 }
 window.filterAndRender = filterAndRender;
 
@@ -2006,6 +2171,10 @@ function showEventDetails(data) {
   currentDetailData = data;
   const overlay = document.getElementById("event-detail-overlay");
   const countdown = getCountdownInfo(data.Datum);
+  const rsvpSection = document.getElementById("detail-rsvp-section");
+  if (rsvpSection) {
+    rsvpSection.style.display = isFixedDateEvent(data) ? "" : "none";
+  }
 
   document.getElementById("detail-title").textContent = data.Titel;
 
@@ -2019,7 +2188,7 @@ function showEventDetails(data) {
 
   const ageTag = document.getElementById("detail-age-tag");
   if (ageTag) {
-    if (data.Kategorie === "Geburtstag" && data.Geburtsjahr) {
+    if (data.Kategorie === "Geburtstag" && data.Geburtsjahr && !data.DatumFlexibel) {
       const evYear = parseInt(
         data.Datum ? data.Datum.split("-")[0] : new Date().getFullYear(),
       );
@@ -2056,7 +2225,7 @@ function showEventDetails(data) {
       every3months: "🔁 Alle 3 Monate",
       yearly: "🔁 Jährlich",
     };
-    if (data.Wiederholung && recLabels[data.Wiederholung]) {
+    if (!data.DatumFlexibel && data.Wiederholung && recLabels[data.Wiederholung]) {
       recTag.textContent = recLabels[data.Wiederholung];
       recTag.style.display = "inline-flex";
     } else {
@@ -2068,6 +2237,7 @@ function showEventDetails(data) {
   if (dateRangeTag) {
     if (
       data.Kategorie === "Urlaub / Abwesend" &&
+      !data.DatumFlexibel &&
       data.Enddatum &&
       data.Enddatum > data.Datum
     ) {
@@ -2082,15 +2252,22 @@ function showEventDetails(data) {
   }
 
   const cdContainer = document.getElementById("detail-countdown");
-  if (countdown.badgeText) {
+  if (!data.DatumFlexibel && countdown.badgeText) {
     cdContainer.innerHTML = `<span class="countdown-badge ${countdown.badgeClass}" style="font-size: 0.75rem; padding: 4px 10px;">${countdown.badgeText}</span>`;
     cdContainer.style.display = "block";
   } else {
     cdContainer.style.display = "none";
   }
 
-  let dateDisplayStr = formatDateObj(data.Datum).formattedLong;
+  let dateDisplayStr = data.DatumFlexibel && data.Enddatum
+    ? `Möglicher Zeitraum: ${formatDateObj(data.Datum).formattedLong} – ${formatDateObj(data.Enddatum).formattedLong}`
+    : data.DatumFlexibel
+      ? "Möglicher Zeitraum noch offen"
+      : data.Datum
+        ? formatDateObj(data.Datum).formattedLong
+        : "Noch kein Datum festgelegt";
   if (
+    !data.DatumFlexibel &&
     data.Kategorie === "Urlaub / Abwesend" &&
     data.Enddatum &&
     data.Enddatum > data.Datum
@@ -2100,9 +2277,12 @@ function showEventDetails(data) {
 
   const isAllDay = data.isAllDay || !data.Uhrzeit;
   document.getElementById("detail-date-str").textContent = dateDisplayStr;
-  document.getElementById("detail-time-str").textContent = isAllDay
-    ? "☀️ Ganztägig"
-    : `${data.Uhrzeit} Uhr`;
+  document.getElementById("detail-time-str").textContent =
+    !data.Datum || data.DatumFlexibel
+      ? "Uhrzeit noch offen"
+      : isAllDay
+        ? "☀️ Ganztägig"
+        : `${data.Uhrzeit} Uhr`;
   document.getElementById("detail-location-str").textContent =
     data.Ort || "Wird noch bekanntgegeben";
   document.getElementById("detail-author-str").textContent =
@@ -2435,7 +2615,11 @@ function renderAllTasks() {
   const upcomingEvents = [];
   allEvents
     .filter(
-      (e) => e.Datum >= nowStr && e.Mitbringliste && e.Mitbringliste.length > 0,
+      (e) =>
+        isFixedDateEvent(e) &&
+        e.Datum >= nowStr &&
+        e.Mitbringliste &&
+        e.Mitbringliste.length > 0,
     )
     .sort((a, b) => a.Datum.localeCompare(b.Datum))
     .forEach((ev) => {
@@ -2448,7 +2632,7 @@ function renderAllTasks() {
 
   if (upcomingEvents.length === 0) {
     const nextEventWithoutList = allEvents
-      .filter((event) => event && event.Datum >= nowStr)
+      .filter((event) => isFixedDateEvent(event) && event.Datum >= nowStr)
       .sort((a, b) => a.Datum.localeCompare(b.Datum))[0];
 
     renderEmptyState(container, {
@@ -2505,7 +2689,11 @@ function renderAllTasks() {
 }
 window.renderAllTasks = renderAllTasks;
 
-window.editEventById = function (eventId, autoAddNewItem = false) {
+window.editEventById = function (
+  eventId,
+  autoAddNewItem = false,
+  assignDateNow = false,
+) {
   const data = allEvents.find((e) => e.id === eventId || e.baseId === eventId);
   if (!data) return;
   editingEventId = data.baseId || data.id;
@@ -2518,9 +2706,31 @@ window.editEventById = function (eventId, autoAddNewItem = false) {
   document.getElementById("event-author").value = data.Ersteller || "";
   document.getElementById("event-author").dispatchEvent(new Event("change"));
   document.getElementById("event-title").value = data.Titel || "";
-  document.getElementById("event-date").value = data.Datum || "";
+  const today = new Date().toISOString().split("T")[0];
+  const dateInput = document.getElementById("event-date");
+  if (dateInput) {
+    dateInput.value = data.DatumFlexibel
+      ? assignDateNow
+        ? data.Datum || today
+        : ""
+      : data.Datum || (assignDateNow ? today : "");
+  }
+  const dateOpenToggle = document.getElementById("event-date-open");
+  if (dateOpenToggle) {
+    dateOpenToggle.checked = !isFixedDateEvent(data) && !assignDateNow;
+  }
+  const openRangeStart = document.getElementById("event-open-from");
+  const openRangeEnd = document.getElementById("event-open-until");
+  if (openRangeStart) {
+    openRangeStart.value = data.DatumFlexibel ? data.Datum || "" : "";
+  }
+  if (openRangeEnd) {
+    openRangeEnd.value = data.DatumFlexibel ? data.Enddatum || "" : "";
+  }
   const endDateInput = document.getElementById("event-end-date");
-  if (endDateInput) endDateInput.value = data.Enddatum || "";
+  if (endDateInput) {
+    endDateInput.value = data.DatumFlexibel ? "" : data.Enddatum || "";
+  }
   document.getElementById("event-time").value = data.Uhrzeit || "";
 
   const isAllDay = !!data.isAllDay || !data.Uhrzeit;
@@ -2548,6 +2758,9 @@ window.editEventById = function (eventId, autoAddNewItem = false) {
   updateCategoryDependentFields();
 
   formParticipants = { ...(data.Teilnehmer || {}) };
+  if (assignDateNow && data.Ersteller && !formParticipants[data.Ersteller]) {
+    formParticipants[data.Ersteller] = "yes";
+  }
   renderFormParticipants();
 
   formGuests = {
@@ -2565,6 +2778,7 @@ window.editEventById = function (eventId, autoAddNewItem = false) {
       recDuration.style.display = recSelect.value !== "none" ? "block" : "none";
     }
   }
+  updateUndatedEventFields();
 
   const builder = document.getElementById("items-builder-container");
   builder.innerHTML = "";
@@ -2660,7 +2874,7 @@ function updateTasksBadge() {
   let unfinishedCount = 0;
   const seenBaseIds = new Set();
   allEvents
-    .filter((e) => e.Datum >= nowStr && e.Mitbringliste)
+    .filter((e) => isFixedDateEvent(e) && e.Datum >= nowStr && e.Mitbringliste)
     .forEach((ev) => {
       const bId = ev.baseId || ev.id;
       if (!seenBaseIds.has(bId)) {
@@ -2860,7 +3074,7 @@ window.editEventFromDetail = function () {
   window.editEventById(currentDetailData.baseId || currentDetailData.id);
 };
 
-window.openNewEventModal = function (prefilledDate = null) {
+window.openNewEventModal = function (prefilledDate = null, startAsUndated = false) {
   resetForm();
   const dateToUse =
     prefilledDate ||
@@ -2870,6 +3084,11 @@ window.openNewEventModal = function (prefilledDate = null) {
   if (dateInput) {
     dateInput.value = dateToUse;
     dateInput.dispatchEvent(new Event("change"));
+  }
+  const dateOpenToggle = document.getElementById("event-date-open");
+  if (dateOpenToggle) {
+    dateOpenToggle.checked = startAsUndated;
+    dateOpenToggle.dispatchEvent(new Event("change"));
   }
   const titleEl = document.getElementById("event-modal-title");
   if (titleEl) titleEl.textContent = "➕ Neuer Termin";
@@ -2881,6 +3100,10 @@ window.openNewEventModal = function (prefilledDate = null) {
   editingEventId = null;
   const overlay = document.getElementById("event-form-overlay");
   if (overlay) overlay.style.display = "flex";
+};
+
+window.openNewUndatedEventModal = function () {
+  window.openNewEventModal(null, true);
 };
 
 window.closeEventModal = function () {
@@ -2931,7 +3154,11 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
 
   const author = document.getElementById("event-author").value;
   const title = document.getElementById("event-title").value.trim();
-  const date = document.getElementById("event-date").value;
+  const isDateOpen = document.getElementById("event-date-open")?.checked || false;
+  const date = isDateOpen ? "" : document.getElementById("event-date").value;
+  const openRangeStart = document.getElementById("event-open-from")?.value || "";
+  const openRangeEnd = document.getElementById("event-open-until")?.value || "";
+  const hasOpenRange = isDateOpen && !!openRangeStart && !!openRangeEnd;
   const endDate = document.getElementById("event-end-date")?.value || "";
   const time = document.getElementById("event-time").value;
   const location = document.getElementById("event-location").value.trim();
@@ -2944,10 +3171,26 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
   const birthYearVal = document.getElementById("event-birth-year")?.value;
   const birthYear = birthYearVal ? parseInt(birthYearVal) : null;
 
-  if (!author || !title || !date) {
+  if (!author || !title || (!isDateOpen && !date)) {
     window.showAppModal(
       "Angaben fehlen",
-      "Bitte fülle Ersteller, Titel und Datum aus!",
+      "Bitte fülle Ersteller, Titel und Datum aus oder markiere „Datum noch offen“.",
+    );
+    return;
+  }
+
+  if (isDateOpen && (!!openRangeStart !== !!openRangeEnd)) {
+    window.showAppModal(
+      "Zeitraum unvollständig",
+      "Bitte fülle Von und Bis aus oder lasse beide Felder leer.",
+    );
+    return;
+  }
+
+  if (hasOpenRange && openRangeEnd < openRangeStart) {
+    window.showAppModal(
+      "Zeitraum prüfen",
+      "Das Bis-Datum darf nicht vor dem Von-Datum liegen.",
     );
     return;
   }
@@ -2964,17 +3207,19 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
 
   window.showLoading(true, "Termin wird gespeichert...");
 
-  let existingRsvp = { ...formParticipants };
-  if (author && !existingRsvp[author]) {
+  let existingRsvp = isDateOpen ? {} : { ...formParticipants };
+  if (!isDateOpen && author && !existingRsvp[author]) {
     existingRsvp[author] = "yes";
   }
 
-  const isAllDay = document.getElementById("event-all-day").checked || !time;
+  const isAllDay =
+    !isDateOpen &&
+    (document.getElementById("event-all-day").checked || !time);
 
   const baseEventData = {
     Ersteller: author,
     Titel: title,
-    Uhrzeit: isAllDay ? "" : time,
+    Uhrzeit: isAllDay || isDateOpen ? "" : time,
     isAllDay: isAllDay,
     Ort: location || "",
     OrtLink: link || "",
@@ -2982,7 +3227,7 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
     Geburtsjahr: selectedType === "Geburtstag" && birthYear ? birthYear : null,
     Beschreibung: description || "",
     Mitbringliste: items,
-    Wiederholung: recurrence,
+    Wiederholung: isDateOpen ? "none" : recurrence,
     WiederholungDauer: recurrenceDuration,
     createdAt: serverTimestamp(),
     lastAction: editingEventId ? "update" : "new",
@@ -2990,22 +3235,29 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
 
   try {
     await ensureAuth();
+    const dateForId = isDateOpen ? openRangeStart : date;
     const docId =
       editingEventId ||
-      `${date}_${title.replace(/[^\w\s-]/gi, "").replace(/\s+/g, "-") || "Termin"}_${Date.now().toString().slice(-4)}`;
+      `${dateForId || "offen"}_${title.replace(/[^\w\s-]/gi, "").replace(/\s+/g, "-") || "Termin"}_${Date.now().toString().slice(-4)}`;
 
     await setDoc(doc(db, "data_termine", docId), {
       ...baseEventData,
-      Datum: date,
-      Enddatum:
-        selectedType === "Urlaub / Abwesend" && endDate && endDate >= date
+      Datum: isDateOpen ? (hasOpenRange ? openRangeStart : "") : date,
+      Enddatum: isDateOpen
+        ? hasOpenRange
+          ? openRangeEnd
+          : ""
+        : selectedType === "Urlaub / Abwesend" && endDate && endDate >= date
           ? endDate
           : "",
+      DatumFlexibel: hasOpenRange,
       Teilnehmer: existingRsvp,
-      Gäste: {
-        adults: formGuests.adults || 0,
-        children: formGuests.children || 0,
-      },
+      Gäste: isDateOpen
+        ? { adults: 0, children: 0 }
+        : {
+            adults: formGuests.adults || 0,
+            children: formGuests.children || 0,
+          },
     });
 
     const isVacation = selectedType === "Urlaub / Abwesend";
@@ -3013,7 +3265,11 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
       ? isVacation
         ? "Urlaub / Abwesenheit wurde erfolgreich aktualisiert! 🏖️"
         : "Termin wurde erfolgreich aktualisiert!"
-      : isVacation
+      : isDateOpen
+        ? hasOpenRange
+          ? "Vormerkung mit Zeitraum wurde gespeichert. Du kannst später ein konkretes Datum festlegen."
+          : "Vormerkung wurde gespeichert. Du kannst später ein Datum festlegen."
+        : isVacation
         ? "Urlaub / Abwesenheit wurde erfolgreich im Kalender gespeichert! 🏖️"
         : "Termin wurde erfolgreich im Kalender gespeichert!";
     window.showAppModal("Erfolg", successMsg);
@@ -3048,6 +3304,18 @@ document
 document
   .getElementById("event-date")
   ?.addEventListener("input", checkAbsenceConflicts);
+document
+  .getElementById("event-date-open")
+  ?.addEventListener("change", (event) => {
+    if (!event.target.checked) {
+      const currentAuthor = document.getElementById("event-author")?.value;
+      if (currentAuthor && !formParticipants[currentAuthor]) {
+        formParticipants[currentAuthor] = "yes";
+        renderFormParticipants();
+      }
+    }
+    updateCategoryDependentFields();
+  });
 document
   .getElementById("event-end-date")
   ?.addEventListener("change", checkAbsenceConflicts);
