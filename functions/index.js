@@ -6,6 +6,33 @@ const webpush = require("web-push");
 admin.initializeApp();
 const db = admin.firestore();
 
+function getEventFields(data = {}) {
+  return {
+    titel: data.Titel || data.titel || "",
+    datum: data.Datum || data.datum || "",
+    enddatum: data.Enddatum || data.enddatum || "",
+    uhrzeit: data.Uhrzeit || data.uhrzeit || "",
+    ort: data.Ort || data.ort || "",
+    ersteller: data.Ersteller || data.ersteller || "Jemand",
+  };
+}
+
+function formatEventDate(date) {
+  const match = String(date || "").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  return match ? `${match[3]}.${match[2]}.${match[1]}` : date;
+}
+
+function describeEvent(fields) {
+  const date = formatEventDate(fields.datum);
+  const endDate = formatEventDate(fields.enddatum);
+  const dateText = date
+    ? ` am ${date}${endDate && endDate !== date ? `–${endDate}` : ""}`
+    : "";
+  const timeText = fields.uhrzeit ? ` um ${fields.uhrzeit} Uhr` : "";
+  const placeText = fields.ort ? ` in ${fields.ort}` : "";
+  return `${dateText}${timeText}${placeText}`;
+}
+
 // VAPID-Schlüssel für KlapsenCal Web-Push
 const VAPID_PUBLIC_KEY =
   "BBoShmX0jnhjLknD_zoYn5qdmjfzChdDWGaiKnPM3avttbI7WcZRe6N-dT5JxpoQLk0dCwOtXNGKrnIEVnTwNO8";
@@ -86,13 +113,10 @@ exports.onEventCreated = functions
     if (docId === "Ersteller" || docId === "Art") return null;
 
     const data = snap.data();
-    if (!data || !data.Titel) return null;
+    const event = getEventFields(data);
+    if (!event.titel) return null;
 
-    const titel = data.Titel;
-    const datum = data.Datum || "";
-    const ersteller = data.Ersteller || "Jemand";
-    const uhrzeitText = data.Uhrzeit ? ` um ${data.Uhrzeit} Uhr` : "";
-    const ortText = data.Ort ? ` (📍 ${data.Ort})` : "";
+    const { titel, ersteller } = event;
 
     console.log(`Neuer Termin erstellt: "${titel}" von ${ersteller}`);
 
@@ -111,17 +135,17 @@ exports.onEventCreated = functions
     const icon = matchedAvatar ? `avatars/${matchedAvatar}.webp` : "logo.png";
 
     const actions = [{ action: "open_event", title: "📅 Kalender" }];
-    if (data.Ort) {
+    if (event.ort) {
       actions.push({ action: "open_maps", title: "🗺️ Navigation" });
     }
 
     await broadcastPushNotification(
       {
         title: `📅 Neuer Termin: ${titel}`,
-        body: `${ersteller} lädt ein: ${datum}${uhrzeitText}${ortText}`,
+        body: `${ersteller} hat einen Termin eingetragen${describeEvent(event)}.`,
         url: "./index.html",
         icon,
-        mapsQuery: data.Ort || "",
+        mapsQuery: event.ort,
         actions,
         tag: `event-created-${docId}`,
       },
@@ -142,20 +166,22 @@ exports.onEventUpdated = functions
 
     const beforeData = change.before.data();
     const afterData = change.after.data();
-    if (!afterData || !afterData.Titel) return null;
+    const beforeEvent = getEventFields(beforeData);
+    const afterEvent = getEventFields(afterData);
+    if (!afterEvent.titel) return null;
 
     // Nur senden, wenn sich relevante Inhalte geändert haben
     if (
-      beforeData.Titel === afterData.Titel &&
-      beforeData.Datum === afterData.Datum &&
-      beforeData.Uhrzeit === afterData.Uhrzeit &&
-      beforeData.Ort === afterData.Ort
+      beforeEvent.titel === afterEvent.titel &&
+      beforeEvent.datum === afterEvent.datum &&
+      beforeEvent.enddatum === afterEvent.enddatum &&
+      beforeEvent.uhrzeit === afterEvent.uhrzeit &&
+      beforeEvent.ort === afterEvent.ort
     ) {
       return null;
     }
 
-    const titel = afterData.Titel;
-    const ersteller = afterData.Ersteller || "Jemand";
+    const { titel, ersteller } = afterEvent;
 
     console.log(`Termin aktualisiert: "${titel}"`);
 
@@ -173,7 +199,7 @@ exports.onEventUpdated = functions
     const icon = matchedAvatar ? `avatars/${matchedAvatar}.webp` : "logo.png";
 
     const actions = [{ action: "open_event", title: "📅 Kalender" }];
-    if (afterData.Ort) {
+    if (afterEvent.ort) {
       actions.push({ action: "open_maps", title: "🗺️ Navigation" });
     }
 
@@ -183,7 +209,7 @@ exports.onEventUpdated = functions
         body: `'${titel}' wurde aktualisiert.`,
         url: "./index.html",
         icon,
-        mapsQuery: afterData.Ort || "",
+        mapsQuery: afterEvent.ort,
         actions,
         tag: `event-updated-${docId}`,
       },
@@ -202,14 +228,14 @@ exports.onEventDeleted = functions
     const docId = context.params.docId;
     if (docId === "Ersteller" || docId === "Art") return null;
 
-    const data = snap.data();
-    if (!data || !data.Titel) return null;
+    const event = getEventFields(snap.data());
+    if (!event.titel) return null;
 
-    console.log(`Termin gelöscht: "${data.Titel}"`);
+    console.log(`Termin gelöscht: "${event.titel}"`);
 
     await broadcastPushNotification({
       title: "Termin abgesagt / gelöscht 🗑️",
-      body: `'${data.Titel}' am ${data.Datum || ""} wurde entfernt.`,
+      body: `'${event.titel}'${describeEvent(event)} wurde entfernt.`,
       url: "./index.html",
       tag: `event-deleted-${docId}`,
     });
@@ -421,7 +447,10 @@ exports.checkScheduledReminders = onSchedule(
 
     for (const docSnap of eventsSnapshot.docs) {
       if (docSnap.id === "Ersteller" || docSnap.id === "Art") continue;
-      const ev = docSnap.data();
+      const rawEvent = docSnap.data();
+      const fields = getEventFields(rawEvent);
+      const ev = { ...rawEvent, Titel: fields.titel, Datum: fields.datum,
+        Enddatum: fields.enddatum, Uhrzeit: fields.uhrzeit, Ort: fields.ort };
       if (!ev.Datum || !ev.Titel) continue;
 
       const parts = ev.Datum.split("-");
