@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>Klapsentouren</title>
 
@@ -928,19 +928,6 @@
         <!-- KlapsenCard Wallet -->
         <div class="wallet-card-container">
           <div class="wallet-card">
-            <div class="wallet-card-top">
-              <div class="wallet-brand">
-                <div class="wallet-chip"></div>
-                <span class="wallet-card-title">KlapsenCard</span>
-              </div>
-              <div class="wallet-top-right">
-                <span id="kasse-bookings-count" class="wallet-bookings-badge"
-                  >🔢 0 Buchungen</span
-                >
-                <span class="wallet-nfc-icon">📶</span>
-              </div>
-            </div>
-
             <div class="wallet-balance-label">Aktueller Kassenbestand</div>
             <div class="wallet-balance-row">
               <span class="wallet-balance-val" id="kasse-total-balance"
@@ -963,16 +950,6 @@
                 >
               </div>
             </div>
-
-            <div class="wallet-card-bottom">
-              <div class="wallet-card-holder">
-                <span class="wallet-holder-label">Zuletzt eingezahlt</span>
-                <span class="wallet-holder-name" id="kasse-last-deposit"
-                  >Noch keine Einzahlung</span
-                >
-              </div>
-              <div class="wallet-card-number">•••• 2026</div>
-            </div>
           </div>
 
           <!-- Schnell-Aktionen Leiste -->
@@ -993,48 +970,64 @@
               <span class="wallet-action-icon">➖</span>
               <span>Ausgabe</span>
             </button>
-            <button
-              type="button"
-              class="wallet-action-btn"
-              onclick="
-                document
-                  .getElementById('kasse-filter-chips')
-                  .scrollIntoView({ behavior: 'smooth' })
-              "
-            >
-              <span class="wallet-action-icon">📊</span>
-              <span>Historie</span>
-            </button>
           </div>
         </div>
 
-        <!-- Filter-Leiste für Buchungen -->
-        <div
-          class="section-header-row kasse-section-header"
-        >
-          <div class="section-title">Buchungen & Historie</div>
+        <!-- Buchungshistorie -->
+        <div class="kasse-section-header">
+          <div class="kasse-history-heading">
+            <div>
+              <h2 class="kasse-history-title">Buchungen</h2>
+              <p class="kasse-history-subtitle">
+                Alle Ein- und Ausgänge der Gruppe
+              </p>
+            </div>
+            <span id="kasse-bookings-count" class="kasse-history-total"
+              >0 Buchungen</span
+            >
+          </div>
           <div
-            class="filter-chips compact-filter-chips"
+            class="kasse-history-filters"
             id="kasse-filter-chips"
+            role="group"
+            aria-label="Buchungen filtern"
           >
-            <div
-              class="filter-chip active"
+            <button
+              type="button"
+              class="kasse-history-filter active"
+              aria-pressed="true"
+              data-filter="alle"
               onclick="window.filterKasse('alle', this)"
             >
-              Alle
-            </div>
-            <div
-              class="filter-chip"
+              <span>Alle</span>
+              <span class="kasse-filter-count" id="kasse-filter-count-all"
+                >0</span
+              >
+            </button>
+            <button
+              type="button"
+              class="kasse-history-filter"
+              aria-pressed="false"
+              data-filter="einnahme"
               onclick="window.filterKasse('einnahme', this)"
             >
-              🟢 Einzahlungen
-            </div>
-            <div
-              class="filter-chip"
+              <span>Einnahmen</span>
+              <span class="kasse-filter-count" id="kasse-filter-count-in"
+                >0</span
+              >
+            </button>
+            <button
+              type="button"
+              class="kasse-history-filter"
+              aria-pressed="false"
+              data-filter="ausgabe"
               onclick="window.filterKasse('ausgabe', this)"
             >
-              🔴 Ausgaben
-            </div>
+              <span>Ausgaben</span>
+              <span class="kasse-filter-count" id="kasse-filter-count-out"
+                >0</span
+              >
+            </button>
           </div>
         </div>
 
@@ -2891,14 +2884,26 @@
 
         <!-- Zweck / Titel -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label
+            for="kasse-purpose"
+            style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
             >Zweck / Wofür?</label
           >
+          <select
+            id="kasse-purpose-preset"
+            class="form-control"
+            aria-label="Familienvorschlag für den Zweck auswählen"
+          >
+            <option value="">Familie auswählen (optional)</option>
+            <option value="Familie Schwabschmi">Familie Schwabschmi</option>
+            <option value="Familie Zalewski">Familie Zalewski</option>
+            <option value="Familie Tornau">Familie Tornau</option>
+          </select>
           <input
             type="text"
             id="kasse-purpose"
             class="form-control"
-            placeholder="z.B. Grillkohle & Getränke, Monatsbeitrag..."
+            placeholder="Oder eigenen Zweck eintragen …"
             required
           />
         </div>

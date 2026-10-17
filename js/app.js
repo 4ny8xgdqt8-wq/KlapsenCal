@@ -1181,34 +1181,112 @@ function formatDateObj(dateStr) {
 // ==========================================
 // 7. Termine Rendern & Filtern
 // ==========================================
+function renderEmptyState(container, options) {
+  const {
+    icon,
+    title,
+    description,
+    actionLabel,
+    onAction,
+    isSearch = false,
+  } = options;
+  const state = document.createElement("section");
+  state.className = `empty-state${isSearch ? " is-search" : ""}`;
+  state.setAttribute("role", "status");
+
+  const iconEl = document.createElement("div");
+  iconEl.className = "empty-state-icon";
+  iconEl.setAttribute("aria-hidden", "true");
+  iconEl.textContent = icon;
+
+  const titleEl = document.createElement("h3");
+  titleEl.className = "empty-state-title";
+  titleEl.textContent = title;
+
+  const descriptionEl = document.createElement("p");
+  descriptionEl.className = "empty-state-description";
+  descriptionEl.textContent = description;
+
+  state.append(iconEl, titleEl, descriptionEl);
+
+  if (actionLabel && typeof onAction === "function") {
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "empty-state-action";
+    action.textContent = actionLabel;
+    action.addEventListener("click", onAction);
+    state.appendChild(action);
+  }
+
+  container.replaceChildren(state);
+}
+
 function renderEvents(events) {
   const container = document.getElementById("event-list-container");
   container.innerHTML = "";
 
   if (events.length === 0) {
+    const query =
+      document.getElementById("event-search")?.value.trim() || "";
+    const hasSearchFilters =
+      allEvents.length > 0 && (!!query || selectedCategory !== "Alle");
+
+    if (hasSearchFilters) {
+      renderEmptyState(container, {
+        icon: "🔎",
+        title: "Keine passenden Termine",
+        description: query
+          ? `Für „${query}“ gibt es mit den aktuellen Filtern keine Treffer.`
+          : "Für die ausgewählte Kategorie gibt es in diesem Zeitraum keine Termine.",
+        actionLabel: "Alle Termine anzeigen",
+        isSearch: true,
+        onAction: () => {
+          const searchInput = document.getElementById("event-search");
+          const sortSelect = document.getElementById("event-sort");
+          if (searchInput) searchInput.value = "";
+          if (sortSelect) sortSelect.value = "upcoming";
+          selectedCategory = "Alle";
+          selectedTimeframe = "all";
+          selectedCalendarDate = null;
+          document
+            .querySelectorAll("#filter-container .filter-chip")
+            .forEach((chip, index) => chip.classList.toggle("active", index === 0));
+          document
+            .querySelectorAll("#timeframe-container .timeframe-chip")
+            .forEach((chip) => chip.classList.remove("active"));
+          document
+            .querySelector("#timeframe-container .timeframe-chip:last-child")
+            ?.classList.add("active");
+          renderCalendarWidget();
+          filterAndRender();
+        },
+      });
+      return;
+    }
+
     if (selectedCalendarDate) {
       const formatted = formatDateObj(selectedCalendarDate).formattedLong;
-      container.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); margin-top: 25px; padding: 24px 16px; background: rgba(255, 255, 255, 0.03); border-radius: 20px; border: 1px dashed rgba(255, 255, 255, 0.12);">
-                <div style="font-size: 2.6rem; margin-bottom: 8px; opacity: 0.85;">🗓️</div>
-                <h3 style="color: white; margin: 0 0 4px 0; font-size: 1.1rem;">Keine Termine am ${formatted}</h3>
-                <p style="font-size: 0.85rem; margin: 0 0 16px 0; color: #94a3b8;">Möchtest du für diesen Tag etwas mit der Gruppe planen?</p>
-                <button type="button" class="btn-day-add-event" style="max-width: 280px; margin: 0 auto;" onclick="window.openNewEventModal('${selectedCalendarDate}')">
-                  ➕ Termin für diesen Tag erstellen
-                </button>
-            </div>
-        `;
+      renderEmptyState(container, {
+        icon: "🗓️",
+        title: "An diesem Tag ist noch nichts geplant",
+        description: formatted,
+        actionLabel: "Termin für diesen Tag planen",
+        onAction: () => window.openNewEventModal(selectedCalendarDate),
+      });
     } else {
-      container.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); margin-top: 45px; padding: 20px;">
-                <div style="font-size: 2.8rem; margin-bottom: 12px; opacity: 0.7;">📅</div>
-                <h3 style="color: white; margin: 0 0 6px 0;">Keine Termine gefunden</h3>
-                <p style="font-size: 0.85rem; margin: 0 0 16px 0;">Plane einen neuen Termin für die Gruppe!</p>
-                <button type="button" class="btn-day-add-event" style="max-width: 260px; margin: 0 auto;" onclick="window.openNewEventModal()">
-                  ➕ Neuen Termin anlegen
-                </button>
-            </div>
-        `;
+      renderEmptyState(container, {
+        icon: allEvents.length === 0 ? "📅" : "🗓️",
+        title:
+          allEvents.length === 0
+            ? "Noch keine Termine geplant"
+            : "In diesem Zeitraum ist noch nichts geplant",
+        description:
+          allEvents.length === 0
+            ? "Der erste gemeinsame Termin kann hier angelegt werden."
+            : "Wähle einen anderen Zeitraum oder plane einen neuen Termin.",
+        actionLabel: "Neuen Termin planen",
+        onAction: () => window.openNewEventModal(),
+      });
     }
     return;
   }
@@ -2369,13 +2447,29 @@ function renderAllTasks() {
     });
 
   if (upcomingEvents.length === 0) {
-    container.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); margin-top: 40px;">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">🎒</div>
-                <h3 style="color: white; margin: 0 0 6px 0;">Alles erledigt!</h3>
-                <p style="font-size: 0.85rem;">Keine offenen Punkte für anstehende Termine.</p>
-            </div>
-        `;
+    const nextEventWithoutList = allEvents
+      .filter((event) => event && event.Datum >= nowStr)
+      .sort((a, b) => a.Datum.localeCompare(b.Datum))[0];
+
+    renderEmptyState(container, {
+      icon: nextEventWithoutList ? "🎒" : "📅",
+      title: nextEventWithoutList
+        ? "Noch keine Packliste hinterlegt"
+        : "Keine anstehenden Termine",
+      description: nextEventWithoutList
+        ? "Ergänze fehlende Dinge direkt bei einem kommenden Termin."
+        : "Sobald ein Termin mit Packliste ansteht, erscheinen die Aufgaben hier.",
+      actionLabel: nextEventWithoutList
+        ? "Packliste ergänzen"
+        : "Termin planen",
+      onAction: () =>
+        nextEventWithoutList
+          ? window.editEventById(
+              nextEventWithoutList.baseId || nextEventWithoutList.id,
+              true,
+            )
+          : window.openNewEventModal(),
+    });
     return;
   }
 
@@ -3028,6 +3122,40 @@ let allKasseBookings = [];
 let selectedKasseFilter = "alle";
 let editingKasseBookingId = null;
 let currentKasseBookingType = "einnahme";
+const kassePurposePresets = [
+  "Familie Schwabschmi",
+  "Familie Zalewski",
+  "Familie Tornau",
+];
+const kasseFamilyMembers = {
+  "Familie Schwabschmi": ["Daniel", "Daniela"],
+  "Familie Zalewski": ["Peter", "Simone"],
+  "Familie Tornau": ["Tanja", "Thorsten"],
+};
+const kassePurposeAliases = new Map([
+  ["Familie Schwaschmi", "Familie Schwabschmi"],
+]);
+
+function normalizeKassePurpose(purpose) {
+  const value = (purpose || "").trim();
+  return kassePurposeAliases.get(value) || value;
+}
+
+const kassePurposePresetEl = document.getElementById("kasse-purpose-preset");
+const kassePurposeInputEl = document.getElementById("kasse-purpose");
+if (kassePurposePresetEl && kassePurposeInputEl) {
+  kassePurposePresetEl.addEventListener("change", () => {
+    if (kassePurposePresetEl.value) {
+      kassePurposeInputEl.value = kassePurposePresetEl.value;
+    }
+  });
+
+  kassePurposeInputEl.addEventListener("input", () => {
+    if (kassePurposePresetEl.value !== kassePurposeInputEl.value) {
+      kassePurposePresetEl.value = "";
+    }
+  });
+}
 
 function initKasseListener() {
   const colRef = collection(db, "data_kasse");
@@ -3060,13 +3188,121 @@ function formatEuro(amount) {
   );
 }
 
+function compareKasseBookingsNewestFirst(a, b) {
+  const dateA = a.datum || "1970-01-01";
+  const dateB = b.datum || "1970-01-01";
+  if (dateA !== dateB) return dateB.localeCompare(dateA);
+  const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+  const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+  return timeB - timeA;
+}
+
+function createKasseBookingCard(booking) {
+  const card = document.createElement("div");
+  card.className = "kasse-tx-card";
+  const isIncome = booking.typ === "einnahme";
+
+  card.style.setProperty("--tx-color", isIncome ? "#10b981" : "#ef4444");
+
+  const formattedDate = formatDateObj(booking.datum).formattedLong;
+  const authorHtml = booking.ersteller
+    ? `<span class="kasse-tx-person"><img src="avatars/${escapeLokalHtml(booking.ersteller)}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-tx-person-avatar" alt="${escapeLokalHtml(booking.ersteller)}" title="${escapeLokalHtml(booking.ersteller)}"><span>${escapeLokalHtml(booking.ersteller)}</span></span>`
+    : "";
+  const noteHtml = booking.notiz
+    ? `<span class="kasse-tx-note">📝 ${escapeLokalHtml(booking.notiz)}</span>`
+    : "";
+
+  card.innerHTML = `
+    <div class="kasse-tx-icon ${isIncome ? "positive" : "negative"}">
+      ${isIncome ? "↑" : "↓"}
+    </div>
+    <div class="kasse-tx-info">
+      <div class="kasse-tx-title">${escapeLokalHtml(normalizeKassePurpose(booking.zweck) || "Buchung")}</div>
+      <div class="kasse-tx-meta">
+        <span class="kasse-tx-kind ${isIncome ? "positive" : "negative"}">
+          ${isIncome ? "Einnahme" : "Ausgabe"}
+        </span>
+        <span class="kasse-tx-date">${formattedDate}</span>
+        ${authorHtml}
+        ${noteHtml}
+      </div>
+    </div>
+    <div class="kasse-tx-right">
+      <span class="kasse-tx-amount ${isIncome ? "positive" : "negative"}">
+        ${isIncome ? "+" : "-"}${formatEuro(booking.betrag)}
+      </span>
+      <div class="kasse-tx-actions">
+        <button class="btn-tx-action" onclick="window.openKasseModalById('${booking.id}')" title="Bearbeiten" aria-label="Buchung bearbeiten">✏️</button>
+        <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${booking.id}')" title="Löschen" aria-label="Buchung löschen">🗑️</button>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function createKasseFamilyGroup(familyName, bookings) {
+  const group = document.createElement("details");
+  group.className = "kasse-family-group";
+
+  const latestBooking = bookings[0];
+  const latestIsIncome = latestBooking.typ === "einnahme";
+  const latestAmount = parseFloat(latestBooking.betrag) || 0;
+  const familyTotal = bookings.reduce((total, booking) => {
+    const amount = parseFloat(booking.betrag) || 0;
+    return total + (booking.typ === "einnahme" ? amount : -amount);
+  }, 0);
+  const familyTotalSign = familyTotal > 0 ? "+" : familyTotal < 0 ? "−" : "";
+  const familyTotalTone =
+    familyTotal > 0 ? "positive" : familyTotal < 0 ? "negative" : "neutral";
+  const latestAmountSign = latestIsIncome ? "+" : "−";
+  const latestDate = formatDateObj(latestBooking.datum).formattedLong;
+  const familyInitial = familyName.replace(/^Familie\s+/i, "").charAt(0);
+  const familyMembers = kasseFamilyMembers[familyName] || [];
+  const familyAvatarHtml = familyMembers.length
+    ? `<span class="kasse-family-avatars" role="img" aria-label="${escapeLokalHtml(familyMembers.join(" und "))}">${familyMembers
+        .map(
+          (name) =>
+            `<img src="avatars/${escapeLokalHtml(name)}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-family-avatar" alt="" aria-hidden="true" title="${escapeLokalHtml(name)}">`,
+        )
+        .join("")}</span>`
+    : `<span class="kasse-family-monogram" aria-hidden="true">${escapeLokalHtml(familyInitial)}</span>`;
+
+  group.innerHTML = `
+    <summary class="kasse-family-summary">
+      ${familyAvatarHtml}
+      <span class="kasse-family-info">
+        <strong class="kasse-family-name">${escapeLokalHtml(familyName)}</strong>
+        <span class="kasse-family-latest">
+          <span class="kasse-family-latest-label">Zuletzt</span>
+          <span class="kasse-family-latest-date">${escapeLokalHtml(latestDate)}</span>
+          <span class="kasse-tx-kind ${latestIsIncome ? "positive" : "negative"}">${latestIsIncome ? "Einnahme" : "Ausgabe"}</span>
+          <span class="kasse-family-latest-amount ${latestIsIncome ? "positive" : "negative"}">${latestAmountSign}${formatEuro(latestAmount)}</span>
+        </span>
+      </span>
+      <span class="kasse-family-total-wrap">
+        <strong class="kasse-family-total ${familyTotalTone}">${familyTotalSign}${formatEuro(Math.abs(familyTotal))}</strong>
+        <small>Gesamtbetrag</small>
+      </span>
+      <span class="kasse-family-chevron" aria-hidden="true">⌄</span>
+    </summary>
+  `;
+
+  const bookingList = document.createElement("div");
+  bookingList.className = "kasse-family-bookings";
+  bookings.forEach((booking) => {
+    bookingList.appendChild(createKasseBookingCard(booking));
+  });
+  group.appendChild(bookingList);
+
+  return group;
+}
+
 function renderKasseView() {
   const totalBalanceEl = document.getElementById("kasse-total-balance");
   const totalInEl = document.getElementById("kasse-total-in");
   const totalOutEl = document.getElementById("kasse-total-out");
   const bookingsCountEl = document.getElementById("kasse-bookings-count");
   const trendEl = document.getElementById("kasse-trend-badge");
-  const lastDepositEl = document.getElementById("kasse-last-deposit");
   const container = document.getElementById("kasse-list-container");
   if (!totalBalanceEl || !container) return;
 
@@ -3097,39 +3333,26 @@ function renderKasseView() {
   if (totalInEl) totalInEl.textContent = "+" + formatEuro(totalIn);
   if (totalOutEl) totalOutEl.textContent = "-" + formatEuro(totalOut);
   if (bookingsCountEl)
-    bookingsCountEl.textContent = `🔢 ${allKasseBookings.length} ${allKasseBookings.length === 1 ? "Buchung" : "Buchungen"}`;
+    bookingsCountEl.textContent = `${allKasseBookings.length} ${allKasseBookings.length === 1 ? "Buchung" : "Buchungen"}`;
+
+  const incomeCount = allKasseBookings.filter(
+    (booking) => booking.typ === "einnahme",
+  ).length;
+  const expenseCount = allKasseBookings.filter(
+    (booking) => booking.typ === "ausgabe",
+  ).length;
+  const allCountEl = document.getElementById("kasse-filter-count-all");
+  const incomeCountEl = document.getElementById("kasse-filter-count-in");
+  const expenseCountEl = document.getElementById("kasse-filter-count-out");
+  if (allCountEl) allCountEl.textContent = allKasseBookings.length;
+  if (incomeCountEl) incomeCountEl.textContent = incomeCount;
+  if (expenseCountEl) expenseCountEl.textContent = expenseCount;
 
   // Trend-Badge (dieser Monat)
   if (trendEl) {
     const sign = monthTrend >= 0 ? "▲ +" : "▼ -";
     trendEl.textContent = `${sign}${formatEuro(Math.abs(monthTrend))} diesen Monat`;
     trendEl.className = `wallet-trend-badge ${monthTrend < 0 ? "negative" : ""}`;
-  }
-
-  // Zuletzt eingezahlt
-  if (lastDepositEl) {
-    const einnahmen = allKasseBookings
-      .filter((b) => b.typ === "einnahme")
-      .sort((a, b) => {
-        const dA = a.datum || "1970-01-01";
-        const dB = b.datum || "1970-01-01";
-        if (dA !== dB) return dB.localeCompare(dA);
-        const tA =
-          a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-        const tB =
-          b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
-        return tB - tA;
-      });
-
-    if (einnahmen.length > 0) {
-      const latest = einnahmen[0];
-      const name = latest.ersteller || "Jemand";
-      const amount = formatEuro(parseFloat(latest.betrag) || 0);
-      const purpose = latest.zweck ? ` (${latest.zweck})` : "";
-      lastDepositEl.textContent = `${name}: +${amount}${purpose}`;
-    } else {
-      lastDepositEl.textContent = "Noch keine Einzahlung";
-    }
   }
 
   // Filtern
@@ -3141,68 +3364,82 @@ function renderKasseView() {
   }
 
   // Sortieren: Neuestes Datum zuerst
-  filtered.sort((a, b) => {
-    const dateA = a.datum || "1970-01-01";
-    const dateB = b.datum || "1970-01-01";
-    if (dateA !== dateB) return dateB.localeCompare(dateA);
-    const tA = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-    const tB = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
-    return tB - tA;
-  });
+  filtered.sort(compareKasseBookingsNewestFirst);
 
   container.innerHTML = "";
 
   if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
-        <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
-        <h3 style="color: white; margin: 0 0 6px 0;">Keine Buchungen vorhanden</h3>
-        <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Einzahlen" oder „➖ Ausgabe" eine Buchung ein!</p>
-      </div>
-    `;
+    const hasActiveFilter =
+      allKasseBookings.length > 0 && selectedKasseFilter !== "alle";
+    renderEmptyState(container, {
+      icon: hasActiveFilter ? "🔎" : "💰",
+      title: hasActiveFilter
+        ? selectedKasseFilter === "einnahme"
+          ? "Noch keine Einnahmen"
+          : "Noch keine Ausgaben"
+        : "Noch keine Buchungen",
+      description: hasActiveFilter
+        ? "In dieser Buchungsart gibt es aktuell keine Einträge."
+        : "Die ersten Ein- und Ausgaben erscheinen hier.",
+      actionLabel: hasActiveFilter
+        ? "Alle Buchungen anzeigen"
+        : "Erste Einzahlung eintragen",
+      isSearch: hasActiveFilter,
+      onAction: hasActiveFilter
+        ? () =>
+            window.filterKasse(
+              "alle",
+              document.querySelector("#kasse-filter-chips .kasse-history-filter"),
+            )
+        : () => window.openKasseModal("einnahme"),
+    });
     return;
   }
 
-  filtered.forEach((b) => {
-    const card = document.createElement("div");
-    card.className = "kasse-tx-card";
-    const isIncome = b.typ === "einnahme";
+  const familyGroups = new Map();
+  const otherBookings = [];
 
-    // CSS-Variable für farbigen linken Rand
-    card.style.setProperty("--tx-color", isIncome ? "#10b981" : "#ef4444");
+  filtered.forEach((booking) => {
+    const normalizedPurpose = normalizeKassePurpose(booking.zweck);
+    const familyName = kassePurposePresets.find(
+      (family) => normalizedPurpose === family,
+    );
+    if (!familyName) {
+      otherBookings.push(booking);
+      return;
+    }
 
-    const formattedDate = formatDateObj(b.datum).formattedLong;
+    if (!familyGroups.has(familyName)) familyGroups.set(familyName, []);
+    familyGroups.get(familyName).push(booking);
+  });
 
-    // Ersteller-Avatar (falls vorhanden)
-    const authorHtml = b.ersteller
-      ? `<img src="avatars/${b.ersteller}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-tx-person-avatar" alt="${b.ersteller}" title="${b.ersteller}"> <span>${b.ersteller}</span>`
-      : "";
+  const sortedFamilyGroups = Array.from(
+    familyGroups,
+    ([familyName, bookings]) => ({
+      latest: bookings[0],
+      familyName,
+      bookings,
+    }),
+  ).sort((a, b) =>
+    compareKasseBookingsNewestFirst(a.latest, b.latest),
+  );
 
-    const notizHtml = b.notiz ? `<span>• 📝 ${b.notiz}</span>` : "";
+  sortedFamilyGroups.forEach((group) => {
+    container.appendChild(
+      createKasseFamilyGroup(group.familyName, group.bookings),
+    );
+  });
 
-    card.innerHTML = `
-      <div class="kasse-tx-icon ${isIncome ? "positive" : "negative"}">
-        ${isIncome ? "↑" : "↓"}
-      </div>
-      <div class="kasse-tx-info">
-        <div class="kasse-tx-title">${b.zweck || "Buchung"}</div>
-        <div class="kasse-tx-meta">
-          <span>📅 ${formattedDate}</span>
-          ${authorHtml}
-          ${notizHtml}
-        </div>
-      </div>
-      <div class="kasse-tx-right">
-        <span class="kasse-tx-amount ${isIncome ? "positive" : "negative"}">
-          ${isIncome ? "+" : "-"}${formatEuro(b.betrag)}
-        </span>
-        <div class="kasse-tx-actions">
-          <button class="btn-tx-action" onclick="window.openKasseModalById('${b.id}')" title="Bearbeiten">✏️</button>
-          <button class="btn-tx-action" style="color: #ef4444;" onclick="window.deleteKasseBooking('${b.id}')" title="Löschen">🗑️</button>
-        </div>
-      </div>
-    `;
-    container.appendChild(card);
+  if (sortedFamilyGroups.length > 0 && otherBookings.length > 0) {
+    const divider = document.createElement("div");
+    divider.className = "kasse-bookings-divider";
+    divider.setAttribute("role", "separator");
+    divider.innerHTML = "<span>Weitere Buchungen</span>";
+    container.appendChild(divider);
+  }
+
+  otherBookings.forEach((booking) => {
+    container.appendChild(createKasseBookingCard(booking));
   });
 
   if (typeof renderPurchasesView === "function") {
@@ -3214,9 +3451,12 @@ window.renderKasseView = renderKasseView;
 window.filterKasse = function (filter, el) {
   selectedKasseFilter = filter;
   document
-    .querySelectorAll("#kasse-filter-chips .filter-chip")
-    .forEach((c) => c.classList.remove("active"));
-  if (el) el.classList.add("active");
+    .querySelectorAll("#kasse-filter-chips .kasse-history-filter")
+    .forEach((button) => {
+      const isActive = button === el || (!el && button.dataset.filter === filter);
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
   renderKasseView();
 };
 
@@ -3245,7 +3485,10 @@ window.openKasseModal = function (bookingOrType = null) {
       "✏️ Buchung bearbeiten";
     document.getElementById("kasse-amount").value =
       parseFloat(booking.betrag) || "";
-    document.getElementById("kasse-purpose").value = booking.zweck || "";
+    const purpose = normalizeKassePurpose(booking.zweck);
+    document.getElementById("kasse-purpose").value = purpose;
+    document.getElementById("kasse-purpose-preset").value =
+      kassePurposePresets.includes(purpose) ? purpose : "";
     document.getElementById("kasse-date").value = booking.datum || "";
     document.getElementById("kasse-notes").value = booking.notiz || "";
     window.setKasseBookingType(booking.typ || "einnahme");
@@ -3262,6 +3505,7 @@ window.openKasseModal = function (bookingOrType = null) {
         : "🟢 Einzahlung erfassen";
     document.getElementById("kasse-amount").value = "";
     document.getElementById("kasse-purpose").value = "";
+    document.getElementById("kasse-purpose-preset").value = "";
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("kasse-date").value = today;
     document.getElementById("kasse-notes").value = "";
@@ -3488,13 +3732,30 @@ function renderPurchasesView() {
   container.innerHTML = "";
 
   if (filtered.length === 0) {
-    container.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
-                <div style="font-size: 2.5rem; margin-bottom: 8px;">🛒</div>
-                <h3 style="color: white; margin: 0 0 6px 0;">Keine Anschaffungen</h3>
-                <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neu“ Ausrüstung oder Wünsche für die Gruppe ein!</p>
-            </div>
-        `;
+    const hasActiveFilter =
+      allPurchases.length > 0 && selectedPurchaseFilter !== "alle";
+    renderEmptyState(container, {
+      icon: hasActiveFilter ? "🔎" : "🛒",
+      title: hasActiveFilter
+        ? selectedPurchaseFilter === "offen"
+          ? "Keine offenen Anschaffungen"
+          : "Noch nichts als angeschafft markiert"
+        : "Noch keine Anschaffungen",
+      description: hasActiveFilter
+        ? "In dieser Ansicht gibt es aktuell keine Einträge."
+        : "Sammle hier Wünsche und Ausrüstung für die Gruppe.",
+      actionLabel: hasActiveFilter
+        ? "Alle Anschaffungen anzeigen"
+        : "Erste Anschaffung eintragen",
+      isSearch: hasActiveFilter,
+      onAction: hasActiveFilter
+        ? () =>
+            window.filterPurchases(
+              "alle",
+              document.querySelector("#purchase-filter-chips .filter-chip"),
+            )
+        : () => window.openPurchaseModal(),
+    });
     return;
   }
 
@@ -4076,11 +4337,13 @@ function renderStauderKistenView() {
   listEl.innerHTML = "";
 
   if (allStauderKisten.length === 0) {
-    listEl.innerHTML = `
-      <div style="text-align: center; padding: 18px 12px; color: #64748b; font-size: 0.85rem;">
-        Noch keine Kisten erfasst.<br>Tippe auf <strong>➕ Kiste eintragen</strong>, wenn eine neue Kiste geholt wurde.
-      </div>
-    `;
+    renderEmptyState(listEl, {
+      icon: "📦",
+      title: "Noch keine Kisten erfasst",
+      description: "Trage eine Kiste ein, sobald eine neue geholt wurde.",
+      actionLabel: "Kiste eintragen",
+      onAction: () => window.openStauderKisteModal(),
+    });
     return;
   }
 
@@ -4600,13 +4863,33 @@ function renderLokaleView() {
   container.innerHTML = "";
 
   if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; color: var(--text-muted); margin-top: 35px; padding: 20px;">
-        <div style="font-size: 2.5rem; margin-bottom: 8px;">🍽️</div>
-        <h3 style="color: white; margin: 0 0 6px 0;">Keine Lokale gefunden</h3>
-        <p style="font-size: 0.85rem; margin: 0;">Trage oben über „➕ Neues Restaurant / Lokal eintragen“ den ersten Tipp ein!</p>
-      </div>
-    `;
+    const hasActiveFilters =
+      allLokale.length > 0 &&
+      (!!searchTerm || selectedLokalFilter !== "alle");
+    renderEmptyState(container, {
+      icon: hasActiveFilters ? "🔎" : "🍽️",
+      title: hasActiveFilters
+        ? "Keine passenden Lokale"
+        : "Noch keine Lokale gespeichert",
+      description: hasActiveFilters
+        ? searchTerm
+          ? "Passe den Suchbegriff oder den gewählten Filter an."
+          : "Für diese Kategorie gibt es aktuell keine Einträge."
+        : "Speichere einen ersten Restauranttipp für die Gruppe.",
+      actionLabel: hasActiveFilters
+        ? "Suche & Filter zurücksetzen"
+        : "Erstes Lokal eintragen",
+      isSearch: hasActiveFilters,
+      onAction: hasActiveFilters
+        ? () => {
+            if (searchInput) searchInput.value = "";
+            const allChip = document.querySelector(
+              "#lokal-filter-chips .filter-chip",
+            );
+            window.filterLokale("alle", allChip);
+          }
+        : () => window.openLokalModal(),
+    });
     return;
   }
 
@@ -5329,13 +5612,32 @@ function filterAndRenderRezepte() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px 16px; color: #94a3b8;">
-        <div style="font-size: 3rem; margin-bottom: 10px;">🍳</div>
-        <div style="font-size: 1.1rem; font-weight: 800; color: #e2e8f0; margin-bottom: 6px;">Keine Rezepte gefunden</div>
-        <div style="font-size: 0.85rem;">Probiere einen anderen Suchbegriff oder trage ein neues Gericht ein.</div>
-      </div>
-    `;
+    const hasActiveFilters =
+      allRecipes.length > 0 &&
+      (!!query ||
+        (activeRecipeCategoryFilter && activeRecipeCategoryFilter !== "alle"));
+    renderEmptyState(container, {
+      icon: hasActiveFilters ? "🔎" : "🍳",
+      title: hasActiveFilters
+        ? "Keine passenden Rezepte"
+        : "Noch keine Rezepte gespeichert",
+      description: hasActiveFilters
+        ? "Passe den Suchbegriff oder die gewählte Kategorie an."
+        : "Lege ein Rezept an, damit die Gruppe es hier wiederfindet.",
+      actionLabel: hasActiveFilters
+        ? "Suche & Filter zurücksetzen"
+        : "Erstes Rezept eintragen",
+      isSearch: hasActiveFilters,
+      onAction: hasActiveFilters
+        ? () => {
+            if (searchInput) searchInput.value = "";
+            window.filterRezepte(
+              "alle",
+              document.querySelector("#recipe-filter-chips .filter-chip"),
+            );
+          }
+        : () => window.openRecipeModal(),
+    });
     return;
   }
 
@@ -5683,13 +5985,12 @@ function renderCart() {
 
   const cart = getCart();
   if (cart.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 35px 10px; color: #94a3b8;">
-        <div style="font-size: 2.5rem; margin-bottom: 8px;">🛒</div>
-        <div style="font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">Dein Einkaufszettel ist leer</div>
-        <div style="font-size: 0.82rem;">Füge Zutaten direkt aus einem Rezept über „In den Einkaufswagen“ hinzu.</div>
-      </div>
-    `;
+    renderEmptyState(container, {
+      icon: "🛒",
+      title: "Dein Einkaufszettel ist leer",
+      description:
+        "Füge Zutaten direkt aus einem Rezept zum Einkaufszettel hinzu.",
+    });
     return;
   }
 
