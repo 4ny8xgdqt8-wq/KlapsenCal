@@ -8847,14 +8847,16 @@ textarea {
 }
 
 .xmas-season .seasonal-scene {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - 2px);
-  z-index: 3;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 72px;
+  height: 34px;
+  z-index: 10000;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   gap: 2px;
-  transform: translateX(-50%);
   pointer-events: none;
 }
 
@@ -8873,13 +8875,12 @@ textarea {
 }
 
 .easter-season .easter-scene {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - 2px);
-  z-index: 3;
+  position: fixed;
+  left: 0;
+  top: 0;
   width: 120px;
   height: 48px;
-  transform: translateX(-50%);
+  z-index: 10000;
   pointer-events: none;
 }
 
@@ -8892,13 +8893,12 @@ textarea {
 }
 
 .karneval-season .karneval-scene {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - 1px);
+  position: fixed;
+  left: 0;
+  top: 0;
   width: 104px;
   height: 36px;
-  z-index: 3;
-  transform: translateX(-50%);
+  z-index: 10000;
   pointer-events: none;
 }
 
@@ -8911,13 +8911,12 @@ textarea {
 }
 
 .halloween-season .halloween-scene {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - 1px);
+  position: fixed;
+  left: 0;
+  top: 0;
   width: 250px;
   height: 64px;
-  z-index: 3;
-  transform: translateX(-50%);
+  z-index: 10000;
   pointer-events: none;
 }
 
@@ -8970,6 +8969,7 @@ textarea {
     opacity: 0;
   }
   8% {
+    transform: translate3d(var(--bat-entry), var(--bat-rise), 0) scale(0.88);
     opacity: 0.82;
   }
   28% {
@@ -9083,12 +9083,11 @@ textarea {
 }
 
 .newyear-season .newyear-scene {
-  position: absolute;
+  position: fixed;
   left: 0;
-  right: 0;
-  bottom: calc(100% - 1px);
+  top: 0;
   height: 20px;
-  z-index: 3;
+  z-index: 10000;
   pointer-events: none;
 }
 

@@ -196,7 +196,17 @@
       }
     }
 
-    tabBar.appendChild(scene);
+    document.body.appendChild(scene);
+    const positionScene = () => {
+      const tabBarRect = tabBar.getBoundingClientRect();
+      if (activeSeason === "newyear") scene.style.width = `${tabBarRect.width}px`;
+      scene.style.left = `${tabBarRect.left + (tabBarRect.width - scene.offsetWidth) / 2}px`;
+      scene.style.top = `${tabBarRect.top - scene.offsetHeight + 1}px`;
+    };
+    positionScene();
+    window.addEventListener("resize", positionScene, { passive: true });
+    window.visualViewport?.addEventListener("resize", positionScene, { passive: true });
+    window.visualViewport?.addEventListener("scroll", positionScene, { passive: true });
   }
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -226,17 +236,23 @@
     const random = (min, max) => Math.random() * (max - min) + min;
 
     function flyBat() {
-      const screenWidth = window.innerWidth;
+      const screenWidth = window.visualViewport?.width || window.innerWidth;
+      const screenHeight = window.visualViewport?.height || window.innerHeight;
       const travel = screenWidth + 100;
       const signedTravel = travel * direction;
       const rise = -random(24, 68);
       const dip = random(8, 36);
+      const batWidth = random(54, 64);
       const bat = document.createElement("span");
       bat.className = "halloween-flying-bat";
       bat.setAttribute("aria-hidden", "true");
       bat.style.left = direction > 0 ? "-50px" : `${screenWidth + 50}px`;
-      bat.style.top = `${random(window.innerHeight * 0.13, window.innerHeight * 0.62)}px`;
-      bat.style.width = `${random(54, 64)}px`;
+      bat.style.top = `${random(screenHeight * 0.12, screenHeight * 0.5)}px`;
+      bat.style.width = `${batWidth}px`;
+      bat.style.setProperty(
+        "--bat-entry",
+        direction > 0 ? "60px" : `${-batWidth - 60}px`,
+      );
       bat.style.setProperty("--bat-quarter", `${signedTravel * 0.25}px`);
       bat.style.setProperty("--bat-half", `${signedTravel * 0.5}px`);
       bat.style.setProperty("--bat-three-quarter", `${signedTravel * 0.75}px`);
