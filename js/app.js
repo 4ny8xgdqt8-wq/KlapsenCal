@@ -364,6 +364,23 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 let pushRegistrationAuthor = "";
+let pushServiceWorkerRegistration = null;
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.ready.then((registration) => {
+    pushServiceWorkerRegistration = registration;
+  }).catch(() => {});
+}
+const pushCategories = ["events", "reminders", "stauder", "kasse", "purchases", "locales"];
+
+function getPushErrorCode(error) {
+  return (typeof error?.code === "string" && error.code) || error?.name || "unbekannt";
+}
+
+function getPushPreferences() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem("klapsen_push_preferences") || "{}"); } catch (error) {}
+  return Object.fromEntries(pushCategories.map((key) => [key, saved?.[key] !== false]));
+}
 
 function getPushDeviceAuthor() {
   const saved = localStorage.getItem("selected_author") || "";
@@ -388,6 +405,12 @@ function openPushDeviceModal() {
   });
   const saved = getPushDeviceAuthor();
   if (saved) select.value = saved;
+  const preferences = getPushPreferences();
+  document.querySelectorAll("[data-push-category]").forEach((input) => {
+    input.checked = preferences[input.dataset.pushCategory];
+  });
+  document.getElementById("push-enabled").checked =
+    localStorage.getItem("klapsen_push_disabled") !== "true";
   document.getElementById("push-device-modal").style.display = "flex";
   select.focus();
 }
@@ -396,44 +419,57 @@ window.closePushDeviceModal = function () {
   document.getElementById("push-device-modal").style.display = "none";
 };
 
-window.savePushDeviceAuthor = function (event) {
+window.savePushDeviceAuthor = async function (event) {
   event.preventDefault();
   const name = document.getElementById("push-device-author").value;
   if (!allAuthors.includes(name)) return;
   try {
     localStorage.setItem("selected_author", name);
+    const preferences = {};
+    document.querySelectorAll("[data-push-category]").forEach((input) => {
+      preferences[input.dataset.pushCategory] = input.checked;
+    });
+    localStorage.setItem("klapsen_push_preferences", JSON.stringify(preferences));
   } catch (error) {
     window.showAppModal("Speichern fehlgeschlagen", "Der Browser erlaubt das Speichern auf diesem Gerät nicht. Bitte prüfe die Browser-Einstellungen.");
     return;
   }
   renderAuthorSelects();
+  const enabled = document.getElementById("push-enabled").checked;
   window.closePushDeviceModal();
+  if (!enabled) {
+    localStorage.setItem("klapsen_push_disabled", "true");
+    pushRegistrationAuthor = "";
+    await unsubscribeUserFromPush();
+    await updateNotificationButton();
+    window.showAppModal("Gespeichert", "Der Gerätenutzer und die Einstellungen wurden gespeichert. Mitteilungen sind auf diesem Gerät ausgeschaltet.");
+    return;
+  }
   return enablePushNotificationsForDevice();
 };
 
 // Registrierung beim Web-Push-Dienst und Speichern in Firestore "push_subscriptions"
-async function subscribeUserToPush() {
+async function subscribeUserToPush(subscriptionPromise = null) {
   pushRegistrationAuthor = "";
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     throw Object.assign(new Error("Push nicht unterstützt"), { code: "push/not-supported" });
   }
   const author = getPushDeviceAuthor();
   if (!author) return null;
+  let stage = "browser";
   try {
+    const reg = pushServiceWorkerRegistration || await navigator.serviceWorker.ready;
+    // Beim automatischen Start nur ein vorhandenes Abo synchronisieren.
+    // Ein neues Abo wird direkt beim Antippen von „Speichern“ angefragt.
+    const subscription = subscriptionPromise
+      ? await subscriptionPromise
+      : await reg.pushManager.getSubscription();
+    if (!subscription) return null;
+    stage = "auth";
     if (!(await ensureAuth())) {
       throw firebaseAuthError || Object.assign(new Error("Keine gültige Firebase-Sitzung"), { code: "push/auth-failed" });
     }
-    const reg = await navigator.serviceWorker.ready;
-    let subscription = await reg.pushManager.getSubscription();
-
-    if (!subscription) {
-      const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey,
-      });
-    }
-
+    stage = "firebase";
     if (subscription) {
       const subJson = subscription.toJSON();
       const subDocId = btoa(subscription.endpoint)
@@ -446,6 +482,7 @@ async function subscribeUserToPush() {
           endpoint: subscription.endpoint,
           keys: subJson.keys || {},
           author: author,
+          preferences: getPushPreferences(),
           userAgent: navigator.userAgent,
           updatedAt: serverTimestamp(),
           createdAt: serverTimestamp(),
@@ -458,8 +495,9 @@ async function subscribeUserToPush() {
       return subscription;
     }
   } catch (err) {
-    console.error("Fehler bei Web-Push-Registrierung:", err.code || err.name);
-    throw err;
+    const code = getPushErrorCode(err);
+    console.error("Fehler bei Web-Push-Registrierung:", stage, code);
+    throw Object.assign(new Error("Push-Registrierung fehlgeschlagen"), { code, stage });
   }
   return null;
 }
@@ -486,39 +524,6 @@ let pushActivationPending = false;
 
 window.requestNotificationPermission = async function () {
   if (pushActivationPending) return;
-  if (!("Notification" in window)) {
-    window.showAppModal(
-      "Nicht unterstützt",
-      "Dieser Browser unterstützt leider keine Push-Mitteilungen. Auf dem iPhone (iOS) bitte die App über Safari mit 'Zum Home-Bildschirm' installieren!",
-    );
-    return;
-  }
-
-  const isMuted = localStorage.getItem("klapsen_push_disabled") === "true";
-  let hasActiveSub = false;
-
-  if ("serviceWorker" in navigator && "PushManager" in window) {
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      hasActiveSub = !!sub;
-    } catch (e) {}
-  }
-
-  // Wenn aktuell aktiv: 1-KLICK DEAKTIVIEREN
-  if (Notification.permission === "granted" && !isMuted && hasActiveSub &&
-      getPushDeviceAuthor() && pushRegistrationAuthor === getPushDeviceAuthor()) {
-    localStorage.setItem("klapsen_push_disabled", "true");
-    pushRegistrationAuthor = "";
-    await unsubscribeUserFromPush();
-    await updateNotificationButton();
-    window.showAppModal(
-      "Mitteilungen deaktiviert",
-      "Mitteilungen wurden für dieses Gerät ausgeschaltet. Du kannst sie jederzeit durch erneutes Antippen der Glocke wieder aktivieren.",
-    );
-    return;
-  }
-
   openPushDeviceModal();
 };
 
@@ -528,39 +533,39 @@ async function enablePushNotificationsForDevice() {
   localStorage.removeItem("klapsen_push_disabled");
 
   try {
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      const sub = await subscribeUserToPush();
-      await updateNotificationButton();
-      if (!sub) {
-        throw Object.assign(new Error("Push-Abo wurde nicht gespeichert"), { code: "push/not-registered" });
-      }
-      window.showAppModal(
-        "Aktiviert!",
-        "Perfekt! Du erhältst jetzt echte Hintergrund-Mitteilungen auf dein Smartphone, auch wenn die App geschlossen oder das Handy gesperrt ist.",
-      );
-      sendLocalNotification(
-        "Klapsentouren",
-        "Hintergrund-Mitteilungen sind erfolgreich aktiv!",
-      );
-    } else if (permission === "denied") {
-      localStorage.setItem("klapsen_push_disabled", "true");
-      await updateNotificationButton();
-      window.showAppModal(
-        "Deaktiviert",
-        "Mitteilungen wurden blockiert. Du kannst sie in den Handy- bzw. Browser-Einstellungen freigeben.",
-      );
+    if (!("Notification" in window) || !("PushManager" in window) || !("serviceWorker" in navigator)) {
+      throw Object.assign(new Error("Push nicht unterstützt"), { code: "push/not-supported" });
     }
-  } catch (e) {
-    console.error("Fehler bei Push-Aktivierung:", e.code || e.name);
+    if (!pushServiceWorkerRegistration) {
+      throw Object.assign(new Error("App wird noch vorbereitet"), { code: "push/not-ready" });
+    }
+    // Safari verlangt diesen Aufruf unmittelbar in der Benutzeraktion.
+    const subscriptionPromise = pushServiceWorkerRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const sub = await subscribeUserToPush(subscriptionPromise);
     await updateNotificationButton();
-    const code = e.code || e.name || "unbekannt";
+    if (!sub) {
+      throw Object.assign(new Error("Push-Abo wurde nicht gespeichert"), { code: "push/not-registered" });
+    }
+    window.showAppModal("Gespeichert", "Deine Einstellungen und der Gerätenutzer wurden gespeichert.");
+  } catch (e) {
+    const code = getPushErrorCode(e);
+    console.error("Fehler bei Push-Aktivierung:", e.stage || "browser", code);
+    await updateNotificationButton();
     const reason = code === "permission-denied"
       ? "Firebase hat das Speichern der Push-Zuordnung abgelehnt. Bitte lade die App neu."
       : code === "push/not-supported"
         ? "Dieser Browser unterstützt hier keine Hintergrund-Mitteilungen. Auf dem iPhone muss die App vom Home-Bildschirm gestartet werden."
+        : code === "push/not-ready"
+          ? "Die App wird noch vorbereitet. Bitte versuche es gleich erneut."
         : code === "NotAllowedError"
-          ? "Die Berechtigung für Mitteilungen wurde nicht erteilt."
+          ? "Die Berechtigung für Mitteilungen wurde nicht erteilt. Bitte prüfe die Mitteilungs-Einstellungen des Geräts."
+          : code === "AbortError" && e.stage === "browser"
+            ? "Der Browser hat die Anmeldung für Mitteilungen abgebrochen. Prüfe die Internetverbindung und versuche es erneut."
+          : code === "AbortError"
+            ? "Die Einrichtung wurde abgebrochen. Bitte versuche es erneut."
           : ["auth/network-request-failed", "unavailable"].includes(code)
             ? "Die Verbindung zu Firebase ist fehlgeschlagen. Bitte prüfe deine Internetverbindung."
             : `Die Push-Mitteilungen konnten nicht eingerichtet werden (Fehler: ${code}).`;
@@ -585,7 +590,7 @@ async function updateNotificationButton() {
     Notification.permission !== "granted"
   ) {
     btn.innerHTML = uiIcon("bellOff");
-    btn.title = "Mitteilungen aktivieren";
+    btn.title = "Mitteilungen und Gerät einstellen";
     btn.style.opacity = "0.55";
     return;
   }
@@ -603,135 +608,14 @@ async function updateNotificationButton() {
 
   if (hasSub && getPushDeviceAuthor() && pushRegistrationAuthor === getPushDeviceAuthor()) {
     btn.innerHTML = uiIcon("bell");
-    btn.title = "Hintergrund-Mitteilungen aktiv (Tippen zum Deaktivieren)";
+    btn.title = "Mitteilungen und Gerät einstellen";
     btn.style.opacity = "1";
   } else {
     btn.innerHTML = uiIcon("bellOff");
-    btn.title = "Mitteilungen aktivieren";
+    btn.title = "Mitteilungen und Gerät einstellen";
     btn.style.opacity = "0.55";
   }
 }
-
-// Lokale Sofort-Benachrichtigung (Fallback für Vordergrund)
-async function sendLocalNotification(title, body) {
-  if (localStorage.getItem("klapsen_push_disabled") === "true") return;
-  if (!("Notification" in window) || Notification.permission !== "granted")
-    return;
-
-  try {
-    if ("serviceWorker" in navigator) {
-      const reg = await navigator.serviceWorker.ready;
-      if (reg && reg.showNotification) {
-        reg.showNotification(title, {
-          body: body,
-          icon: "logo.png",
-          badge: "icons/icon-192.png",
-          vibrate: [200, 100, 200],
-          data: { url: "./index.html" },
-        });
-        return;
-      }
-    }
-    new Notification(title, {
-      body: body,
-      icon: "logo.png",
-    });
-  } catch (e) {
-    console.warn("Konnte lokale Benachrichtigung nicht senden:", e);
-  }
-}
-
-// ==========================================
-// 3.1 Lokale Erinnerungen für weitere Serien- und Zeitraumtage
-// ==========================================
-function checkUpcomingReminders() {
-  if (localStorage.getItem("klapsen_push_disabled") === "true") return;
-  if (!("Notification" in window) || Notification.permission !== "granted")
-    return;
-
-  let sentReminders = {};
-  try {
-    sentReminders = JSON.parse(
-      localStorage.getItem("klapsen_sent_reminders") || "{}",
-    );
-  } catch (e) {
-    sentReminders = {};
-  }
-
-  const now = new Date();
-
-  allEvents.forEach((ev) => {
-    if ((!ev.isRecurringOccurrence && !ev.isRangeOccurrence) || !isFixedDateEvent(ev) || !ev.Titel) return;
-
-    const isAllDay = !!ev.isAllDay || !ev.Uhrzeit;
-    const parts = ev.Datum.split("-");
-    if (parts.length !== 3) return;
-
-    const year = parseInt(parts[0]);
-    const month = parseInt(parts[1]) - 1;
-    const day = parseInt(parts[2]);
-
-    if (isAllDay) {
-      // Ganztägiger Termin: Vorabend ab 20:00 Uhr erinnern
-      const eveReminderTime = new Date(year, month, day - 1, 20, 0, 0);
-      const eventDayEnd = new Date(year, month, day, 23, 59, 59);
-
-      const reminderKey = `reminder_allday_${ev.id || ev.Titel}_${ev.Datum}`;
-
-      if (
-        now >= eveReminderTime &&
-        now <= eventDayEnd &&
-        !sentReminders[reminderKey]
-      ) {
-        const isEve =
-          now.getFullYear() === year &&
-          now.getMonth() === month &&
-          now.getDate() === day - 1;
-        const titleText = isEve
-          ? `Erinnerung für morgen: ${ev.Titel}`
-          : `Heute ganztägig: ${ev.Titel}`;
-        const bodyText = `${isEve ? "Morgen" : "Heute"} steht '${ev.Titel}' an!${ev.Ort ? " (" + ev.Ort + ")" : ""}`;
-
-        sendLocalNotification(titleText, bodyText);
-        sentReminders[reminderKey] = Date.now();
-      }
-    } else {
-      // Termin mit fester Uhrzeit: 2 Stunden vorher erinnern
-      const timeParts = (ev.Uhrzeit || "00:00").split(":");
-      const hours = parseInt(timeParts[0]) || 0;
-      const minutes = parseInt(timeParts[1]) || 0;
-
-      const eventStartTime = new Date(year, month, day, hours, minutes, 0);
-      const reminderTime = new Date(
-        eventStartTime.getTime() - 2 * 60 * 60 * 1000,
-      ); // 2 Std vorher
-
-      const reminderKey = `reminder_timed_${ev.id || ev.Titel}_${ev.Datum}_${ev.Uhrzeit}`;
-
-      if (
-        now >= reminderTime &&
-        now < eventStartTime &&
-        !sentReminders[reminderKey]
-      ) {
-        const titleText = `⏰ Erinnerung: ${ev.Titel}`;
-        const bodyText = `Um ${ev.Uhrzeit} Uhr: '${ev.Titel}'${ev.Ort ? " (" + ev.Ort + ")" : ""}`;
-
-        sendLocalNotification(titleText, bodyText);
-        sentReminders[reminderKey] = Date.now();
-      }
-    }
-  });
-
-  try {
-    localStorage.setItem(
-      "klapsen_sent_reminders",
-      JSON.stringify(sentReminders),
-    );
-  } catch (e) {}
-}
-
-// Regelmäßige Prüfung alle 60 Sekunden
-setInterval(checkUpcomingReminders, 60000);
 
 // ==========================================
 // 4. Autoren & Kategorien (Echtzeit aus Firebase)
@@ -1244,7 +1128,6 @@ function initEventsListener() {
       renderCalendarWidget();
       filterAndRender();
       updateTasksBadge();
-      checkUpcomingReminders();
 
       if (currentDetailData) {
         const refreshed = allEvents.find((e) => e.id === currentDetailData.id) ||
@@ -2438,6 +2321,7 @@ function showEventDetails(data) {
   }
 
   const linkBtn = document.getElementById("btn-open-link");
+  const calendarBtn = document.getElementById("btn-export-calendar");
   const actionsCont = document.getElementById("detail-actions-container");
   const targetLink = data.OrtLink || data.Link;
 
@@ -2448,6 +2332,10 @@ function showEventDetails(data) {
     hasAction = true;
   } else if (linkBtn) {
     linkBtn.style.display = "none";
+  }
+  if (calendarBtn) {
+    calendarBtn.style.display = isFixedDateEvent(data) ? "flex" : "none";
+    if (isFixedDateEvent(data)) hasAction = true;
   }
 
   if (actionsCont) {
@@ -2469,6 +2357,73 @@ function showEventDetails(data) {
   overlay.style.display = "flex";
 }
 window.showEventDetails = showEventDetails;
+
+// Eine einzelne ausgewählte Instanz als Kalenderdatei übernehmen.
+window.exportEventToCalendar = async function () {
+  const event = currentDetailData;
+  if (!event || !isFixedDateEvent(event)) return;
+  const escapeIcs = (value) => String(value || "").replace(/\\/g, "\\\\")
+    .replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const compactDate = (value) => value.replace(/-/g, "");
+  const nextDay = (value) => {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+  };
+  const allDay = !!event.isAllDay || !event.Uhrzeit;
+  const base = rawEvents.find((item) => item.id === (event.baseId || event.id));
+  const isRange = base?.Enddatum && base.Enddatum > base.Datum;
+  const start = isRange ? base.Datum : event.Datum;
+  const end = isRange ? base.Enddatum : start;
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Klapsentouren//Kalender//DE", "BEGIN:VEVENT",
+    `UID:${escapeIcs(`${event.baseId || event.id}-${start}@klapsencal.app`)}`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`,
+    `SUMMARY:${escapeIcs(event.Titel)}`];
+  if (allDay) {
+    lines.push(`DTSTART;VALUE=DATE:${compactDate(start)}`, `DTEND;VALUE=DATE:${compactDate(nextDay(end))}`);
+  } else {
+    const [year, month, day] = start.split("-").map(Number);
+    const [hour, minute] = event.Uhrzeit.split(":").map(Number);
+    const wallTime = Date.UTC(year, month - 1, day, hour, minute);
+    const offset = (timestamp) => {
+      const zone = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", timeZoneName: "longOffset" })
+        .formatToParts(new Date(timestamp)).find((part) => part.type === "timeZoneName").value;
+      const match = zone.match(/^GMT([+-])(\d{2}):(\d{2})$/);
+      if (!match) throw new Error("Zeitzone nicht verfügbar");
+      return (match[1] === "+" ? 1 : -1) * (Number(match[2]) * 60 + Number(match[3])) * 60000;
+    };
+    const utc = new Date(wallTime - offset(wallTime - offset(wallTime)));
+    const formatUtc = (date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    lines.push(`DTSTART:${formatUtc(utc)}`, `DTEND:${formatUtc(new Date(utc.getTime() + 3600000))}`);
+  }
+  if (event.Ort) lines.push(`LOCATION:${escapeIcs(event.Ort)}`);
+  const description = [event.Beschreibung, !allDay ? "Die Dauer wurde mit einer Stunde eingetragen." : ""].filter(Boolean).join("\n");
+  if (description) lines.push(`DESCRIPTION:${escapeIcs(description)}`);
+  lines.push("END:VEVENT", "END:VCALENDAR");
+  // Kalenderdateien begrenzen jede Zeile auf 75 Bytes, einschließlich UTF-8-Zeichen.
+  const encoder = new TextEncoder();
+  const folded = lines.map((line) => {
+    let result = "", length = 0;
+    for (const character of line) {
+      const size = encoder.encode(character).length;
+      if (length + size > 75) { result += "\r\n "; length = 1; }
+      result += character; length += size;
+    }
+    return result;
+  }).join("\r\n") + "\r\n";
+  const file = new File([folded], "termin.ics", { type: "text/calendar;charset=utf-8" });
+  try {
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: event.Titel });
+    } else {
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url; link.download = "termin.ics"; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") window.showAppModal("Kalenderdatei", "Der Termin konnte nicht geöffnet werden. Bitte versuche es erneut.");
+  }
+};
 
 window.rateCurrentEventLocation = function () {
   if (!currentDetailData) return;
@@ -3043,7 +2998,10 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
   else if (durationType === "6m") maxMonths = 6;
   else if (durationType === "1y") maxMonths = 12;
   else if (durationType === "2y") maxMonths = 24;
-  else if (durationType === "forever") maxMonths = 60;
+  else if (durationType === "forever") {
+    const today = new Date();
+    maxMonths = Math.max(60, (today.getFullYear() - startYear) * 12 + today.getMonth() - (startMonth - 1) + 24);
+  }
 
   const endDate = new Date(startDate);
   endDate.setMonth(endDate.getMonth() + maxMonths);

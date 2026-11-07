@@ -2174,6 +2174,24 @@ select.form-control {
   line-height: 1.4;
   white-space: pre-line;
 }
+.push-settings-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  text-align: left;
+}
+.push-settings-options label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e2e8f0;
+}
+.push-settings-options input {
+  width: 19px;
+  height: 19px;
+  accent-color: var(--primary-color);
+  flex-shrink: 0;
+}
 .btn-modal-close {
   background: var(--primary-color);
   color: white;

@@ -96,6 +96,15 @@ async function broadcastPushNotification(payload, excludeAuthor = null) {
     const pushPromises = subsSnapshot.docs.map(async (docSnap) => {
       const data = docSnap.data();
 
+      const tag = payload.tag || "";
+      const category = tag.startsWith("event-") ? "events"
+        : tag.startsWith("eve_") || tag.startsWith("timed_") ? "reminders"
+          : tag.startsWith("stauder-") ? "stauder"
+            : tag.startsWith("kasse-") ? "kasse"
+              : tag.startsWith("anschaffung-") ? "purchases"
+                : tag.startsWith("lokal-") ? "locales" : "";
+      if (category && data.preferences?.[category] === false) return;
+
       // Optional: Autor der Aktion nicht selbst benachrichtigen
       if (
         excludeAuthor &&
@@ -476,6 +485,146 @@ exports.onLokalCreated = functions
     return null;
   });
 
+function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
+  if (!recurrenceType || recurrenceType === "none") {
+    return [startDateStr];
+  }
+
+  const [startYear, startMonth, startDay] = startDateStr.split("-").map(Number);
+  const startDate = new Date(startYear, startMonth - 1, startDay, 12, 0, 0);
+
+  let maxMonths = 36;
+  if (durationType === "3m") maxMonths = 3;
+  else if (durationType === "6m") maxMonths = 6;
+  else if (durationType === "1y") maxMonths = 12;
+  else if (durationType === "2y") maxMonths = 24;
+  else if (durationType === "forever") {
+    const today = new Date();
+    maxMonths = Math.max(60, (today.getFullYear() - startYear) * 12 + today.getMonth() - (startMonth - 1) + 24);
+  }
+
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + maxMonths);
+
+  const dates = [];
+  let cur = new Date(startDate);
+
+  if (recurrenceType === "weekly") {
+    while (cur <= endDate) {
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, "0");
+      const d = String(cur.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
+      cur.setDate(cur.getDate() + 7);
+    }
+  } else if (recurrenceType === "biweekly") {
+    while (cur <= endDate) {
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, "0");
+      const d = String(cur.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
+      cur.setDate(cur.getDate() + 14);
+    }
+  } else if (recurrenceType === "monthly") {
+    let step = 0;
+    while (step <= maxMonths) {
+      const targetMonthIndex = startMonth - 1 + step;
+      const tempDate = new Date(startYear, targetMonthIndex, 1, 12, 0, 0);
+      const daysInMonth = new Date(
+        tempDate.getFullYear(),
+        tempDate.getMonth() + 1,
+        0,
+      ).getDate();
+      const targetDate = new Date(
+        tempDate.getFullYear(),
+        tempDate.getMonth(),
+        Math.min(startDay, daysInMonth),
+        12,
+        0,
+        0,
+      );
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const d = String(targetDate.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
+      step++;
+    }
+  } else if (
+    recurrenceType === "every2months" ||
+    recurrenceType === "every3months"
+  ) {
+    const stepSize = recurrenceType === "every2months" ? 2 : 3;
+    const targetWeekday = startDate.getDay(); // 0 = So, 1 = Mo, ..., 5 = Fr, 6 = Sa
+    const nth = Math.floor((startDay - 1) / 7) + 1; // 1., 2., 3., 4. oder 5. Wochentag im Monat
+
+    let step = 0;
+    while (step <= maxMonths) {
+      const targetMonthIndex = startMonth - 1 + step;
+      const firstDay = new Date(startYear, targetMonthIndex, 1, 12, 0, 0);
+      const tempYear = firstDay.getFullYear();
+      const tempMonth = firstDay.getMonth();
+      const firstWeekday = firstDay.getDay();
+      const dayOffset = (targetWeekday - firstWeekday + 7) % 7;
+      let day = 1 + dayOffset + (nth - 1) * 7;
+
+      const daysInTargetMonth = new Date(tempYear, tempMonth + 1, 0).getDate();
+      // Falls ein Monat ausnahmsweise keinen 5. Wochentag hat, auf den letzten (4.) fallen
+      if (day > daysInTargetMonth) {
+        day -= 7;
+      }
+
+      const targetDate = new Date(tempYear, tempMonth, day, 12, 0, 0);
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const d = String(targetDate.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
+
+      step += stepSize;
+    }
+  } else if (recurrenceType === "yearly") {
+    const yearsCount = Math.max(1, Math.round(maxMonths / 12));
+    for (let step = 0; step <= yearsCount; step++) {
+      const targetDate = new Date(
+        startYear + step,
+        startMonth - 1,
+        startDay,
+        12,
+        0,
+        0,
+      );
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const d = String(targetDate.getDate()).padStart(2, "0");
+      dates.push(`${y}-${m}-${d}`);
+    }
+  }
+
+  return dates.length > 0 ? dates : [startDateStr];
+}
+
+function reminderCandidateDates(now) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now);
+  const part = (type) => Number(parts.find((item) => item.type === type).value);
+  const today = new Date(Date.UTC(part("year"), part("month") - 1, part("day")));
+  return [0, 1].map((days) => new Date(today.getTime() + days * 86400000).toISOString().slice(0, 10));
+}
+
+function eventOccursOn(ev, date) {
+  if (ev.Enddatum && ev.Enddatum > ev.Datum) {
+    const elapsed = (Date.parse(date + "T00:00:00Z") - Date.parse(ev.Datum + "T00:00:00Z")) / 86400000;
+    return date >= ev.Datum && date <= ev.Enddatum && elapsed < 90;
+  }
+  if (!ev.Wiederholung || ev.Wiederholung === "none") return date === ev.Datum;
+  return calculateRecurrenceDates(ev.Datum, ev.Wiederholung, ev.WiederholungDauer || "forever").includes(date);
+}
+
+function normalizeEventDate(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  return match ? `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}` : "";
+}
+
 /**
  * 8. Zeitgesteuerte Terminerinnerungen (alle 15 Minuten)
  * Erinnert 2 Stunden vor Startzeit bzw. am Vorabend um 20:00 Uhr bei ganztägigen Terminen
@@ -499,88 +648,93 @@ exports.checkScheduledReminders = onSchedule(
       if (docSnap.id === "Ersteller" || docSnap.id === "Art") continue;
       const rawEvent = docSnap.data();
       const fields = getEventFields(rawEvent);
-      const ev = { ...rawEvent, Titel: fields.titel, Datum: fields.datum,
-        Enddatum: fields.enddatum, Uhrzeit: fields.uhrzeit, Ort: fields.ort };
+      const ev = { ...rawEvent, Titel: fields.titel, Datum: normalizeEventDate(fields.datum),
+        Enddatum: normalizeEventDate(fields.enddatum), Uhrzeit: fields.uhrzeit, Ort: fields.ort };
       if (!ev.Datum || !ev.Titel || ev.DatumFlexibel) continue;
 
-      const parts = ev.Datum.split("-");
-      if (parts.length !== 3) continue;
+      const originalDate = ev.Datum;
+      for (const occurrenceDate of reminderCandidateDates(now)) {
+        if (!eventOccursOn({ ...ev, Datum: originalDate }, occurrenceDate)) continue;
+        ev.Datum = occurrenceDate;
+        const parts = ev.Datum.split("-");
+        if (parts.length !== 3) continue;
 
-      const year = parseInt(parts[0]);
-      const month = parseInt(parts[1]) - 1;
-      const day = parseInt(parts[2]);
-      const isAllDay = !!ev.isAllDay || !ev.Uhrzeit;
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+        const isAllDay = !!ev.isAllDay || !ev.Uhrzeit;
 
-      if (isAllDay) {
-        // Vorabend-Erinnerung ab 20:00 Uhr für den nächsten Tag
-        const eveReminderStart = berlinDateToUtc(year, month, day - 1, 20, 0);
-        const eveReminderEnd = new Date(eveReminderStart.getTime() + 30 * 60 * 1000);
-        const reminderKey = `eve_${docSnap.id}_${ev.Datum}`;
+        if (isAllDay) {
+          // Vorabend-Erinnerung ab 20:00 Uhr für den nächsten Tag
+          const eveReminderStart = berlinDateToUtc(year, month, day - 1, 20, 0);
+          const eveReminderEnd = new Date(eveReminderStart.getTime() + 30 * 60 * 1000);
+          const reminderKey = `eve_${docSnap.id}_${ev.Datum}`;
 
-        if (
-          now >= eveReminderStart &&
-          now <= eveReminderEnd &&
-          !sentReminders[reminderKey]
-        ) {
-          const eveActions = [];
-          if (ev.Ort) {
-            eveActions.push({ action: "open_maps", title: "🧭 Route planen" });
-          }
-          eveActions.push({
-            action: "open_tasks",
-            title: "📋 Aufgaben prüfen",
-          });
-
-          await broadcastPushNotification({
-            title: `☀️ Morgen: ${ev.Titel}`,
-            body: `Morgen steht '${ev.Titel}' an!${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
-            url: "./index.html#termine",
-            mapsQuery: ev.Ort || "",
-            actions: eveActions,
-            tag: reminderKey,
-          });
-          sentReminders[reminderKey] = now.toISOString();
-          newSentKeys = true;
-        }
-      } else {
-        // 2 Stunden vorher erinnern
-        const timeParts = (ev.Uhrzeit || "00:00").split(":");
-        const hours = parseInt(timeParts[0]) || 0;
-        const minutes = parseInt(timeParts[1]) || 0;
-
-        const eventStartTime = berlinDateToUtc(year, month, day, hours, minutes);
-        const twoHoursBefore = new Date(
-          eventStartTime.getTime() - 2 * 60 * 60 * 1000,
-        );
-        const reminderWindowEnd = new Date(
-          eventStartTime.getTime() - 1 * 60 * 60 * 1000,
-        );
-        const reminderKey = `timed_${docSnap.id}_${ev.Datum}_${ev.Uhrzeit}`;
-
-        if (
-          now >= twoHoursBefore &&
-          now <= reminderWindowEnd &&
-          !sentReminders[reminderKey]
-        ) {
-          const timedActions = [];
-          if (ev.Ort) {
-            timedActions.push({
-              action: "open_maps",
-              title: "🧭 Route starten",
+          if (
+            now >= eveReminderStart &&
+            now <= eveReminderEnd &&
+            !sentReminders[reminderKey]
+          ) {
+            const eveActions = [];
+            if (ev.Ort) {
+              eveActions.push({ action: "open_maps", title: "🧭 Route planen" });
+            }
+            eveActions.push({
+              action: "open_tasks",
+              title: "📋 Aufgaben prüfen",
             });
-          }
-          timedActions.push({ action: "open_tasks", title: "📋 Was fehlt?" });
 
-          await broadcastPushNotification({
-            title: `⏰ Erinnerung: ${ev.Titel}`,
-            body: `Um ${ev.Uhrzeit} Uhr geht's los: '${ev.Titel}'${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
-            url: "./index.html#termine",
-            mapsQuery: ev.Ort || "",
-            actions: timedActions,
-            tag: reminderKey,
-          });
-          sentReminders[reminderKey] = now.toISOString();
-          newSentKeys = true;
+            await broadcastPushNotification({
+              title: `☀️ Morgen: ${ev.Titel}`,
+              body: `Morgen steht '${ev.Titel}' an!${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
+              url: "./index.html#termine",
+              mapsQuery: ev.Ort || "",
+              actions: eveActions,
+              tag: reminderKey,
+            });
+            sentReminders[reminderKey] = now.toISOString();
+            newSentKeys = true;
+          }
+        } else {
+          // 2 Stunden vorher erinnern
+          const timeParts = (ev.Uhrzeit || "00:00").split(":");
+          const hours = parseInt(timeParts[0]) || 0;
+          const minutes = parseInt(timeParts[1]) || 0;
+
+          const eventStartTime = berlinDateToUtc(year, month, day, hours, minutes);
+          const twoHoursBefore = new Date(
+            eventStartTime.getTime() - 2 * 60 * 60 * 1000,
+          );
+          const reminderWindowEnd = new Date(
+            eventStartTime.getTime() - 1 * 60 * 60 * 1000,
+          );
+          const reminderKey = `timed_${docSnap.id}_${ev.Datum}_${ev.Uhrzeit}`;
+
+          if (
+            now >= twoHoursBefore &&
+            now <= reminderWindowEnd &&
+            !sentReminders[reminderKey]
+          ) {
+            const timedActions = [];
+            if (ev.Ort) {
+              timedActions.push({
+                action: "open_maps",
+                title: "🧭 Route starten",
+              });
+            }
+            timedActions.push({ action: "open_tasks", title: "📋 Was fehlt?" });
+
+            await broadcastPushNotification({
+              title: `⏰ Erinnerung: ${ev.Titel}`,
+              body: `Um ${ev.Uhrzeit} Uhr geht's los: '${ev.Titel}'${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
+              url: "./index.html#termine",
+              mapsQuery: ev.Ort || "",
+              actions: timedActions,
+              tag: reminderKey,
+            });
+            sentReminders[reminderKey] = now.toISOString();
+            newSentKeys = true;
+          }
         }
       }
     }
