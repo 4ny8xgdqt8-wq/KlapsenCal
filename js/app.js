@@ -173,9 +173,9 @@ try {
 // ==========================================
 const DEFAULT_AUTHORS = [
   "Daniel",
-  "Daniela",
+  "Dani",
   "Peter",
-  "Simone",
+  "MamaMone",
   "Tanja",
   "Thorsten",
   "Nic",
@@ -184,6 +184,10 @@ const DEFAULT_AUTHORS = [
   "Emily",
   "Alexander",
 ];
+function getAuthorAvatarPath(name) {
+  const avatarName = name === "Dani" ? "Daniela" : name === "MamaMone" ? "Simone" : name;
+  return `avatars/${avatarName}.webp`;
+}
 const DEFAULT_CATEGORIES = [
   "Essen",
   "Konzert",
@@ -267,9 +271,9 @@ function getCategoryColor(cat) {
 const CHILDREN_NAMES = ["Nic", "Tristan", "Simon", "Emily", "Alexander"];
 const ADULT_NAMES = [
   "Daniel",
-  "Daniela",
+  "Dani",
   "Peter",
-  "Simone",
+  "MamaMone",
   "Tanja",
   "Thorsten",
 ];
@@ -714,7 +718,7 @@ function renderFormParticipants() {
     chip.type = "button";
     chip.className = `form-participant-chip ${isSelected ? "selected" : ""}`;
     chip.innerHTML = `
-            <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="form-participant-avatar" alt="${name}">
+            <img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null; this.src='logo.png';" class="form-participant-avatar" alt="${name}">
             <span class="form-participant-name">${name}</span>
             ${isSelected ? '<span class="form-participant-check">✓</span>' : ""}
         `;
@@ -1585,7 +1589,7 @@ function renderEvents(events) {
           .slice(0, 3)
           .map(
             (name) =>
-              `<img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" alt="${name}" title="${name}" style="width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #13241b; margin-left: -6px;">`,
+              `<img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null; this.src='logo.png';" alt="${name}" title="${name}" style="width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #13241b; margin-left: -6px;">`,
           )
           .join("");
         rsvpStackHtml = `
@@ -1632,7 +1636,7 @@ function renderEvents(events) {
         .slice(0, maxPreview)
         .map(
           (name) => `
-                <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="participant-mini" alt="${name}">
+                <img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null; this.src='logo.png';" class="participant-mini" alt="${name}">
             `,
         )
         .join("");
@@ -1724,7 +1728,7 @@ function renderEvents(events) {
         .slice(0, 4)
         .map(
           (name) =>
-            `<img src="avatars/${name}.webp" onerror="this.onerror=null;this.src='logo.png';" class="event-avatar-item" alt="${name}" title="${name}">`,
+            `<img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null;this.src='logo.png';" class="event-avatar-item" alt="${name}" title="${name}">`,
         )
         .join("");
       const extraCount =
@@ -2401,7 +2405,7 @@ function showEventDetails(data) {
       authorAvatarImg.onerror = () => {
         authorAvatarImg.src = "logo.png";
       };
-      authorAvatarImg.src = `avatars/${data.Ersteller}.webp`;
+      authorAvatarImg.src = getAuthorAvatarPath(data.Ersteller);
     } else {
       authorAvatarImg.src = "logo.png";
     }
@@ -2571,7 +2575,7 @@ function renderDetailRSVP(data) {
       : '<span class="rsvp-role-badge adult">Erw.</span>';
 
     card.innerHTML = `
-            <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="rsvp-card-avatar" alt="${name}">
+            <img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null; this.src='logo.png';" class="rsvp-card-avatar" alt="${name}">
             <div class="rsvp-info">
                 <span class="rsvp-name">${name}</span>
                 ${roleBadge}
@@ -3449,7 +3453,7 @@ document.getElementById("event-author").addEventListener("change", (e) => {
     img.onerror = () => {
       img.src = "logo.png";
     };
-    img.src = name ? `avatars/${name}.webp` : "logo.png";
+    img.src = name ? getAuthorAvatarPath(name) : "logo.png";
   }
   if (name) {
     formParticipants[name] = "yes";
@@ -3470,7 +3474,7 @@ if (lokalAuthorEl) {
       img.onerror = () => {
         img.src = "logo.png";
       };
-      img.src = name ? `avatars/${name}.webp` : "logo.png";
+      img.src = name ? getAuthorAvatarPath(name) : "logo.png";
     }
   });
 }
@@ -3503,8 +3507,8 @@ const kassePurposePresets = [
   "Familie Tornau",
 ];
 const kasseFamilyMembers = {
-  "Familie Schwabschmi": ["Daniel", "Daniela"],
-  "Familie Zalewski": ["Peter", "Simone"],
+  "Familie Schwabschmi": ["Daniel", "Dani"],
+  "Familie Zalewski": ["Peter", "MamaMone"],
   "Familie Tornau": ["Tanja", "Thorsten"],
 };
 const kassePurposeAliases = new Map([
@@ -3581,7 +3585,7 @@ function createKasseBookingCard(booking) {
 
   const formattedDate = formatDateObj(booking.datum).formattedLong;
   const authorHtml = booking.ersteller
-    ? `<span class="kasse-tx-person"><img src="avatars/${escapeLokalHtml(booking.ersteller)}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-tx-person-avatar" alt="${escapeLokalHtml(booking.ersteller)}" title="${escapeLokalHtml(booking.ersteller)}"><span>${escapeLokalHtml(booking.ersteller)}</span></span>`
+    ? `<span class="kasse-tx-person"><img src="${escapeLokalHtml(getAuthorAvatarPath(booking.ersteller))}" onerror="this.onerror=null;this.src='logo.png';" class="kasse-tx-person-avatar" alt="${escapeLokalHtml(booking.ersteller)}" title="${escapeLokalHtml(booking.ersteller)}"><span>${escapeLokalHtml(booking.ersteller)}</span></span>`
     : "";
   const noteHtml = booking.notiz
     ? `<span class="kasse-tx-note">${uiIcon("file")} ${escapeLokalHtml(booking.notiz)}</span>`
@@ -3643,7 +3647,7 @@ function createKasseFamilyGroup(familyName, bookings) {
     ? `<span class="kasse-family-avatars" role="img" aria-label="${escapeLokalHtml(familyMembers.join(" und "))}">${familyMembers
         .map(
           (name) =>
-            `<img src="avatars/${escapeLokalHtml(name)}.webp" onerror="this.onerror=null;this.src='logo.png';" class="kasse-family-avatar" alt="" aria-hidden="true" title="${escapeLokalHtml(name)}">`,
+            `<img src="${escapeLokalHtml(getAuthorAvatarPath(name))}" onerror="this.onerror=null;this.src='logo.png';" class="kasse-family-avatar" alt="" aria-hidden="true" title="${escapeLokalHtml(name)}">`,
         )
         .join("")}</span>`
     : `<span class="kasse-family-monogram" aria-hidden="true">${escapeLokalHtml(familyInitial)}</span>`;
@@ -4745,7 +4749,7 @@ function renderStauderKistenView() {
     itemEl.innerHTML = `
       <div class="stauder-kisten-item-left">
         <img
-          src="avatars/${buyerName}.webp"
+          src="${getAuthorAvatarPath(buyerName)}"
           onerror="this.onerror=null; this.src='logo.png';"
           class="stauder-kisten-avatar"
           alt="${buyerName}"
@@ -4836,7 +4840,7 @@ function openStauderKisteModal(id = null) {
       const chip = document.createElement("div");
       chip.className = `stauder-kiste-buyer-chip ${name === stauderKisteSelectedBuyer ? "selected" : ""}`;
       chip.innerHTML = `
-        <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="stauder-kiste-buyer-avatar" alt="${name}"/>
+        <img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null; this.src='logo.png';" class="stauder-kiste-buyer-avatar" alt="${name}"/>
         <span>${name}</span>
       `;
       chip.onclick = () => {
@@ -5181,7 +5185,7 @@ function renderLokalParticipants() {
     chip.type = "button";
     chip.className = `form-participant-chip ${isSelected ? "selected" : ""}`;
     chip.innerHTML = `
-      <img src="avatars/${name}.webp" onerror="this.onerror=null; this.src='logo.png';" class="form-participant-avatar" alt="${name}">
+      <img src="${getAuthorAvatarPath(name)}" onerror="this.onerror=null; this.src='logo.png';" class="form-participant-avatar" alt="${name}">
       <span class="form-participant-name">${name}</span>
       ${isSelected ? '<span class="form-participant-check">✓</span>' : ""}
     `;
@@ -5313,7 +5317,7 @@ function renderLokaleView() {
     }
 
     const authorAvatar = item.author
-      ? `avatars/${item.author}.webp`
+      ? getAuthorAvatarPath(item.author)
       : "logo.png";
 
     // Google Maps Link für Standort
@@ -5340,7 +5344,7 @@ function renderLokaleView() {
       attendedAuthors.slice(0, 5).forEach((name, idx) => {
         avatarStack += `
           <img
-            src="avatars/${name}.webp"
+            src="${getAuthorAvatarPath(name)}"
             onerror="this.onerror=null; this.src='logo.png';"
             class="lokal-stack-avatar"
             style="z-index: ${10 - idx};"
@@ -5545,7 +5549,7 @@ window.openLokalModal = function (id = null, prefill = null) {
       authorSelect.value = item.author;
       const img = document.getElementById("lokal-author-avatar");
       if (img) {
-        img.src = `avatars/${item.author}.webp`;
+        img.src = getAuthorAvatarPath(item.author);
         img.onerror = () => {
           img.src = "logo.png";
         };
@@ -5580,7 +5584,7 @@ window.openLokalModal = function (id = null, prefill = null) {
       authorSelect.value = prefill.author;
       const img = document.getElementById("lokal-author-avatar");
       if (img) {
-        img.src = `avatars/${prefill.author}.webp`;
+        img.src = getAuthorAvatarPath(prefill.author);
         img.onerror = () => {
           img.src = "logo.png";
         };
@@ -6048,7 +6052,7 @@ function filterAndRenderRezepte() {
     const arts = Array.isArray(r.Art) ? r.Art : r.Art ? [r.Art] : [];
     const imgSrc = getRecipeImage(arts);
     const authorName = r.Ersteller || "Gruppe";
-    const authorAvatar = `avatars/${authorName}.webp`;
+    const authorAvatar = getAuthorAvatarPath(authorName);
     const portions = r.Personenanzahl || 4;
     const time = r.Zeit ? `${r.Zeit} Min.` : "30 Min.";
     const isLink = !!r.isLink;
@@ -6151,7 +6155,7 @@ function openRecipeDetail(recipeId) {
   document.getElementById("recipe-detail-author-name").textContent = authorName;
   const authorImg = document.getElementById("recipe-detail-author-img");
   if (authorImg) {
-    authorImg.src = `avatars/${authorName}.webp`;
+    authorImg.src = getAuthorAvatarPath(authorName);
     authorImg.onerror = () => {
       authorImg.src = "logo.png";
     };
