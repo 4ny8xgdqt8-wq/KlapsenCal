@@ -291,9 +291,6 @@ let selectedType = "Essen";
 let formParticipants = {};
 let editingEventId = null;
 let currentDetailData = null;
-let isInitialLoad = true;
-let initialEventsLoaded = false;
-let knownEventDocIds = new Set();
 
 let calCurrentYear = new Date().getFullYear();
 let calCurrentMonth = new Date().getMonth();
@@ -460,6 +457,13 @@ window.requestNotificationPermission = async function () {
     if (permission === "granted") {
       const sub = await subscribeUserToPush();
       await updateNotificationButton();
+      if (!sub) {
+        window.showAppModal(
+          "Aktivierung fehlgeschlagen",
+          "Die Hintergrund-Mitteilungen konnten nicht eingerichtet werden. Bitte versuche es erneut.",
+        );
+        return;
+      }
       window.showAppModal(
         "Aktiviert!",
         "Perfekt! Du erhältst jetzt echte Hintergrund-Mitteilungen auf dein Smartphone, auch wenn die App geschlossen oder das Handy gesperrt ist.",
@@ -551,7 +555,7 @@ async function sendLocalNotification(title, body) {
 }
 
 // ==========================================
-// 3.1 Automatische Terminerinnerungen (2h vorher / Vorabend 20 Uhr)
+// 3.1 Lokale Erinnerungen für weitere Serien- und Zeitraumtage
 // ==========================================
 function checkUpcomingReminders() {
   if (localStorage.getItem("klapsen_push_disabled") === "true") return;
@@ -570,7 +574,7 @@ function checkUpcomingReminders() {
   const now = new Date();
 
   allEvents.forEach((ev) => {
-    if (!isFixedDateEvent(ev) || !ev.Titel) return;
+    if ((!ev.isRecurringOccurrence && !ev.isRangeOccurrence) || !isFixedDateEvent(ev) || !ev.Titel) return;
 
     const isAllDay = !!ev.isAllDay || !ev.Uhrzeit;
     const parts = ev.Datum.split("-");
@@ -622,7 +626,7 @@ function checkUpcomingReminders() {
         now < eventStartTime &&
         !sentReminders[reminderKey]
       ) {
-        const titleText = `⏰ In 2 Stunden: ${ev.Titel}`;
+        const titleText = `⏰ Erinnerung: ${ev.Titel}`;
         const bodyText = `Um ${ev.Uhrzeit} Uhr: '${ev.Titel}'${ev.Ort ? " (" + ev.Ort + ")" : ""}`;
 
         sendLocalNotification(titleText, bodyText);
@@ -1151,64 +1155,6 @@ function initEventsListener() {
         });
       });
 
-      // Benachrichtigung bei echten Live-Änderungen (kein Fluten beim Start oder Cache-Wechsel)
-      if (!initialEventsLoaded) {
-        snapshot.forEach((docSnap) => knownEventDocIds.add(docSnap.id));
-        if (!snapshot.metadata.fromCache) {
-          initialEventsLoaded = true;
-        }
-      } else {
-        if (
-          !snapshot.metadata.hasPendingWrites &&
-          !snapshot.metadata.fromCache
-        ) {
-          snapshot.docChanges().forEach((change) => {
-            const item = change.doc.data();
-            if (
-              change.doc.id === "Ersteller" ||
-              change.doc.id === "Art" ||
-              !item.Titel
-            )
-              return;
-
-            const createdMs =
-              item.createdAt && item.createdAt.toMillis
-                ? item.createdAt.toMillis()
-                : Date.now();
-            const isRecent = Date.now() - createdMs < 3 * 60 * 1000;
-
-            if (
-              change.type === "added" &&
-              !knownEventDocIds.has(change.doc.id)
-            ) {
-              knownEventDocIds.add(change.doc.id);
-              if (isRecent) {
-                const dateDescription = item.DatumFlexibel && item.Enddatum
-                  ? `im Zeitraum ${formatDateObj(item.Datum).formattedLong} bis ${formatDateObj(item.Enddatum).formattedLong}`
-                  : item.Datum || "noch ohne Datum";
-                sendLocalNotification(
-                  "Neuer Termin!",
-                  `${item.Ersteller || "Jemand"} hat '${item.Titel}' (${dateDescription}) eingetragen.`,
-                );
-              }
-            } else if (
-              change.type === "modified" &&
-              item.lastAction === "update"
-            ) {
-              if (isRecent) {
-                sendLocalNotification(
-                  "Termin aktualisiert",
-                  `'${item.Titel}' wurde aktualisiert.`,
-                );
-              }
-            } else if (change.type === "removed") {
-              knownEventDocIds.delete(change.doc.id);
-            }
-          });
-        }
-      }
-
-      isInitialLoad = false;
       rawEvents = list;
       allEvents = expandEventInstances(rawEvents);
 

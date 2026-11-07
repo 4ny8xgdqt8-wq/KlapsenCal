@@ -15,12 +15,38 @@ function getEventFields(data = {}) {
     uhrzeit: data.Uhrzeit || data.uhrzeit || "",
     ort: data.Ort || data.ort || "",
     ersteller: data.Ersteller || data.ersteller || "Jemand",
+    kategorie: data.Kategorie || data.Art || "",
   };
 }
 
 function formatEventDate(date) {
   const match = String(date || "").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   return match ? `${match[3]}.${match[2]}.${match[1]}` : date;
+}
+
+function getAbsentNames(data) {
+  const names = Object.entries(data.Teilnehmer || {})
+    .filter(([, status]) => status === "yes")
+    .map(([name]) => name);
+  return names.length ? names : [getEventFields(data).ersteller];
+}
+
+function berlinDateToUtc(year, month, day, hour, minute) {
+  const wallTime = Date.UTC(year, month, day, hour, minute);
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    timeZoneName: "longOffset",
+  });
+  const offsetAt = (timestamp) => {
+    const zone = formatter.formatToParts(new Date(timestamp))
+      .find((part) => part.type === "timeZoneName").value;
+    const match = zone.match(/^GMT([+-])(\d{2}):(\d{2})$/);
+    if (!match) throw new Error("Berliner Zeitzone konnte nicht ermittelt werden");
+    return (match[1] === "+" ? 1 : -1) *
+      (Number(match[2]) * 60 + Number(match[3])) * 60 * 1000;
+  };
+  const firstGuess = wallTime - offsetAt(wallTime);
+  return new Date(wallTime - offsetAt(firstGuess));
 }
 
 function describeEvent(fields) {
@@ -154,9 +180,13 @@ exports.onEventCreated = functions
 
     await broadcastPushNotification(
       {
-        title: `📅 Neuer Termin: ${titel}`,
-        body: `${ersteller} ${actionText}${describeEvent(event)}.`,
-        url: "./index.html",
+        title: event.kategorie === "Urlaub / Abwesend"
+          ? `${getAbsentNames(data).join(", ")} nicht da`
+          : `📅 Neuer Termin: ${titel}`,
+        body: event.kategorie === "Urlaub / Abwesend"
+          ? `Abwesend${describeEvent(event)}.`
+          : `${ersteller} ${actionText}${describeEvent(event)}.`,
+        url: "./index.html#termine",
         icon,
         mapsQuery: event.ort,
         actions,
@@ -190,7 +220,11 @@ exports.onEventUpdated = functions
       beforeEvent.enddatum === afterEvent.enddatum &&
       beforeEvent.datumFlexibel === afterEvent.datumFlexibel &&
       beforeEvent.uhrzeit === afterEvent.uhrzeit &&
-      beforeEvent.ort === afterEvent.ort
+      beforeEvent.ort === afterEvent.ort &&
+      beforeEvent.kategorie === afterEvent.kategorie &&
+      (afterEvent.kategorie !== "Urlaub / Abwesend" ||
+        JSON.stringify(getAbsentNames(beforeData).sort()) ===
+          JSON.stringify(getAbsentNames(afterData).sort()))
     ) {
       return null;
     }
@@ -223,8 +257,8 @@ exports.onEventUpdated = functions
     await broadcastPushNotification(
       {
         title: "Termin aktualisiert 🔄",
-        body: `'${titel}' wurde aktualisiert.`,
-        url: "./index.html",
+        body: `'${titel}' wurde aktualisiert.${describeEvent(afterEvent) ? ` Aktuell${describeEvent(afterEvent)}.` : ""}`,
+        url: "./index.html#termine",
         icon,
         mapsQuery: afterEvent.ort,
         actions,
@@ -253,7 +287,7 @@ exports.onEventDeleted = functions
     await broadcastPushNotification({
       title: "Termin abgesagt / gelöscht 🗑️",
       body: `'${event.titel}'${describeEvent(event)} wurde entfernt.`,
-      url: "./index.html",
+      url: "./index.html#termine",
       tag: `event-deleted-${docId}`,
     });
     return null;
@@ -360,7 +394,7 @@ exports.onKasseBookingCreated = functions
 
     if (typ === "einnahme") {
       title = `💰 Kasse: +${formattedBetrag} eingezahlt!`;
-      body = `Zahler: ${zweck}\nNeuer Kontostand: ${saldoText}`;
+      body = `Zweck: ${zweck}\nNeuer Kontostand: ${saldoText}`;
     } else {
       title = `💸 Kasse: -${formattedBetrag} ausgegeben`;
       body = `Zweck: ${zweck}\nNeuer Kontostand: ${saldoText}`;
@@ -374,7 +408,6 @@ exports.onKasseBookingCreated = functions
         tag: `kasse-booking-${docId}`,
         actions: [{ action: "open_kasse", title: "💳 Kasse ansehen" }],
       },
-      typ === "einnahme" ? zweck : null,
     );
     return null;
   });
@@ -402,7 +435,7 @@ exports.onAnschaffungCreated = functions
     await broadcastPushNotification({
       title: "🛒 Neue Anschaffung!",
       body: `'${titel}' wurde auf die Wunschliste gesetzt!${preisText}`,
-      url: "./index.html",
+      url: "./index.html#anschaffungen",
       tag: `anschaffung-${docId}`,
     });
     return null;
@@ -435,7 +468,7 @@ exports.onLokalCreated = functions
       {
         title,
         body,
-        url: "./index.html",
+        url: "./index.html#lokale",
         tag: `lokal-${docId}`,
       },
       author,
@@ -480,8 +513,8 @@ exports.checkScheduledReminders = onSchedule(
 
       if (isAllDay) {
         // Vorabend-Erinnerung ab 20:00 Uhr für den nächsten Tag
-        const eveReminderStart = new Date(year, month, day - 1, 19, 45, 0);
-        const eveReminderEnd = new Date(year, month, day - 1, 20, 30, 0);
+        const eveReminderStart = berlinDateToUtc(year, month, day - 1, 20, 0);
+        const eveReminderEnd = new Date(eveReminderStart.getTime() + 30 * 60 * 1000);
         const reminderKey = `eve_${docSnap.id}_${ev.Datum}`;
 
         if (
@@ -501,7 +534,7 @@ exports.checkScheduledReminders = onSchedule(
           await broadcastPushNotification({
             title: `☀️ Morgen: ${ev.Titel}`,
             body: `Morgen steht '${ev.Titel}' an!${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
-            url: "./index.html",
+            url: "./index.html#termine",
             mapsQuery: ev.Ort || "",
             actions: eveActions,
             tag: reminderKey,
@@ -515,7 +548,7 @@ exports.checkScheduledReminders = onSchedule(
         const hours = parseInt(timeParts[0]) || 0;
         const minutes = parseInt(timeParts[1]) || 0;
 
-        const eventStartTime = new Date(year, month, day, hours, minutes, 0);
+        const eventStartTime = berlinDateToUtc(year, month, day, hours, minutes);
         const twoHoursBefore = new Date(
           eventStartTime.getTime() - 2 * 60 * 60 * 1000,
         );
@@ -539,9 +572,9 @@ exports.checkScheduledReminders = onSchedule(
           timedActions.push({ action: "open_tasks", title: "📋 Was fehlt?" });
 
           await broadcastPushNotification({
-            title: `⏰ In 2 Stunden: ${ev.Titel}`,
+            title: `⏰ Erinnerung: ${ev.Titel}`,
             body: `Um ${ev.Uhrzeit} Uhr geht's los: '${ev.Titel}'${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
-            url: "./index.html",
+            url: "./index.html#termine",
             mapsQuery: ev.Ort || "",
             actions: timedActions,
             tag: reminderKey,

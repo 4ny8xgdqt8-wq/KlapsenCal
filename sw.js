@@ -1,4 +1,4 @@
-const VERSION = "7.0.4";
+const VERSION = "7.0.5";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -180,7 +180,9 @@ self.addEventListener("notificationclick", (event) => {
     return;
   }
 
-  if (event.action === "prost") {
+  if (event.action === "open_event") {
+    targetUrl = "./index.html#termine";
+  } else if (event.action === "prost") {
     targetUrl = "./index.html#stauder?prost=1";
   } else if (event.action === "open_stauder") {
     targetUrl = "./index.html#stauder";
@@ -196,8 +198,9 @@ self.addEventListener("notificationclick", (event) => {
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes("index.html") && "focus" in client) {
-            client.navigate(targetUrl);
-            return client.focus();
+            return client.navigate(targetUrl).then((navigatedClient) =>
+              navigatedClient ? navigatedClient.focus() : clients.openWindow(targetUrl),
+            );
           }
         }
         if (clients.openWindow) {
