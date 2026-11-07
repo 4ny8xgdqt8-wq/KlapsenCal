@@ -3438,6 +3438,13 @@
 
     <!-- UI Helper Scripts -->
     <script>
+      const scrollContent = document.getElementById("content");
+      const updateScrollAppearance = () => {
+        document.body.classList.toggle("is-scrolled", scrollContent.scrollTop > 8);
+      };
+      scrollContent.addEventListener("scroll", updateScrollAppearance, { passive: true });
+      updateScrollAppearance();
+
       // Tab Switching
       function switchTab(tabId, el) {
         const contentEl = document.getElementById("content");

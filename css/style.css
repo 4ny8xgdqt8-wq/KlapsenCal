@@ -7790,6 +7790,24 @@ header {
   border-bottom: 1px solid var(--border-color);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  mask-image: none;
+  -webkit-mask-image: none;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.is-scrolled > header {
+  background: rgba(17, 21, 34, 0.97);
+  box-shadow: 0 8px 24px rgba(5, 10, 20, 0.3);
+}
+
+body.is-scrolled .tab-bar {
+  box-shadow: 0 8px 28px rgba(5, 10, 20, 0.55), 0 0 0 1px rgba(143, 224, 208, 0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body > header {
+    transition: none;
+  }
 }
 
 .logo-img {
