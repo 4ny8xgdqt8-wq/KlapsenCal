@@ -13,6 +13,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ==========================================
@@ -118,16 +119,26 @@ function hydrateStaticUiIcons() {
 hydrateStaticUiIcons();
 
 // Helper: Sicherstellen, dass stets eine gültige Firebase Auth Session aktiv ist
+let anonymousAuthPromise = null;
+let firebaseAuthError = null;
+let firebaseListenersStarted = false;
+
 async function ensureAuth() {
-  if (!auth.currentUser) {
-    try {
-      const cred = await signInAnonymously(auth);
-      console.log("Firebase Auth erfolgreich verbunden:", cred.user.uid);
-    } catch (e) {
-      console.warn("Auth Initialisierungs-Hinweis:", e);
-    }
+  if (auth.currentUser) return auth.currentUser;
+  if (!anonymousAuthPromise) {
+    anonymousAuthPromise = signInAnonymously(auth)
+      .then(({ user }) => {
+        firebaseAuthError = null;
+        return user;
+      })
+      .catch((error) => {
+        firebaseAuthError = error;
+        console.warn("Firebase-Anmeldung fehlgeschlagen:", error.code || error.name);
+        return null;
+      })
+      .finally(() => { anonymousAuthPromise = null; });
   }
-  return auth.currentUser;
+  return anonymousAuthPromise;
 }
 window.ensureAuth = ensureAuth;
 
@@ -140,7 +151,7 @@ document.addEventListener("visibilitychange", async () => {
     console.log(
       "App wieder im Vordergrund – prüfe Verbindung & synchronisiere Termine...",
     );
-    await ensureAuth();
+    await startFirebaseListeners();
     filterAndRender();
     renderCalendarWidget();
     updateTasksBadge();
@@ -150,7 +161,7 @@ document.addEventListener("visibilitychange", async () => {
 // Automatische Re-Synchronisation bei Rückkehr der Internetverbindung
 window.addEventListener("online", async () => {
   console.log("Internetverbindung wiederhergestellt – synchronisiere...");
-  await ensureAuth();
+  await startFirebaseListeners();
   filterAndRender();
   renderCalendarWidget();
 });
@@ -352,13 +363,66 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+let pushRegistrationAuthor = "";
+
+function getPushDeviceAuthor() {
+  const saved = localStorage.getItem("selected_author") || "";
+  const name = saved === "Daniela" ? "Dani" : saved === "Simone" ? "MamaMone" : saved;
+  return allAuthors.includes(name) ? name : "";
+}
+
+function openPushDeviceModal() {
+  const select = document.getElementById("push-device-author");
+  select.replaceChildren();
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Bitte Namen wählen…";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+  allAuthors.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+  const saved = getPushDeviceAuthor();
+  if (saved) select.value = saved;
+  document.getElementById("push-device-modal").style.display = "flex";
+  select.focus();
+}
+
+window.closePushDeviceModal = function () {
+  document.getElementById("push-device-modal").style.display = "none";
+};
+
+window.savePushDeviceAuthor = function (event) {
+  event.preventDefault();
+  const name = document.getElementById("push-device-author").value;
+  if (!allAuthors.includes(name)) return;
+  try {
+    localStorage.setItem("selected_author", name);
+  } catch (error) {
+    window.showAppModal("Speichern fehlgeschlagen", "Der Browser erlaubt das Speichern auf diesem Gerät nicht. Bitte prüfe die Browser-Einstellungen.");
+    return;
+  }
+  renderAuthorSelects();
+  window.closePushDeviceModal();
+  return enablePushNotificationsForDevice();
+};
+
 // Registrierung beim Web-Push-Dienst und Speichern in Firestore "push_subscriptions"
 async function subscribeUserToPush() {
+  pushRegistrationAuthor = "";
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    console.warn("Push-Manager wird von diesem Browser nicht unterstützt.");
-    return null;
+    throw Object.assign(new Error("Push nicht unterstützt"), { code: "push/not-supported" });
   }
+  const author = getPushDeviceAuthor();
+  if (!author) return null;
   try {
+    if (!(await ensureAuth())) {
+      throw firebaseAuthError || Object.assign(new Error("Keine gültige Firebase-Sitzung"), { code: "push/auth-failed" });
+    }
     const reg = await navigator.serviceWorker.ready;
     let subscription = await reg.pushManager.getSubscription();
 
@@ -375,7 +439,6 @@ async function subscribeUserToPush() {
       const subDocId = btoa(subscription.endpoint)
         .slice(-40)
         .replace(/[/+=]/g, "_");
-      const author = localStorage.getItem("selected_author") || "Unbekannt";
 
       await setDoc(
         doc(db, "push_subscriptions", subDocId),
@@ -390,11 +453,13 @@ async function subscribeUserToPush() {
         { merge: true },
       );
 
+      pushRegistrationAuthor = author;
       console.log("✅ Web-Push-Abonnement aktiv in Firestore:", subDocId);
       return subscription;
     }
   } catch (err) {
-    console.error("Fehler bei Web-Push-Registrierung:", err);
+    console.error("Fehler bei Web-Push-Registrierung:", err.code || err.name);
+    throw err;
   }
   return null;
 }
@@ -417,7 +482,10 @@ async function unsubscribeUserFromPush() {
   }
 }
 
+let pushActivationPending = false;
+
 window.requestNotificationPermission = async function () {
+  if (pushActivationPending) return;
   if (!("Notification" in window)) {
     window.showAppModal(
       "Nicht unterstützt",
@@ -438,8 +506,10 @@ window.requestNotificationPermission = async function () {
   }
 
   // Wenn aktuell aktiv: 1-KLICK DEAKTIVIEREN
-  if (Notification.permission === "granted" && !isMuted && hasActiveSub) {
+  if (Notification.permission === "granted" && !isMuted && hasActiveSub &&
+      getPushDeviceAuthor() && pushRegistrationAuthor === getPushDeviceAuthor()) {
     localStorage.setItem("klapsen_push_disabled", "true");
+    pushRegistrationAuthor = "";
     await unsubscribeUserFromPush();
     await updateNotificationButton();
     window.showAppModal(
@@ -449,7 +519,12 @@ window.requestNotificationPermission = async function () {
     return;
   }
 
-  // Andernfalls: 1-KLICK AKTIVIEREN
+  openPushDeviceModal();
+};
+
+async function enablePushNotificationsForDevice() {
+  if (pushActivationPending) return;
+  pushActivationPending = true;
   localStorage.removeItem("klapsen_push_disabled");
 
   try {
@@ -458,11 +533,7 @@ window.requestNotificationPermission = async function () {
       const sub = await subscribeUserToPush();
       await updateNotificationButton();
       if (!sub) {
-        window.showAppModal(
-          "Aktivierung fehlgeschlagen",
-          "Die Hintergrund-Mitteilungen konnten nicht eingerichtet werden. Bitte versuche es erneut.",
-        );
-        return;
+        throw Object.assign(new Error("Push-Abo wurde nicht gespeichert"), { code: "push/not-registered" });
       }
       window.showAppModal(
         "Aktiviert!",
@@ -481,10 +552,26 @@ window.requestNotificationPermission = async function () {
       );
     }
   } catch (e) {
-    console.error("Fehler bei Benachrichtigungs-Berechtigung:", e);
+    console.error("Fehler bei Push-Aktivierung:", e.code || e.name);
     await updateNotificationButton();
+    const code = e.code || e.name || "unbekannt";
+    const reason = code === "permission-denied"
+      ? "Firebase hat das Speichern der Push-Zuordnung abgelehnt. Bitte lade die App neu."
+      : code === "push/not-supported"
+        ? "Dieser Browser unterstützt hier keine Hintergrund-Mitteilungen. Auf dem iPhone muss die App vom Home-Bildschirm gestartet werden."
+        : code === "NotAllowedError"
+          ? "Die Berechtigung für Mitteilungen wurde nicht erteilt."
+          : ["auth/network-request-failed", "unavailable"].includes(code)
+            ? "Die Verbindung zu Firebase ist fehlgeschlagen. Bitte prüfe deine Internetverbindung."
+            : `Die Push-Mitteilungen konnten nicht eingerichtet werden (Fehler: ${code}).`;
+    window.showAppModal(
+      "Name gespeichert",
+      `Dein Name bleibt auf diesem Gerät gespeichert. ${reason}`,
+    );
+  } finally {
+    pushActivationPending = false;
   }
-};
+}
 
 async function updateNotificationButton() {
   const btn = document.getElementById("btn-toggle-notifications");
@@ -514,7 +601,7 @@ async function updateNotificationButton() {
     }
   }
 
-  if (hasSub) {
+  if (hasSub && getPushDeviceAuthor() && pushRegistrationAuthor === getPushDeviceAuthor()) {
     btn.innerHTML = uiIcon("bell");
     btn.title = "Hintergrund-Mitteilungen aktiv (Tippen zum Deaktivieren)";
     btn.style.opacity = "1";
@@ -649,6 +736,39 @@ setInterval(checkUpcomingReminders, 60000);
 // ==========================================
 // 4. Autoren & Kategorien (Echtzeit aus Firebase)
 // ==========================================
+function renderAuthorSelects() {
+  const select = document.getElementById("event-author");
+  const currentVal = allAuthors.includes(select.value)
+    ? select.value
+    : !editingEventId ? getPushDeviceAuthor() : "";
+  select.innerHTML = '<option value="" disabled selected>Wähle Ersteller...</option>';
+  allAuthors.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+  if (allAuthors.includes(currentVal)) select.value = currentVal;
+  const avatar = document.getElementById("author-avatar");
+  if (avatar) avatar.src = select.value ? getAuthorAvatarPath(select.value) : "logo.png";
+
+  const lokalSelect = document.getElementById("lokal-author") ||
+    document.getElementById("einkehr-author");
+  if (lokalSelect) {
+    const currentLokal = lokalSelect.value;
+    lokalSelect.innerHTML = '<option value="" disabled selected>Wähle Ersteller...</option>';
+    allAuthors.forEach((name) => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      lokalSelect.appendChild(option);
+    });
+    if (allAuthors.includes(currentLokal)) lokalSelect.value = currentLokal;
+  }
+  renderFormParticipants();
+  renderLokalParticipants();
+}
+
 function initAuthorsListener() {
   const docRef = doc(db, "data_termine", "Ersteller");
 
@@ -660,50 +780,13 @@ function initAuthorsListener() {
   onSnapshot(
     docRef,
     (docSnap) => {
-      const select = document.getElementById("event-author");
-      const currentVal = select.value;
-
-      if (docSnap.exists() && Array.isArray(docSnap.data().names)) {
+      if (docSnap.exists() && Array.isArray(docSnap.data().names) && docSnap.data().names.length) {
         allAuthors = docSnap.data().names;
       } else {
         allAuthors = [...DEFAULT_AUTHORS];
       }
 
-      select.innerHTML =
-        '<option value="" disabled selected>Wähle Ersteller...</option>';
-      allAuthors.forEach((name) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        select.appendChild(opt);
-      });
-
-      if (currentVal && allAuthors.includes(currentVal)) {
-        select.value = currentVal;
-      }
-
-      const lokalSelect =
-        document.getElementById("lokal-author") ||
-        document.getElementById("einkehr-author");
-      if (lokalSelect) {
-        const lokalVal = lokalSelect.value;
-        lokalSelect.innerHTML =
-          '<option value="" disabled selected>Wähle Ersteller...</option>';
-        allAuthors.forEach((name) => {
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.textContent = name;
-          lokalSelect.appendChild(opt);
-        });
-        if (lokalVal && allAuthors.includes(lokalVal)) {
-          lokalSelect.value = lokalVal;
-        }
-      }
-
-      renderFormParticipants();
-      if (typeof renderLokalParticipants === "function") {
-        renderLokalParticipants();
-      }
+      renderAuthorSelects();
     },
     (e) => {
       console.warn("Ersteller Listener Fehler:", e);
@@ -1164,11 +1247,8 @@ function initEventsListener() {
       checkUpcomingReminders();
 
       if (currentDetailData) {
-        const refreshed = allEvents.find(
-          (e) =>
-            e.id === currentDetailData.id ||
-            e.baseId === currentDetailData.baseId,
-        );
+        const refreshed = allEvents.find((e) => e.id === currentDetailData.id) ||
+          allEvents.find((e) => e.baseId === currentDetailData.baseId);
         if (refreshed) {
           currentDetailData = refreshed;
           showEventDetails(refreshed);
@@ -2454,10 +2534,8 @@ window.saveGuestsModal = async function () {
   const targetDocId = currentDetailData.baseId || currentDetailData.id;
   try {
     await ensureAuth();
-    await setDoc(doc(db, "data_termine", targetDocId), {
-      ...currentDetailData,
-      id: targetDocId,
-      Gäste: currentGuestsData,
+    await updateDoc(doc(db, "data_termine", targetDocId), {
+      Gäste: { ...currentGuestsData },
       lastAction: "update",
     });
   } catch (err) {
@@ -2574,16 +2652,16 @@ function renderDetailChecklist(data) {
 
 window.toggleEventTask = async function (idx) {
   if (!currentDetailData) return;
-  const items = [...(currentDetailData.Mitbringliste || [])];
+  const items = (currentDetailData.Mitbringliste || []).map((item) =>
+    typeof item === "string" ? { name: item, checked: false } : { ...item },
+  );
   if (!items[idx]) return;
 
   items[idx].checked = !items[idx].checked;
   const targetDocId = currentDetailData.baseId || currentDetailData.id;
   try {
     await ensureAuth();
-    await setDoc(doc(db, "data_termine", targetDocId), {
-      ...currentDetailData,
-      id: targetDocId,
+    await updateDoc(doc(db, "data_termine", targetDocId), {
       Mitbringliste: items,
       lastAction: "update",
     });
@@ -2840,7 +2918,9 @@ window.editEventById = function (
   const builder = document.getElementById("items-builder-container");
   builder.innerHTML = "";
   if (data.Mitbringliste && data.Mitbringliste.length > 0) {
-    data.Mitbringliste.forEach((item) => addItemBuilderRow(item.name || item));
+    data.Mitbringliste.forEach((item) =>
+      addItemBuilderRow(item.name || item, !!item.checked),
+    );
   }
   if (autoAddNewItem) {
     addItemBuilderRow("");
@@ -2868,14 +2948,15 @@ window.toggleGlobalTask = async function (eventId, itemIdx) {
   const ev = allEvents.find((e) => e.id === eventId || e.baseId === eventId);
   if (!ev || !ev.Mitbringliste || !ev.Mitbringliste[itemIdx]) return;
 
-  const items = [...ev.Mitbringliste];
+  const items = ev.Mitbringliste.map((item) =>
+    typeof item === "string" ? { name: item, checked: false } : { ...item },
+  );
   items[itemIdx].checked = !items[itemIdx].checked;
 
   const targetDocId = ev.baseId || ev.id;
   try {
-    await setDoc(doc(db, "data_termine", targetDocId), {
-      ...ev,
-      id: targetDocId,
+    await ensureAuth();
+    await updateDoc(doc(db, "data_termine", targetDocId), {
       Mitbringliste: items,
       lastAction: "update",
     });
@@ -3063,24 +3144,28 @@ function calculateRecurrenceDates(startDateStr, recurrenceType, durationType) {
   return dates.length > 0 ? dates : [startDateStr];
 }
 
-window.addItemBuilderRow = function (name = "") {
+window.addItemBuilderRow = function (name = "", checked = false) {
   const container = document.getElementById("items-builder-container");
   const row = document.createElement("div");
   row.className = "item-builder-row";
+  row.dataset.checked = String(checked);
 
   row.innerHTML = `
-        <input type="text" class="form-control item-name-input" placeholder="z.B. Grillkohle, Salat, Kasten Bier, Zelt..." value="${name}" style="flex: 1;" required>
+        <input type="text" class="form-control item-name-input" placeholder="z.B. Grillkohle, Salat, Kasten Bier, Zelt..." style="flex: 1;" required>
         <button type="button" class="btn-remove-item" onclick="this.closest('.item-builder-row').remove()" title="Entfernen" aria-label="Punkt entfernen">${uiIcon("close")}</button>
     `;
+  row.querySelector(".item-name-input").value = name;
   container.appendChild(row);
 };
 
 function resetForm() {
   editingEventId = null;
   document.getElementById("event-form").reset();
+  const savedAuthor = getPushDeviceAuthor();
+  document.getElementById("event-author").value = savedAuthor;
   document.getElementById("submit-event-btn").textContent = "Termin speichern";
   document.getElementById("cancel-edit-btn").style.display = "none";
-  document.getElementById("author-avatar").src = "logo.png";
+  document.getElementById("author-avatar").src = savedAuthor ? getAuthorAvatarPath(savedAuthor) : "logo.png";
   document.getElementById("items-builder-container").innerHTML = "";
 
   const allDayCheckbox = document.getElementById("event-all-day");
@@ -3252,20 +3337,31 @@ document.getElementById("event-form").addEventListener("submit", async (e) => {
     return;
   }
 
+  if (
+    selectedType === "Urlaub / Abwesend" && !isDateOpen &&
+    !Object.values(formParticipants).includes("yes")
+  ) {
+    window.showAppModal("Angabe fehlt", "Bitte wähle mindestens eine abwesende Person aus.");
+    return;
+  }
+
   const itemRows = document.querySelectorAll(
     "#items-builder-container .item-builder-row",
   );
   const items = Array.from(itemRows)
     .map((row) => ({
       name: row.querySelector(".item-name-input").value.trim(),
-      checked: false,
+      checked: row.dataset.checked === "true",
     }))
     .filter((i) => i.name !== "");
 
   window.showLoading(true, "Termin wird gespeichert...");
 
   let existingRsvp = isDateOpen ? {} : { ...formParticipants };
-  if (!isDateOpen && author && !existingRsvp[author]) {
+  if (
+    !isDateOpen && selectedType !== "Urlaub / Abwesend" &&
+    author && !existingRsvp[author]
+  ) {
     existingRsvp[author] = "yes";
   }
 
@@ -7117,17 +7213,13 @@ async function saveRecipe(event) {
     recipeData.Zubereitung = zubereitung;
   }
 
-  const sanitizedTitle = title.replace(/[^\w\s-]/gi, "").replace(/\s+/g, "-");
-  const docId = editingRecipeId || sanitizedTitle || "Rezept-" + Date.now();
+  const recipeRef = editingRecipeId
+    ? doc(db, "data_rezepte", editingRecipeId)
+    : doc(collection(db, "data_rezepte"));
 
   window.showLoading(true, "Rezept wird gespeichert...");
   try {
-    // Falls Titel geändert wurde, altes Dokument löschen
-    if (editingRecipeId && editingRecipeId !== docId) {
-      await deleteDoc(doc(db, "data_rezepte", editingRecipeId));
-    }
-
-    await setDoc(doc(db, "data_rezepte", docId), recipeData, { merge: true });
+    await setDoc(recipeRef, recipeData, { merge: true });
     closeRecipeModal();
     if (typeof confetti === "function") {
       confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
@@ -7189,35 +7281,40 @@ if (
   Notification.permission === "granted"
 ) {
   setTimeout(() => {
-    subscribeUserToPush().catch(() => {});
+    if (localStorage.getItem("klapsen_push_disabled") === "true") return;
+    if (getPushDeviceAuthor()) {
+      subscribeUserToPush().then(updateNotificationButton).catch(updateNotificationButton);
+    } else {
+      openPushDeviceModal();
+    }
   }, 2500);
 }
 renderFormParticipants();
 renderLokalParticipants();
 renderFormGuests();
 
-// Firebase Auth & Realtime Listeners
-initAuthorsListener();
-initCategoriesListener();
-initEventsListener();
-initKasseListener();
-initPurchasesListener();
-initStauderListener();
-initStauderKistenListener();
-initLokaleListener();
-initRezepteListener();
+// Namensauswahl steht auch vor der Anmeldung oder bei Verbindungsproblemen bereit.
+renderAuthorSelects();
+
+async function startFirebaseListeners() {
+  if (!(await ensureAuth()) || firebaseListenersStarted) return;
+  firebaseListenersStarted = true;
+  initAuthorsListener();
+  initCategoriesListener();
+  initEventsListener();
+  initKasseListener();
+  initPurchasesListener();
+  initStauderListener();
+  initStauderKistenListener();
+  initLokaleListener();
+  initRezepteListener();
+}
+
+startFirebaseListeners();
 
 // ==========================================
 // 16. Firebase Auth & Deep Linking
 // ==========================================
-
-signInAnonymously(auth)
-  .then(() => {
-    console.log("Klapsentouren: Anonym bei Firebase angemeldet.");
-  })
-  .catch((error) => {
-    console.warn("Anonymer Login Hinweis:", error);
-  });
 
 // Deep-Linking Handler für Push-Benachrichtigungen & Aktions-Buttons
 function handleDeepLinkHash() {
