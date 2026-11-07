@@ -1,4 +1,5 @@
-const VERSION = "7.0.9";
+// Format: JJJJMMTT.Laufnummer (bei weiteren Änderungen am selben Tag erhöhen).
+const VERSION = "20261107.1";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -6,7 +7,7 @@ const ASSETS_TO_CACHE = [
   "./index.html",
   "./manifest.json",
   "./README.md",
-  "./css/style.css?v=7.0.8",
+  "./css/style.css",
   "./js/app.js",
   "./js/seasonal-effects.js",
   "./images/stauder.webp",
@@ -48,7 +49,11 @@ self.addEventListener("install", (event) => {
       .open(CACHE_NAME)
       .then((cache) => {
         console.log("[SW] Pre-caching core assets...");
-        return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
+        // Lokale Dateien beim Anlegen einer neuen Cache-Version frisch laden.
+        const assets = ASSETS_TO_CACHE.map((url) =>
+          url.startsWith("./") ? new Request(url, { cache: "reload" }) : url,
+        );
+        return cache.addAll(assets).catch((err) => {
           console.warn("[SW] Some assets could not be pre-cached:", err);
         });
       })
@@ -98,7 +103,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.endsWith(".json")
   ) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, url.origin === self.location.origin ? { cache: "no-cache" } : undefined)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseToCache = networkResponse.clone();
