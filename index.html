@@ -29,7 +29,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2.5.0" />
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/style.css?v=7.0.8" />
     <script src="js/seasonal-effects.js" defer></script>
 
     <!-- Confetti für Erfolgs-Momente -->
@@ -2804,23 +2804,26 @@
         onclick="event.stopPropagation()"
         onsubmit="window.savePushDeviceAuthor(event)"
       >
-        <h3 id="push-device-title">Mitteilungen &amp; Gerät</h3>
+        <h3 id="push-device-title" tabindex="-1">Mitteilungen &amp; Gerät</h3>
         <p>Wähle den Nutzer und die Mitteilungen für dieses Gerät.</p>
         <div class="form-group">
           <label for="push-device-author">Dein Name</label>
           <select id="push-device-author" class="form-control" required></select>
         </div>
         <div class="push-settings-options">
-          <label><input id="push-enabled" type="checkbox"> Mitteilungen aktivieren</label>
-          <label><input type="checkbox" data-push-category="events"> Termine und Abwesenheiten</label>
-          <label><input type="checkbox" data-push-category="reminders"> Terminerinnerungen</label>
-          <label><input type="checkbox" data-push-category="stauder"> Stauder</label>
-          <label><input type="checkbox" data-push-category="kasse"> Kasse</label>
-          <label><input type="checkbox" data-push-category="purchases"> Anschaffungen</label>
-          <label><input type="checkbox" data-push-category="locales"> Lokale</label>
+          <label class="push-setting-row push-setting-main"><span>Mitteilungen aktivieren</span><input id="push-enabled" type="checkbox" role="switch"></label>
+          <div class="push-settings-heading">Welche Mitteilungen?</div>
+          <div class="push-settings-list">
+            <label class="push-setting-row"><span>Termine und Abwesenheiten</span><input type="checkbox" role="switch" data-push-category="events"></label>
+            <label class="push-setting-row"><span>Terminerinnerungen</span><input type="checkbox" role="switch" data-push-category="reminders"></label>
+            <label class="push-setting-row"><span>Stauder</span><input type="checkbox" role="switch" data-push-category="stauder"></label>
+            <label class="push-setting-row"><span>Kasse</span><input type="checkbox" role="switch" data-push-category="kasse"></label>
+            <label class="push-setting-row"><span>Anschaffungen</span><input type="checkbox" role="switch" data-push-category="purchases"></label>
+            <label class="push-setting-row"><span>Lokale</span><input type="checkbox" role="switch" data-push-category="locales"></label>
+          </div>
         </div>
-        <div style="display: flex; gap: 10px; margin-top: 18px">
-          <button type="button" class="btn-modal-close" onclick="window.closePushDeviceModal()">Abbrechen</button>
+        <div class="push-settings-actions">
+          <button type="button" class="btn-modal-close push-settings-cancel" onclick="window.closePushDeviceModal()">Abbrechen</button>
           <button type="submit" class="btn-modal-close">Speichern</button>
         </div>
       </form>

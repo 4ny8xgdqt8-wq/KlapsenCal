@@ -2174,23 +2174,84 @@ select.form-control {
   line-height: 1.4;
   white-space: pre-line;
 }
-.push-settings-options {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
+#push-device-modal .custom-modal {
+  max-width: 420px;
   text-align: left;
 }
-.push-settings-options label {
+#push-device-modal h3 { outline: none; }
+#push-device-modal p { margin-bottom: 18px; }
+.push-settings-options { margin-top: 18px; }
+.push-settings-heading {
+  margin: 18px 2px 8px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.push-settings-list, .push-setting-main {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+}
+.push-setting-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #e2e8f0;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  line-height: 1.3;
+  cursor: pointer;
 }
-.push-settings-options input {
-  width: 19px;
-  height: 19px;
-  accent-color: var(--primary-color);
-  flex-shrink: 0;
+.push-settings-list .push-setting-row + .push-setting-row {
+  border-top: 1px solid var(--border-color);
+}
+.push-setting-main { font-weight: 700; }
+#push-device-modal .push-setting-row input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border: 1px solid #65728a;
+  border-radius: 20px;
+  background: #465269;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+#push-device-modal .push-setting-row input::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+#push-device-modal .push-setting-row input:checked {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+#push-device-modal .push-setting-row input:checked::before { transform: translateX(18px); }
+#push-device-modal .push-setting-row input:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+}
+.push-settings-actions { display: flex; gap: 10px; margin-top: 20px; }
+#push-device-modal .push-settings-cancel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  box-shadow: none;
 }
 .btn-modal-close {
   background: var(--primary-color);

@@ -412,7 +412,7 @@ function openPushDeviceModal() {
   document.getElementById("push-enabled").checked =
     localStorage.getItem("klapsen_push_disabled") !== "true";
   document.getElementById("push-device-modal").style.display = "flex";
-  select.focus();
+  document.getElementById("push-device-title").focus({ preventScroll: true });
 }
 
 window.closePushDeviceModal = function () {
