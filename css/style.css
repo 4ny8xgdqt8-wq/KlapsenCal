@@ -1188,7 +1188,7 @@ header {
 /* Bottom Tab Bar (Floating Glass Island) */
 .tab-bar {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  bottom: max(8px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%) translateZ(0);
   width: calc(100% - 28px);
