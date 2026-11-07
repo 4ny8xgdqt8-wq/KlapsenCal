@@ -159,9 +159,7 @@ exports.onEventCreated = functions
     if (!event.titel) return null;
 
     const { titel, ersteller } = event;
-    const actionText = event.datumFlexibel || !event.datum
-      ? "hat einen Termin vorgemerkt"
-      : "hat einen Termin eingetragen";
+    const isOpenDate = event.datumFlexibel || !event.datum;
 
     console.log(`Neuer Termin erstellt: "${titel}" von ${ersteller}`);
 
@@ -191,10 +189,14 @@ exports.onEventCreated = functions
       {
         title: event.kategorie === "Urlaub / Abwesend"
           ? `${getAbsentNames(data).join(", ")} nicht da`
-          : `📅 Neuer Termin: ${titel}`,
+          : isOpenDate
+            ? `${ersteller} hat etwas vorgemerkt ✨`
+            : `${ersteller} plant: ${titel} 📅`,
         body: event.kategorie === "Urlaub / Abwesend"
           ? `Abwesend${describeEvent(event)}.`
-          : `${ersteller} ${actionText}${describeEvent(event)}.`,
+          : isOpenDate
+            ? `${titel} ist vorgemerkt${describeEvent(event)}.`
+            : `${titel}${describeEvent(event)}.`,
         url: "./index.html#termine",
         icon,
         mapsQuery: event.ort,
@@ -265,8 +267,12 @@ exports.onEventUpdated = functions
 
     await broadcastPushNotification(
       {
-        title: "Termin aktualisiert 🔄",
-        body: `'${titel}' wurde aktualisiert.${describeEvent(afterEvent) ? ` Aktuell${describeEvent(afterEvent)}.` : ""}`,
+        title: afterEvent.kategorie === "Urlaub / Abwesend"
+          ? `${getAbsentNames(afterData).join(", ")} nicht da – geändert`
+          : `Neue Infos: ${titel} 🔄`,
+        body: describeEvent(afterEvent)
+          ? `Aktualisiert${describeEvent(afterEvent)}.`
+          : "Der Eintrag wurde geändert.",
         url: "./index.html#termine",
         icon,
         mapsQuery: afterEvent.ort,
@@ -294,8 +300,8 @@ exports.onEventDeleted = functions
     console.log(`Termin gelöscht: "${event.titel}"`);
 
     await broadcastPushNotification({
-      title: "Termin abgesagt / gelöscht 🗑️",
-      body: `'${event.titel}'${describeEvent(event)} wurde entfernt.`,
+      title: `${event.titel} wurde entfernt 🗑️`,
+      body: `Der Eintrag${describeEvent(event)} steht nicht mehr im Kalender.`,
       url: "./index.html#termine",
       tag: `event-deleted-${docId}`,
     });
@@ -319,30 +325,10 @@ exports.onStauderKisteCreated = functions
 
     console.log(`Neue Stauder-Kiste erfasst: ${kistenText} von ${kaeufer}`);
 
-    // Monatsstatistik live ermitteln
-    let monthCount = 0;
-    try {
-      const currentMonthKey = new Date().toISOString().slice(0, 7);
-      const kistenSnap = await db.collection("data_stauder_kisten").get();
-      kistenSnap.forEach((doc) => {
-        const d = doc.data();
-        if (d.datum && d.datum.startsWith(currentMonthKey)) {
-          monthCount += Number(d.anzahl) || 1;
-        }
-      });
-    } catch (e) {
-      console.warn("Fehler beim Abrufen der Monatskisten:", e);
-    }
-
-    const countInfo =
-      monthCount > 0
-        ? `\n📦 Monatsstand: ${monthCount} Kiste${monthCount === 1 ? "" : "n"}`
-        : "";
-
     await broadcastPushNotification(
       {
-        title: "🍺 Stauder-Alarm: Nachschub ist da!",
-        body: `${kaeufer} hat ${kistenText} Stauder geholt! 🍻${countInfo}`,
+        title: `${kaeufer} sorgt für Nachschub 🍻`,
+        body: `${kistenText} Stauder ${anzahl === 1 ? "ist" : "sind"} da!`,
         url: "./index.html#stauder",
         icon: "images/stauder.webp",
         tag: `stauder-kiste-${docId}`,
@@ -398,15 +384,15 @@ exports.onKasseBookingCreated = functions
         maximumFractionDigits: 2,
       }) + " €";
 
-    let title = "💰 Kasse: Neue Buchung";
-    let body = `${formattedBetrag} für ${zweck}\nNeuer Kontostand: ${saldoText}`;
+    let title = "Neue Buchung in der Kasse 💰";
+    let body = `${formattedBetrag} · ${zweck}\nKassenstand: ${saldoText}`;
 
     if (typ === "einnahme") {
-      title = `💰 Kasse: +${formattedBetrag} eingezahlt!`;
-      body = `Zweck: ${zweck}\nNeuer Kontostand: ${saldoText}`;
+      title = "Die Kasse wächst 💚";
+      body = `${formattedBetrag} eingezahlt · ${zweck}\nKassenstand: ${saldoText}`;
     } else {
-      title = `💸 Kasse: -${formattedBetrag} ausgegeben`;
-      body = `Zweck: ${zweck}\nNeuer Kontostand: ${saldoText}`;
+      title = "Aus der Kasse bezahlt 💸";
+      body = `${formattedBetrag} ausgegeben · ${zweck}\nKassenstand: ${saldoText}`;
     }
 
     await broadcastPushNotification(
@@ -436,14 +422,14 @@ exports.onAnschaffungCreated = functions
     const preis = Number(data.preis);
     const preisText =
       !isNaN(preis) && preis > 0
-        ? ` (~${preis.toFixed(2).replace(".", ",")} €)`
+        ? ` · ungefähr ${preis.toFixed(2).replace(".", ",")} €`
         : "";
 
     console.log(`Neue Anschaffung: "${titel}"`);
 
     await broadcastPushNotification({
-      title: "🛒 Neue Anschaffung!",
-      body: `'${titel}' wurde auf die Wunschliste gesetzt!${preisText}`,
+      title: "Eine neue Idee für die Klapse 💡",
+      body: preisText ? `${titel}${preisText}.` : `${titel} steht auf der Wunschliste.`,
       url: "./index.html#anschaffungen",
       tag: `anschaffung-${docId}`,
     });
@@ -469,9 +455,11 @@ exports.onLokalCreated = functions
     console.log(`Neues Lokal eingetragen: "${name}" von ${author}`);
 
     const title = isGeplant
-      ? "📌 Neues Wunsch-Lokal!"
-      : "🍽️ Neues Lokal im Guide!";
-    const body = `${author} hat '${name}'${ort} ${isGeplant ? "vorgemerkt" : "eingetragen und bewertet"}.`;
+      ? `${author} hat eine Lokal-Idee 💡`
+      : `${author} hat ein Lokal entdeckt 🍽️`;
+    const body = isGeplant
+      ? `${name}${ort} steht auf der Wunschliste.`
+      : `${name}${ort} ist jetzt im Guide.`;
 
     await broadcastPushNotification(
       {
@@ -685,8 +673,8 @@ exports.checkScheduledReminders = onSchedule(
             });
 
             await broadcastPushNotification({
-              title: `☀️ Morgen: ${ev.Titel}`,
-              body: `Morgen steht '${ev.Titel}' an!${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
+              title: `Morgen: ${ev.Titel} ☀️`,
+              body: `Morgen steht ${ev.Titel} an.${ev.Ort ? " Ort: " + ev.Ort + "." : ""}`,
               url: "./index.html#termine",
               mapsQuery: ev.Ort || "",
               actions: eveActions,
@@ -725,8 +713,8 @@ exports.checkScheduledReminders = onSchedule(
             timedActions.push({ action: "open_tasks", title: "📋 Was fehlt?" });
 
             await broadcastPushNotification({
-              title: `⏰ Erinnerung: ${ev.Titel}`,
-              body: `Um ${ev.Uhrzeit} Uhr geht's los: '${ev.Titel}'${ev.Ort ? " (📍 " + ev.Ort + ")" : ""}`,
+              title: `Bald: ${ev.Titel} ⏰`,
+              body: `Um ${ev.Uhrzeit} Uhr geht's los${ev.Ort ? " · " + ev.Ort : ""}.`,
               url: "./index.html#termine",
               mapsQuery: ev.Ort || "",
               actions: timedActions,

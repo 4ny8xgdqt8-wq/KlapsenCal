@@ -41,31 +41,37 @@
   <body>
     <!-- Splash Screen -->
     <div id="splash-screen">
-      <!-- Logo und laufende Wanderschuhe -->
-      <div class="splash-logo-wrap">
-        <img src="logo.png?v=2.5.0" alt="Klapsentouren Logo" />
+      <div class="splash-landscape" aria-hidden="true">
+        <div class="splash-sun"></div>
+        <div class="splash-mountain"></div>
+        <div class="splash-mountain splash-mountain-front"></div>
       </div>
-      <div class="splash-boot-walk" aria-hidden="true">
-        <span>🥾</span>
-        <span>🥾</span>
-      </div>
+      <div class="splash-main">
+        <div class="splash-logo-wrap">
+          <img src="logo.png?v=2.5.0" alt="Klapsentouren Logo" />
+        </div>
+        <h1>Klapsentouren</h1>
+        <div class="splash-subtitle">Zusammen unterwegs</div>
 
-      <h1>Klapsentouren</h1>
-      <div class="splash-subtitle">Gruppen-Planer & Termine</div>
+        <div class="splash-path">
+          <div class="splash-path-item"><span aria-hidden="true">📅</span> Termine &amp; Touren</div>
+          <div class="splash-path-item"><span aria-hidden="true">🍽️</span> Rezepte &amp; Lokale</div>
+          <div class="splash-path-item"><span aria-hidden="true">💰</span> Alles für die Runde</div>
+        </div>
 
-      <!-- Liquid Brew Progress Bar -->
-      <div class="splash-liquid-brew-wrap">
-        <div class="splash-liquid-brew-fill" id="splash-brew-fill">
-          <div class="splash-liquid-brew-foam"></div>
+        <div class="splash-boot-walk" aria-hidden="true">
+          <span>🥾</span>
+          <span>🥾</span>
         </div>
       </div>
 
-      <!-- Feature Ticker -->
-      <div class="splash-feature-ticker">
-        <span id="splash-ticker-text">Lade Termine & Kalender...</span>
+      <div class="splash-footer">
+        <div class="splash-liquid-brew-wrap" aria-hidden="true">
+          <div class="splash-liquid-brew-fill" id="splash-brew-fill"></div>
+        </div>
+        <div class="splash-feature-ticker" id="splash-ticker-text">Lade Termine &amp; Kalender...</div>
+        <div class="version" id="app-version">Lade...</div>
       </div>
-
-      <div class="version" id="app-version">Lade...</div>
     </div>
 
     <!-- Header -->
@@ -3570,7 +3576,7 @@
           document.getElementById("app-version").textContent = "Version nicht verfügbar";
         });
 
-      // Splash Screen Steuerung (Konzept A: Emerald Brew mit Liquid-Bier-Welle)
+      // Ladebildschirm: Fortschritt, Status und Übergang in die App
       window.minTimePassed = false;
       window.firebaseDataReceived = false;
       window.splashStartTime = Date.now();
@@ -3586,7 +3592,7 @@
       const brewFillEl = document.getElementById("splash-brew-fill");
       const tickerTextEl = document.getElementById("splash-ticker-text");
 
-      // Weicher Progress-Loop für den Bier-Ladebalken
+      // Weicher Fortschritt während des Startvorgangs
       const splashProgressInterval = setInterval(() => {
         const elapsed = Date.now() - window.splashStartTime;
         let progress = Math.min(0.92, elapsed / window.splashTargetDuration);
