@@ -364,10 +364,14 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 let pushRegistrationAuthor = "";
+let pushSyncState = "idle";
+let pushSyncErrorStage = "";
+let pushStatusCheckId = 0;
 let pushServiceWorkerRegistration = null;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.ready.then((registration) => {
     pushServiceWorkerRegistration = registration;
+    void refreshPushStatus();
   }).catch(() => {});
 }
 const pushCategories = ["events", "reminders", "stauder", "kasse", "purchases", "locales"];
@@ -386,6 +390,85 @@ function getPushDeviceAuthor() {
   const saved = localStorage.getItem("selected_author") || "";
   const name = saved === "Daniela" ? "Dani" : saved === "Simone" ? "MamaMone" : saved;
   return allAuthors.includes(name) ? name : "";
+}
+
+async function refreshPushStatus() {
+  const panel = document.getElementById("push-status");
+  const title = document.getElementById("push-status-title");
+  const detail = document.getElementById("push-status-detail");
+  const authorEl = document.getElementById("push-status-author");
+  if (!panel || !title || !detail || !authorEl) return;
+
+  const checkId = ++pushStatusCheckId;
+  const author = getPushDeviceAuthor();
+  authorEl.textContent = author || "Noch nicht ausgewählt";
+  const show = (state, heading, message) => {
+    if (checkId !== pushStatusCheckId) return;
+    panel.dataset.state = state;
+    title.textContent = heading;
+    detail.textContent = message;
+  };
+
+  if (!("Notification" in window) || !("PushManager" in window) || !("serviceWorker" in navigator)) {
+    show("attention", "Nicht verfügbar", "Dieser Browser unterstützt hier keine Push-Mitteilungen. Auf dem iPhone öffne die App vom Home-Bildschirm.");
+    return;
+  }
+  if (localStorage.getItem("klapsen_push_disabled") === "true") {
+    show("attention", "Ausgeschaltet", "Mitteilungen sind auf diesem Gerät ausgeschaltet.");
+    return;
+  }
+  if (!author) {
+    show("attention", "Nutzer auswählen", "Wähle deinen Namen und speichere die Einstellungen.");
+    return;
+  }
+  if (Notification.permission === "denied") {
+    show("error", "Berechtigung blockiert", "Erlaube Mitteilungen in den Geräte- oder Browser-Einstellungen.");
+    return;
+  }
+  if (Notification.permission !== "granted") {
+    show("attention", "Noch nicht aktiviert", "Speichere die Einstellungen und erlaube Mitteilungen auf diesem Gerät.");
+    return;
+  }
+  if (navigator.onLine === false) {
+    show("attention", "Keine Internetverbindung", "Der Anmeldestatus kann gerade nicht bestätigt werden.");
+    return;
+  }
+  if (pushSyncState === "error") {
+    const message = pushSyncErrorStage === "firebase" || pushSyncErrorStage === "auth"
+      ? "Die Anmeldung bei Firebase konnte nicht bestätigt werden. Bitte versuche es erneut."
+      : "Die Push-Anmeldung konnte nicht eingerichtet werden. Bitte versuche es erneut.";
+    show("error", "Einrichtung fehlgeschlagen", message);
+    return;
+  }
+  if (!pushServiceWorkerRegistration || pushSyncState === "syncing") {
+    show("checking", "Status wird geprüft …", "Die Anmeldung für dieses Gerät wird vorbereitet.");
+    return;
+  }
+
+  show("checking", "Status wird geprüft …", "Das Push-Abo auf diesem Gerät wird geprüft.");
+  let timeout;
+  try {
+    const subscription = await Promise.race([
+      pushServiceWorkerRegistration.pushManager.getSubscription(),
+      new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("timeout")), 5000); }),
+    ]);
+    if (!subscription) {
+      show("attention", "Noch nicht aktiviert", "Speichere die Einstellungen, um Mitteilungen einzurichten.");
+    } else if (pushRegistrationAuthor === author) {
+      const enabledCount = Object.values(getPushPreferences()).filter(Boolean).length;
+      if (enabledCount === 0) {
+        show("attention", "Keine Mitteilungsarten aktiv", "Das Push-Abo ist eingerichtet; alle Mitteilungsarten sind ausgeschaltet.");
+      } else {
+        show("active", "Mitteilungen eingerichtet", `Anmeldung bei Firebase bestätigt · ${enabledCount} von ${pushCategories.length} Arten aktiv.`);
+      }
+    } else {
+      show("checking", "Anmeldung noch nicht bestätigt", "Die Anmeldung wird geprüft. Falls dieser Hinweis bleibt, speichere die Einstellungen erneut.");
+    }
+  } catch (error) {
+    show("attention", "Status nicht verfügbar", "Das Push-Abo konnte gerade nicht geprüft werden. Bitte versuche es erneut.");
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function openPushDeviceModal() {
@@ -413,6 +496,7 @@ function openPushDeviceModal() {
     localStorage.getItem("klapsen_push_disabled") !== "true";
   document.getElementById("push-device-modal").style.display = "flex";
   document.getElementById("push-device-title").focus({ preventScroll: true });
+  void refreshPushStatus();
 }
 
 window.closePushDeviceModal = function () {
@@ -440,6 +524,7 @@ window.savePushDeviceAuthor = async function (event) {
   if (!enabled) {
     localStorage.setItem("klapsen_push_disabled", "true");
     pushRegistrationAuthor = "";
+    pushSyncState = "idle";
     await unsubscribeUserFromPush();
     await updateNotificationButton();
     window.showAppModal("Gespeichert", "Der Gerätenutzer und die Einstellungen wurden gespeichert. Mitteilungen sind auf diesem Gerät ausgeschaltet.");
@@ -456,6 +541,9 @@ async function subscribeUserToPush(subscriptionPromise = null) {
   }
   const author = getPushDeviceAuthor();
   if (!author) return null;
+  pushSyncState = "syncing";
+  pushSyncErrorStage = "";
+  void refreshPushStatus();
   let stage = "browser";
   try {
     const reg = pushServiceWorkerRegistration || await navigator.serviceWorker.ready;
@@ -491,13 +579,19 @@ async function subscribeUserToPush(subscriptionPromise = null) {
       );
 
       pushRegistrationAuthor = author;
+      pushSyncState = "synced";
       console.log("✅ Web-Push-Abonnement aktiv in Firestore:", subDocId);
       return subscription;
     }
   } catch (err) {
     const code = getPushErrorCode(err);
+    pushSyncState = "error";
+    pushSyncErrorStage = stage;
     console.error("Fehler bei Web-Push-Registrierung:", stage, code);
     throw Object.assign(new Error("Push-Registrierung fehlgeschlagen"), { code, stage });
+  } finally {
+    if (pushSyncState === "syncing") pushSyncState = "idle";
+    void refreshPushStatus();
   }
   return null;
 }
@@ -552,6 +646,8 @@ async function enablePushNotificationsForDevice() {
     window.showAppModal("Gespeichert", "Deine Einstellungen und der Gerätenutzer wurden gespeichert.");
   } catch (e) {
     const code = getPushErrorCode(e);
+    pushSyncState = "error";
+    pushSyncErrorStage = e.stage || "browser";
     console.error("Fehler bei Push-Aktivierung:", e.stage || "browser", code);
     await updateNotificationButton();
     const reason = code === "permission-denied"
@@ -579,6 +675,7 @@ async function enablePushNotificationsForDevice() {
 }
 
 async function updateNotificationButton() {
+  void refreshPushStatus();
   const btn = document.getElementById("btn-toggle-notifications");
   if (!btn) return;
 
@@ -616,6 +713,12 @@ async function updateNotificationButton() {
     btn.style.opacity = "0.55";
   }
 }
+
+window.addEventListener("online", refreshPushStatus);
+window.addEventListener("offline", refreshPushStatus);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") void refreshPushStatus();
+});
 
 // ==========================================
 // 4. Autoren & Kategorien (Echtzeit aus Firebase)

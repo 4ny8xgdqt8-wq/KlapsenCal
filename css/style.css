@@ -2218,6 +2218,22 @@ select.form-control {
 }
 #push-device-modal h3 { outline: none; }
 #push-device-modal p { margin-bottom: 18px; }
+.push-status {
+  margin: 0 0 18px;
+  padding: 13px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-raised);
+}
+.push-status-top { display: flex; align-items: flex-start; gap: 10px; }
+.push-status-dot { flex: 0 0 9px; width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; background: #a0a9bc; }
+.push-status[data-state="active"] .push-status-dot { background: #8fe0d0; }
+.push-status[data-state="attention"] .push-status-dot { background: #fbbf24; }
+.push-status[data-state="error"] .push-status-dot { background: #fca5a5; }
+#push-status-title { display: block; color: var(--text-color); font-size: 0.88rem; }
+#push-status-detail { margin-top: 3px; color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; }
+.push-status-person { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem; }
+.push-status-person strong { color: var(--text-color); overflow-wrap: anywhere; }
 .push-settings-options { margin-top: 18px; }
 .push-settings-heading {
   margin: 18px 2px 8px;

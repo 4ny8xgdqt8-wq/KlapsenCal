@@ -2812,6 +2812,13 @@
       >
         <h3 id="push-device-title" tabindex="-1">Mitteilungen &amp; Gerät</h3>
         <p>Wähle den Nutzer und die Mitteilungen für dieses Gerät.</p>
+        <section class="push-status" id="push-status" data-state="checking" role="status" aria-live="polite">
+          <div class="push-status-top">
+            <span class="push-status-dot" aria-hidden="true"></span>
+            <div><strong id="push-status-title">Status wird geprüft …</strong><div id="push-status-detail">Bitte einen Moment warten.</div></div>
+          </div>
+          <div class="push-status-person"><span>Gerätenutzer</span><strong id="push-status-author">Noch nicht ausgewählt</strong></div>
+        </section>
         <div class="form-group">
           <label for="push-device-author">Dein Name</label>
           <select id="push-device-author" class="form-control" required></select>
