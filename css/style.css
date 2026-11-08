@@ -9665,3 +9665,6 @@ textarea {
 :root[data-theme="light"] .event-pill-meta, :root[data-theme="light"] .event-dabei-label, :root[data-theme="light"] .participant-count-badge { color: var(--text-muted); }
 :root[data-theme="light"] .empty-state-action, :root[data-theme="light"] .calendar-today-btn, :root[data-theme="light"] .event-filters-toggle { color: var(--primary-color); }
 :root[data-theme="light"] .event-filter-count:not([hidden]) { color: #fff; }
+
+.title-stack[role="button"] { cursor: pointer; }
+.title-stack[role="button"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 4px; border-radius: 4px; }

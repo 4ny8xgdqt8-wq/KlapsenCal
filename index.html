@@ -120,7 +120,7 @@
           </div>
         </details>
       </div>
-      <div class="title-stack">
+      <div class="title-stack" role="button" tabindex="0" aria-label="Zum Seitenanfang scrollen" title="Zum Seitenanfang scrollen">
         <div class="main-title">Klapsentouren</div>
         <div class="sub-title" id="header-sub-title">Termine & Vorhaben</div>
       </div>
@@ -3518,6 +3518,24 @@
       };
       scrollContent.addEventListener("scroll", updateScrollAppearance, { passive: true });
       updateScrollAppearance();
+
+      // Der Header ergänzt das systemeigene Tippen auf die iOS-Statusleiste.
+      const pageHeader = document.querySelector("body > header");
+      const scrollToTop = () => {
+        if (document.querySelector('#theme-menu[open]')) return;
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        scrollContent.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+      };
+      pageHeader.addEventListener("click", (event) => {
+        if (event.target.closest("button, a, summary, input, select, .theme-menu")) return;
+        scrollToTop();
+      });
+      pageHeader.querySelector(".title-stack").addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          scrollToTop();
+        }
+      });
 
       // Tab Switching
       function switchTab(tabId, el) {
