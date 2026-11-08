@@ -9537,6 +9537,7 @@ textarea {
 .calendar-header-left { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .calendar-shift-btn { flex-shrink: 0; }
 .calendar-month-title { text-align: center; }
+#termine .calendar-widget { margin-bottom: 2px; padding-bottom: 2px; }
 .shift-legend { justify-content: center; margin-top: 8px; color: #aebdb4; font-size: 0.67rem; }
 .shift-legend span { display: flex; align-items: center; gap: 4px; }
 .calendar-day-cell span.cal-day-num { position: relative; }
@@ -9546,6 +9547,8 @@ textarea {
 .shift-week-marker { margin: 3px 0 0 3px; flex-shrink: 0; }
 .shift-marker.dani { background: #f9a8d4; }
 .shift-day-summary { margin-top: 8px; color: #d4e9de; font-size: 0.8rem; line-height: 1.4; }
+.shift-management { min-width: 0; overflow-x: hidden; overflow-y: auto; touch-action: pan-y; }
+.shift-management form, .shift-management section, .shift-management .form-group { min-width: 0; max-width: 100%; }
 .shift-management h3 { margin: 20px 0 8px; font-size: 1rem; }
 .shift-management p { color: #b6c8be; font-size: 0.82rem; line-height: 1.4; }
 .shift-management form, .shift-management section { padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -9554,3 +9557,30 @@ textarea {
 .shift-weekends { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .shift-weekend-button { padding: 9px 4px; border: 1px solid #4c6557; border-radius: 8px; color: #d9e8dd; background: #202e26; cursor: pointer; }
 .shift-weekend-button.active { border-color: #f9a8d4; background: #653b52; color: #fff; }
+
+/* Kompakter Hinweis für einen ausgewählten Tag ohne Termine. */
+#termine.has-selected-calendar-day #event-list-container .empty-state:not(.is-search) { padding: 14px 18px; }
+#termine.has-selected-calendar-day #event-list-container .empty-state:not(.is-search) .empty-state-icon { width: 36px; height: 36px; margin-bottom: 6px; border-radius: 11px; }
+#termine.has-selected-calendar-day #event-list-container .empty-state:not(.is-search) .empty-state-icon .ui-icon { width: 26px; height: 26px; }
+#termine.has-selected-calendar-day #event-list-container .empty-state:not(.is-search) .empty-state-description { margin-top: 3px; }
+#termine.has-selected-calendar-day #event-list-container .empty-state:not(.is-search) .empty-state-action { margin-top: 8px; }
+
+/* Der heutige Tag bleibt auch bei Terminen und Auswahl erkennbar. */
+#termine .calendar-day-cell.today {
+  border: 2px solid #a8f3df;
+  color: #d5fff3;
+  box-shadow: inset 0 0 0 1px rgba(168, 243, 223, 0.28), 0 0 9px rgba(143, 224, 208, 0.3);
+}
+#termine .calendar-day-cell.today .cal-day-num { font-weight: 900; }
+#termine.has-selected-calendar-day .calendar-day-cell.today.selected {
+  border-color: #164d40;
+  box-shadow: inset 0 0 0 1px #164d40, 0 0 0 2px rgba(168, 243, 223, 0.55);
+}
+
+/* Wochenenden und gesetzliche Feiertage in NRW */
+#termine .calendar-day-cell.weekend:not(.selected):not(.today) .cal-day-num { color: #b9d6d0; }
+#termine .calendar-day-cell.holiday .cal-day-num, .holiday-legend { text-decoration: underline; text-decoration-color: #e8c57c; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.shift-legend { flex-wrap: wrap; }
+
+.shift-day-summary:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.holiday-day-label { display: inline-block; padding: 4px 9px; border: 1px solid rgba(232, 197, 124, 0.45); border-radius: 8px; background: rgba(232, 197, 124, 0.12); color: #f5dcaa; font-weight: 700; }

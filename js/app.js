@@ -1841,6 +1841,29 @@ function peterShift(dateStr) {
   const type = weeks % 2 === 0 ? shiftPattern.type : (shiftPattern.type === "early" ? "late" : "early");
   return { type, changed: false };
 }
+// Gesetzliche Feiertage in NRW; bewegliche Tage richten sich nach Ostern.
+function getNrwHolidays(year) {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const holidays = {
+    [`${year}-01-01`]: "Neujahr", [`${year}-05-01`]: "Tag der Arbeit",
+    [`${year}-10-03`]: "Tag der Deutschen Einheit", [`${year}-11-01`]: "Allerheiligen",
+    [`${year}-12-25`]: "1. Weihnachtstag", [`${year}-12-26`]: "2. Weihnachtstag",
+  };
+  for (const [offset, name] of [[-2, "Karfreitag"], [1, "Ostermontag"], [39, "Christi Himmelfahrt"], [50, "Pfingstmontag"], [60, "Fronleichnam"]]) {
+    const date = new Date(year, month - 1, day + offset, 12);
+    holidays[shiftDateString(date)] = name;
+  }
+  return holidays;
+}
+function nrwHoliday(dateStr) {
+  return getNrwHolidays(Number(dateStr.slice(0, 4)))[dateStr];
+}
 function shiftDescription(dateStr) {
   const labels = [];
   const shift = peterShift(dateStr);
@@ -1855,8 +1878,20 @@ function renderShiftDay() {
   const el = document.getElementById("shift-day-summary");
   if (!el) return;
   const labels = selectedCalendarDate ? shiftDescription(selectedCalendarDate) : [];
-  el.textContent = labels.join(" · ");
-  el.hidden = !labels.length;
+  const holiday = selectedCalendarDate && nrwHoliday(selectedCalendarDate);
+  el.replaceChildren();
+  if (holiday) {
+    const badge = document.createElement("span");
+    badge.className = "holiday-day-label";
+    badge.textContent = `Feiertag: ${holiday}`;
+    el.appendChild(badge);
+  }
+  if (labels.length) {
+    const shifts = document.createElement("span");
+    shifts.textContent = labels.join(" · ");
+    el.appendChild(shifts);
+  }
+  el.hidden = !holiday && !labels.length;
 }
 window.renderShiftDay = renderShiftDay;
 function initShiftsListener() {
@@ -2040,6 +2075,8 @@ function renderCalendarWidget() {
       const dateStr = `${dayInfo.dateObj.getFullYear()}-${String(dayInfo.dateObj.getMonth() + 1).padStart(2, "0")}-${String(dayInfo.dayNum).padStart(2, "0")}`;
 
       const cell = document.createElement("div");
+      const holiday = nrwHoliday(dateStr);
+      const weekend = dIdx >= 5;
 
       if (!dayInfo.isCurrentMonth) {
         cell.className = "calendar-day-cell other-month";
@@ -2056,12 +2093,14 @@ function renderCalendarWidget() {
         if (isToday) classes.push("today");
         if (isSelected) classes.push("selected");
         if (hasEvents) classes.push("has-events");
+        if (weekend) classes.push("weekend");
+        if (holiday) classes.push("holiday");
 
         cell.className = classes.join(" ");
         cell.innerHTML = `<span class="cal-day-num">${dayInfo.dayNum}</span>`;
         cell.onclick = () => { window.selectCalendarDay(dateStr); renderShiftDay(); };
         const shifts = shiftDescription(dateStr);
-        if (shifts.length) cell.title = shifts.join(" · ");
+        cell.title = [holiday, ...shifts].filter(Boolean).join(" · ");
         if (shiftEntries[`dani_${dateStr}`]) {
           const marker = document.createElement("span");
           marker.className = "shift-marker dani shift-day-marker";
