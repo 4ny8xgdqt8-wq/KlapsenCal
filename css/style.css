@@ -9609,3 +9609,5 @@ textarea {
 #termine .calendar-day-cell.holiday:not(.selected):not(.today) .cal-day-num { color: #e8c57c; }
 #termine .calendar-day-cell.holiday.today:not(.selected) .cal-day-num { color: #e8c57c; }
 #termine .calendar-day-cell.holiday.selected .cal-day-num { color: #604000; }
+
+#termine .calendar-day-cell.other-month { color: #3e495c; }

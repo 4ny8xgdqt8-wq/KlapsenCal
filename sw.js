@@ -1,5 +1,5 @@
 // Format: JJJJMMTT.Laufnummer (bei weiteren Änderungen am selben Tag erhöhen).
-const VERSION = "20261108.21";
+const VERSION = "20261108.23";
 const CACHE_NAME = `klapsentouren-cache-${VERSION}`;
 
 const ASSETS_TO_CACHE = [
