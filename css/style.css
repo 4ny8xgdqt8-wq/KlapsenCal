@@ -6084,6 +6084,12 @@ select.form-control {
   gap: 12px;
 }
 
+.portion-calc-label {
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .btn-portion-step {
   width: 34px;
   height: 34px;
@@ -9649,9 +9655,9 @@ textarea {
 :root[data-theme="light"] .ticket-card { color: var(--text-color); background: #e2f1ed; }
 :root[data-theme="light"] .ticket-title, :root[data-theme="light"] .event-title, :root[data-theme="light"] .event-date-range, :root[data-theme="light"] .event-date-day, :root[data-theme="light"] .checklist-name { color: var(--text-color); }
 :root[data-theme="light"] .ticket-meta-row, :root[data-theme="light"] .event-date-weekday, :root[data-theme="light"] .event-date-month { color: var(--text-muted); }
-:root[data-theme="light"] .ticket-header { color: #fff; }
-:root[data-theme="light"] .calendar-day-cell.other-month { color: #a2afab; }
-:root[data-theme="light"] #termine .calendar-day-cell.other-month { color: #a2afab; }
+:root[data-theme="light"] .ticket-header, :root[data-theme="light"] .ticket-category { color: var(--text-color); }
+:root[data-theme="light"] .calendar-day-cell.other-month { color: #687d77; }
+:root[data-theme="light"] #termine .calendar-day-cell.other-month { color: #687d77; }
 :root[data-theme="light"] #termine .calendar-day-cell.weekend:not(.selected):not(.today) .cal-day-num { color: #47716a; }
 :root[data-theme="light"] #termine .calendar-day-cell.holiday:not(.selected):not(.today) .cal-day-num, :root[data-theme="light"] #termine .calendar-day-cell.holiday.today:not(.selected) .cal-day-num { color: #936000; }
 :root[data-theme="light"] #termine .calendar-day-cell.today { color: #0b5949; border-color: #137961; box-shadow: inset 0 0 0 1px rgba(19,121,97,0.25), 0 0 8px rgba(19,121,97,0.2); }
@@ -9665,6 +9671,127 @@ textarea {
 :root[data-theme="light"] .event-pill-meta, :root[data-theme="light"] .event-dabei-label, :root[data-theme="light"] .participant-count-badge { color: var(--text-muted); }
 :root[data-theme="light"] .empty-state-action, :root[data-theme="light"] .calendar-today-btn, :root[data-theme="light"] .event-filters-toggle { color: var(--primary-color); }
 :root[data-theme="light"] .event-filter-count:not([hidden]) { color: #fff; }
+
+/* Fest definierte Farben aus der dunklen Darstellung auf hellen Flächen. */
+:root[data-theme="light"] :is(.main-title, .sub-title, .btn-header-action, .btn-cart-action,
+  .calendar-month-title, .calendar-nav-btn, .calendar-day-cell:not(.selected),
+  .search-input, .form-control, .selectable-chip, .timeframe-chip.active,
+  .filter-chip.active, .tab-item.active, .detail-title-section h1, .meta-value,
+  .btn-action-tile, .rsvp-summary-count, .rsvp-name, .custom-modal h3,
+  .readme-main-header, .readme-strong, .loading-text, .stepper-btn,
+  .btn-tx-action, .btn-stauder-step-action, .stauder-big-num, .stauder-goal-title,
+  .stauder-goal-stat-val, .stauder-kisten-title, .stauder-stat-highlight,
+  .stauder-kisten-name, .stauder-kiste-buyer-chip, .btn-stauder-kiste-stepper,
+  .purchase-title, .purchases-budget-detail-item .detail-val, .btn-rsvp-quick-action,
+  .form-participant-chip, .form-guest-label, .lokal-stat-val, .einkehr-stat-val,
+  .criterion-label, .overall-score-label, .btn-fazit-option, .badge-lokal-cat,
+  .badge-einkehr-cat, .lokal-participants-names, .lokal-notes-content,
+  .btn-lokal-link, .btn-einkehr-link, .btn-status-option, .rezept-card-title,
+  .btn-portion-step, .recipe-ing-name, .recipe-step-item, .event-meta,
+  .event-undated-date-box small, .readme-item, .readme-p,
+  .readme-chip, .stauder-goal-badge, .stauder-kisten-badge, .stauder-kpi-unit,
+  .stauder-bar-val, .purchases-budget-status-sub, .lokal-score-pill.high,
+  .kasse-history-filter.active, .recipe-tag-choice.active) { color: var(--text-color); }
+:root[data-theme="light"] .undated-toggle-label { color: var(--text-color) !important; }
+:root[data-theme="light"] :is(.btn-submit, .btn-modal-close, .selectable-chip.selected,
+  .checklist-item-row.checked .checklist-checkbox) { color: #fff; }
+:root[data-theme="light"] :is(.btn-stauder-add-kiste, .rezept-badge-new,
+  .purchase-card.checked .purchase-checkbox) { color: #173b33; }
+
+/* Einheitliche Schaltflächen und Zustände für beide Darstellungen. */
+:root:not([data-theme="light"]) :is(.btn-submit, .btn-modal-close, .selectable-chip.selected,
+  .checklist-item-row.checked .checklist-checkbox) { color: #10201f; }
+:root:not([data-theme="light"]) :is(.btn-stauder-add-kiste, .rezept-badge-new,
+  .purchase-card.checked .purchase-checkbox) { color: #173b33; }
+:root[data-theme="light"] :is(.btn-submit, .btn-modal-close, .btn-kasse-add,
+  .lokal-add-button, .recipe-action-primary, .event-set-date-button) {
+  color: #fff;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+:root[data-theme="light"] :is(.btn-header-action, .btn-cart-action, .calendar-nav-btn,
+  .btn-detail-icon, .btn-close-modal, .btn-action-tile, .btn-tx-action,
+  .stepper-btn, .btn-stauder-step-action, .btn-stauder-kiste-stepper,
+  .btn-portion-step, .btn-rsvp-quick-action) {
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border-color: var(--border-color);
+}
+:root[data-theme="light"] :is(.filter-chip.active, .timeframe-chip.active,
+  .kasse-history-filter.active, .segmented-control-btn.active,
+  .segmented-control-btn.active .seg-badge, .recipe-tag-choice.active) {
+  color: var(--primary-hover);
+  background: #d8ece6;
+  border-color: #84b9aa;
+}
+:root[data-theme="light"] :is(.calendar-nav-btn:hover, .calendar-today-btn:hover,
+  .btn-day-add-event:hover) { color: #fff; background: var(--primary-color); }
+:root[data-theme="light"] :is(.btn-submit, .btn-modal-close, .btn-kasse-add,
+  .lokal-add-button, .recipe-action-primary, .event-set-date-button):hover {
+  color: #fff;
+  background: var(--primary-hover);
+}
+:root[data-theme="light"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), select, textarea):focus {
+  color: var(--text-color);
+  background-color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* Der Rezeptkopf liegt in beiden Designs auf einem abgedunkelten Bild. */
+:root .recipe-detail-hero .recipe-detail-title,
+:root .recipe-detail-hero .rezept-author-box,
+:root .recipe-detail-hero .btn-detail-icon {
+  color: #fff;
+}
+:root .recipe-detail-hero .btn-detail-icon {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+:root .recipe-detail-hero .btn-detail-icon:hover {
+  color: #fff;
+  border-color: #fff;
+}
+:root[data-theme="light"] .portion-calc-bar {
+  background: var(--surface-raised);
+  border-color: var(--border-color);
+}
+
+/* Kassenübersicht auf hellen Flächen lesbar halten. */
+:root[data-theme="light"] .wallet-card {
+  background: #fff;
+  border-color: var(--border-color);
+  box-shadow: 0 8px 22px rgba(30, 65, 55, 0.14);
+}
+:root[data-theme="light"] .wallet-balance-label,
+:root[data-theme="light"] .kasse-history-total { color: var(--text-muted); }
+:root[data-theme="light"] .wallet-balance-val { color: var(--text-color); text-shadow: none; }
+:root[data-theme="light"] .wallet-balance-val.negative { color: var(--status-danger); }
+:root[data-theme="light"] .wallet-stat-in :is(.wallet-stat-label, .wallet-stat-val) { color: var(--status-success); }
+:root[data-theme="light"] .wallet-stat-out :is(.wallet-stat-label, .wallet-stat-val),
+:root[data-theme="light"] .wallet-trend-badge.negative { color: var(--status-danger); }
+:root[data-theme="light"] .wallet-action-btn.wallet-action-in:hover { color: var(--primary-hover); }
+:root[data-theme="light"] .wallet-action-btn.wallet-action-out:hover { color: var(--status-danger); }
+
+:root .recipe-detail-content .recipe-detail-edit {
+  flex: 1;
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-color);
+}
+:root .recipe-detail-content .recipe-detail-delete {
+  flex: 0.6;
+  color: var(--status-danger);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+:root[data-theme="light"] .recipe-notes-box { color: #704500; }
+:root[data-theme="light"] .recipe-detail-content .recipe-detail-edit:hover {
+  color: var(--text-color);
+  background: #d8e5e1;
+}
+:root[data-theme="light"] .recipe-detail-content .recipe-detail-delete:hover {
+  color: var(--status-danger);
+  background: #f8d6d6;
+}
 
 .title-stack[role="button"] { cursor: pointer; }
 .title-stack[role="button"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 4px; border-radius: 4px; }
