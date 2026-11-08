@@ -28,6 +28,36 @@
     />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2.5.0" />
 
+    <script>
+      (() => {
+        let choice = "dark";
+        try { choice = localStorage.getItem("klapsen_theme") || "dark"; } catch (_) {}
+        if (!["dark", "light", "system"].includes(choice)) choice = "dark";
+        const system = window.matchMedia("(prefers-color-scheme: light)");
+        const apply = () => {
+          const light = choice === "light" || (choice === "system" && system.matches);
+          document.documentElement.dataset.theme = light ? "light" : "dark";
+          document.documentElement.dataset.themeChoice = choice;
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.content = light ? "#f1f5f4" : "#111522";
+          document.querySelectorAll("[data-theme-option]").forEach((button) => {
+            button.setAttribute("aria-checked", String(button.dataset.themeOption === choice));
+          });
+        };
+        window.setAppTheme = (value) => {
+          if (!["dark", "light", "system"].includes(value)) return;
+          choice = value;
+          try { localStorage.setItem("klapsen_theme", value); } catch (_) {}
+          apply();
+          const menu = document.getElementById("theme-menu");
+          if (menu) menu.open = false;
+        };
+        if (system.addEventListener) system.addEventListener("change", apply);
+        else if (system.addListener) system.addListener(apply);
+        document.addEventListener("DOMContentLoaded", apply);
+        apply();
+      })();
+    </script>
     <!-- CSS Stylesheet -->
     <link rel="stylesheet" href="css/style.css" />
     <script src="js/seasonal-effects.js" defer></script>
@@ -76,8 +106,19 @@
 
     <!-- Header -->
     <header>
-      <div class="header-side">
+      <div class="header-side header-side-left">
         <img src="logo.png?v=2.5.0" class="logo-img" alt="Logo" />
+        <details class="theme-menu" id="theme-menu">
+          <summary class="btn-header-action theme-menu-button" title="Darstellung einstellen" aria-label="Darstellung einstellen">
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+          </summary>
+          <div class="theme-menu-panel" role="radiogroup" aria-label="Darstellung">
+            <span class="theme-menu-title">Darstellung</span>
+            <button type="button" role="radio" data-theme-option="dark" aria-checked="true" onclick="window.setAppTheme('dark')">Dunkel</button>
+            <button type="button" role="radio" data-theme-option="light" aria-checked="false" onclick="window.setAppTheme('light')">Hell</button>
+            <button type="button" role="radio" data-theme-option="system" aria-checked="false" onclick="window.setAppTheme('system')">System</button>
+          </div>
+        </details>
       </div>
       <div class="title-stack">
         <div class="main-title">Klapsentouren</div>
