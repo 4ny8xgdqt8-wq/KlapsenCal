@@ -9605,3 +9605,7 @@ textarea {
 .event-filter-sort { margin-bottom: 10px; }
 .event-filter-sort .event-sort-select { width: 100%; max-width: none; }
 .event-filter-reset { min-height: 40px; padding: 7px 10px; border: 1px solid var(--border-color); border-radius: 9px; color: var(--primary-color); background: transparent; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+
+#termine .calendar-day-cell.holiday:not(.selected):not(.today) .cal-day-num { color: #e8c57c; }
+#termine .calendar-day-cell.holiday.today:not(.selected) .cal-day-num { color: #e8c57c; }
+#termine .calendar-day-cell.holiday.selected .cal-day-num { color: #604000; }
