@@ -1294,7 +1294,7 @@
                 style="
                   display: none;
                   background: rgba(56, 189, 248, 0.2);
-                  color: #38bdf8;
+                  color: var(--status-info);
                   border-color: rgba(56, 189, 248, 0.4);
                 "
               >
@@ -1421,7 +1421,7 @@
             <p
               id="detail-notes"
               style="
-                color: #e2e8f0;
+                color: var(--text-color);
                 font-size: 0.92rem;
                 line-height: 1.5;
                 margin: 0;
@@ -1605,7 +1605,7 @@
                 padding: 8px 12px;
                 margin-top: -4px;
                 margin-bottom: 10px;
-                color: #fde68a;
+                color: var(--status-warning);
                 font-size: 0.82rem;
                 align-items: center;
                 gap: 8px;
@@ -1640,7 +1640,7 @@
                 for="event-all-day"
                 style="
                   font-size: 0.85rem;
-                  color: #cbd5e1;
+                  color: var(--text-color);
                   cursor: pointer;
                   user-select: none;
                   margin: 0;
@@ -1703,7 +1703,7 @@
                     margin: 0;
                     font-size: 0.9rem;
                     font-weight: 700;
-                    color: #cbd5e1;
+                    color: var(--text-color);
                   "
                   ><span data-ui-icon="users"></span> Wer ist dabei? (Teilnehmer)</label
                 >
@@ -1747,7 +1747,7 @@
                 style="
                   font-size: 0.82rem;
                   font-weight: 700;
-                  color: #94a3b8;
+                  color: var(--text-muted);
                   margin-bottom: 6px;
                   display: block;
                 "
@@ -2035,7 +2035,7 @@
                     margin: 0;
                     font-size: 0.9rem;
                     font-weight: 700;
-                    color: #cbd5e1;
+                    color: var(--text-color);
                   "
                   ><span data-ui-icon="users"></span> Wer war alles dabei?</label
                 >
@@ -2402,14 +2402,14 @@
                 style="
                   font-weight: 800;
                   font-size: 0.95rem;
-                  color: #38bdf8;
+                  color: var(--status-info);
                   margin-bottom: 4px;
                 "
               >
                 <span data-ui-icon="link"></span> Externes Web-Rezept
               </div>
               <div
-                style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 14px"
+                style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px"
               >
                 Dieses Gericht wurde als Online-Rezept hinterlegt.
               </div>
@@ -2625,7 +2625,7 @@
                 style="
                   margin: 0;
                   font-size: 0.9rem;
-                  color: #fff;
+                  color: var(--text-color);
                   cursor: pointer;
                   font-weight: 700;
                 "
@@ -2819,7 +2819,7 @@
               gap: 8px;
             "
           >
-            <span style="font-size: 0.82rem; color: #94a3b8"
+            <span style="font-size: 0.82rem; color: var(--text-muted)"
               >Antippen zum Durchstreichen</span
             >
             <div style="display: flex; gap: 8px; flex-shrink: 0">
@@ -2848,7 +2848,7 @@
             <button
               type="button"
               class="btn-submit"
-              style="background: rgba(255, 255, 255, 0.12); color: white"
+              style="background: var(--surface-raised); color: var(--text-color)"
               onclick="window.closeCartModal()"
             >
               Schließen
@@ -2929,7 +2929,7 @@
         </h3>
         <p
           id="confirm-modal-text"
-          style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.5"
+          style="color: var(--text-color); font-size: 0.95rem; line-height: 1.5"
         >
           Bist du sicher?
         </p>
@@ -2937,7 +2937,7 @@
           <button
             type="button"
             class="btn-modal-close"
-            style="flex: 1; background: rgba(255, 255, 255, 0.1); color: white"
+            style="flex: 1; background: var(--surface-raised); color: var(--text-color)"
             onclick="closeConfirmModal()"
           >
             Abbrechen
@@ -2969,7 +2969,7 @@
         <h3>
           <span data-ui-icon="users"></span> Gäste verwalten
         </h3>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 16px">
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px">
           Wieviele zusätzliche Gäste kommen mit?
         </p>
 
@@ -2986,7 +2986,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
           "
         >
-          <span style="font-weight: 700; color: #ffffff; font-size: 0.9rem"
+          <span style="font-weight: 700; color: var(--text-color); font-size: 0.9rem"
             ><span data-ui-icon="users"></span> Erwachsene:</span
           >
           <div style="display: flex; align-items: center; gap: 10px">
@@ -3031,7 +3031,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
           "
         >
-          <span style="font-weight: 700; color: #ffffff; font-size: 0.9rem"
+          <span style="font-weight: 700; color: var(--text-color); font-size: 0.9rem"
             ><span data-ui-icon="users"></span> Kinder:</span
           >
           <div style="display: flex; align-items: center; gap: 10px">
@@ -3067,7 +3067,7 @@
           <button
             type="button"
             class="btn-modal-close"
-            style="flex: 1; background: rgba(255, 255, 255, 0.1); color: white"
+            style="flex: 1; background: var(--surface-raised); color: var(--text-color)"
             onclick="window.closeGuestsModal()"
           >
             Abbrechen
@@ -3122,7 +3122,7 @@
 
         <!-- Betrag -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Betrag (€)</label
           >
           <input
@@ -3145,7 +3145,7 @@
         <div class="form-group" style="margin-bottom: 12px">
           <label
             for="kasse-purpose"
-            style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+            style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Zweck / Wofür?</label
           >
           <select
@@ -3169,7 +3169,7 @@
 
         <!-- Datum -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Datum</label
           >
           <input type="date" id="kasse-date" class="form-control" required />
@@ -3177,7 +3177,7 @@
 
         <!-- Optionale Notiz -->
         <div class="form-group" style="margin-bottom: 16px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Notiz / Info (optional)</label
           >
           <input
@@ -3192,7 +3192,7 @@
           <button
             type="button"
             class="btn-modal-close"
-            style="flex: 1; background: rgba(255, 255, 255, 0.1); color: white"
+            style="flex: 1; background: var(--surface-raised); color: var(--text-color)"
             onclick="window.closeKasseModal()"
           >
             Abbrechen
@@ -3228,7 +3228,7 @@
 
         <!-- Titel / Gegenstand -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Gegenstand / Was wird gebraucht?</label
           >
           <input
@@ -3242,9 +3242,9 @@
 
         <!-- Geschätzter Preis (€) -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Geschätzter Preis (€)
-            <span style="font-size: 0.7rem; font-weight: normal; color: #64748b"
+            <span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted)"
               >(optional)</span
             ></label
           >
@@ -3260,7 +3260,7 @@
 
         <!-- Priorität -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Priorität / Dringlichkeit</label
           >
           <div class="kasse-type-toggle" style="margin: 0">
@@ -3293,9 +3293,9 @@
 
         <!-- Web-Link -->
         <div class="form-group" style="margin-bottom: 12px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Web-Link / Shop-Link
-            <span style="font-size: 0.7rem; font-weight: normal; color: #64748b"
+            <span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted)"
               >(optional)</span
             ></label
           >
@@ -3309,9 +3309,9 @@
 
         <!-- Notiz -->
         <div class="form-group" style="margin-bottom: 16px">
-          <label style="font-size: 0.8rem; font-weight: 700; color: #94a3b8"
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted)"
             >Notiz / Details
-            <span style="font-size: 0.7rem; font-weight: normal; color: #64748b"
+            <span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted)"
               >(optional)</span
             ></label
           >
@@ -3327,7 +3327,7 @@
           <button
             type="button"
             class="btn-modal-close"
-            style="flex: 1; background: rgba(255, 255, 255, 0.1); color: white"
+            style="flex: 1; background: var(--surface-raised); color: var(--text-color)"
             onclick="window.closePurchaseModal()"
           >
             Abbrechen
@@ -3367,7 +3367,7 @@
             style="
               font-size: 0.8rem;
               font-weight: 700;
-              color: #94a3b8;
+              color: var(--text-muted);
               display: block;
               margin-bottom: 8px;
             "
@@ -3387,7 +3387,7 @@
             style="
               font-size: 0.8rem;
               font-weight: 700;
-              color: #94a3b8;
+              color: var(--text-muted);
               display: block;
               margin-bottom: 4px;
             "
@@ -3408,7 +3408,7 @@
             style="
               font-size: 0.8rem;
               font-weight: 700;
-              color: #94a3b8;
+              color: var(--text-muted);
               display: block;
               margin-bottom: 6px;
             "
@@ -3430,7 +3430,7 @@
                 font-weight: 800;
                 min-width: 36px;
                 text-align: center;
-                color: #ffffff;
+                color: var(--text-color);
               "
               >1</span
             >
@@ -3441,7 +3441,7 @@
             >
               +
             </button>
-            <span style="font-size: 0.85rem; color: #94a3b8; margin-left: 4px"
+            <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 4px"
               >Kiste(n)</span
             >
           </div>
@@ -3452,7 +3452,7 @@
         <div
           style="
             font-size: 0.74rem;
-            color: #64748b;
+            color: var(--text-muted);
             margin-bottom: 16px;
             line-height: 1.35;
             background: rgba(255, 255, 255, 0.04);
@@ -3470,7 +3470,7 @@
           <button
             type="button"
             class="btn-modal-close"
-            style="flex: 1; background: rgba(255, 255, 255, 0.1); color: white"
+            style="flex: 1; background: var(--surface-raised); color: var(--text-color)"
             onclick="window.closeStauderKisteModal()"
           >
             Abbrechen

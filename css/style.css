@@ -9793,5 +9793,25 @@ textarea {
   background: #f8d6d6;
 }
 
+:root[data-theme="light"] :is(.calendar-weekdays, .ticket-month-sub,
+  .undated-tab-heading-row p, .event-undated-heading-row p, .event-location,
+  .undated-toggle-copy small, .undated-range-heading small, .rsvp-summary-label,
+  .checklist-assignee, .checklist-status-label, .custom-modal p, .readme-subitem,
+  .stauder-sub-flaschen, .stauder-goal-stat-label, .stauder-milestones,
+  .stauder-kisten-header-left .stauder-kisten-substats, .stauder-stat-card-header .stauder-stat-title,
+  .stauder-kpi-label, .stauder-stat-title, .stauder-chart-badge, .stauder-bar-label,
+  .stauder-kisten-date, .purchase-meta, .purchases-budget-status-label,
+  .purchases-budget-detail-item .detail-label, .lokal-stat-lbl, .einkehr-stat-lbl,
+  .lokal-score-big-sub, .lokal-participants-title, .lokal-notes-summary,
+  .lokal-notes-chevron, .lokal-card-footer, .einkehr-card-footer,
+  .lokal-author-info, .lokal-participants-label, .rezepte-stat-lbl,
+  .recipe-tag-choice, .btn-remove-cart-item) { color: var(--text-muted); }
+:root[data-theme="light"] :is(.btn-cart-action.danger, .btn-remove-item,
+  .kasse-family-latest-amount.negative, .kasse-family-total.negative,
+  .kasse-tx-amount.negative, .purchases-budget-status-value.missing,
+  .lokal-score-pill.low, .lokal-score-pill.low .lokal-score-pill-val,
+  .lokal-user-chip.missing, .btn-remove-ing-row) { color: var(--status-danger); }
+:root[data-theme="light"] .recipe-detail-hero .rezept-author-box { color: #fff; }
+
 .title-stack[role="button"] { cursor: pointer; }
 .title-stack[role="button"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 4px; border-radius: 4px; }
