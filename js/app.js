@@ -1154,6 +1154,7 @@ function expandEventInstances(rawEventsList) {
           id: idx === 0 ? rawDoc.id : `${rawDoc.id}_range_${idx}`,
           baseId: rawDoc.id,
           Datum: rDate,
+          rangeStart: rawDoc.Datum,
           rangeIndex: idx,
           isRangeOccurrence: idx > 0,
           rangeTotalDays: rangeDates.length,
@@ -1558,7 +1559,17 @@ function renderEvents(events) {
     const countdown = getCountdownInfo(item.Datum);
     const isPast = countdown.daysDiff < 0;
 
-    const dateParts = formatDateObj(item.Datum);
+    const dateParts = formatDateObj(item.rangeStart || item.Datum);
+    const rangeEnd = item.rangeStart && item.Enddatum > item.rangeStart
+      ? formatDateObj(item.Enddatum)
+      : null;
+    const rangeDateLabel = (date) => {
+      const [, month, day] = date.split("-");
+      return `${day}.${month}.`;
+    };
+    const rangeDateHtml = rangeEnd
+      ? `<span class="event-date-range">${rangeDateLabel(item.rangeStart)}<span class="event-date-range-separator">bis</span>${rangeDateLabel(item.Enddatum)}</span>`
+      : "";
     const isAllDay = item.isAllDay || !item.Uhrzeit;
     const timeStr = isAllDay
       ? ` • ${uiIcon("sun")} Ganztägig`
@@ -1622,14 +1633,17 @@ function renderEvents(events) {
             <div class="ticket-title">${escapeLokalHtml(item.Titel || "Termin")}</div>
             <div class="ticket-meta-row">
               <span class="ticket-meta-item">${timeStr.replace(" • ", "")}</span>
+              ${rangeEnd ? `<span class="ticket-meta-item">Bis ${rangeEnd.formattedLong}</span>` : ""}
               ${locationStr ? `<span class="ticket-meta-item">${locationStr}</span>` : ""}
             </div>
           </div>
           <div class="ticket-rip-separator"></div>
           <div class="ticket-side">
-            <span class="ticket-day-huge" style="color: ${catStyle.color};">${dateParts.day}</span>
-            <span class="ticket-month-sub">${dateParts.monthShort}</span>
-            <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">${dateParts.weekdayShort}</span>
+            ${rangeEnd ? rangeDateHtml : `
+              <span class="ticket-day-huge" style="color: ${catStyle.color};">${dateParts.day}</span>
+              <span class="ticket-month-sub">${dateParts.monthShort}</span>
+              <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">${dateParts.weekdayShort}</span>
+            `}
             ${rsvpStackHtml}
           </div>
         </div>
@@ -1727,10 +1741,8 @@ function renderEvents(events) {
 
     // Urlaub-Zeitraum-Badge
     const dateRangePillHtml =
-      item.Kategorie === "Urlaub / Abwesend" &&
-      item.Enddatum &&
-      item.Enddatum > item.Datum
-        ? `<span class="event-pill event-pill-meta">${uiIcon("sun")} Bis ${formatDateObj(item.Enddatum).day}.${formatDateObj(item.Enddatum).monthShort}</span>`
+      rangeEnd
+        ? `<span class="event-pill event-pill-meta">${uiIcon("sun")} Bis ${rangeEnd.formattedLong}</span>`
         : "";
 
     // Avatar-Stack (Teilnehmer)
@@ -1761,9 +1773,11 @@ function renderEvents(events) {
 
     card.innerHTML = `
       <div class="event-date-box">
-        <span class="event-date-weekday">${dateParts.weekdayShort}</span>
-        <span class="event-date-day">${dateParts.day}</span>
-        <span class="event-date-month">${dateParts.monthShort}</span>
+        ${rangeEnd ? rangeDateHtml : `
+          <span class="event-date-weekday">${dateParts.weekdayShort}</span>
+          <span class="event-date-day">${dateParts.day}</span>
+          <span class="event-date-month">${dateParts.monthShort}</span>
+        `}
       </div>
       <div class="event-info">
         <div class="event-title-row">
@@ -2233,6 +2247,15 @@ function filterAndRender() {
   };
   filtered = filtered.filter(matchesActiveFilters);
 
+  // Zeiträume erscheinen in der Liste nur einmal; Serientermine bleiben einzeln.
+  const seenRanges = new Set();
+  filtered = filtered.filter((ev) => {
+    if (!ev.rangeStart) return true;
+    if (seenRanges.has(ev.baseId)) return false;
+    seenRanges.add(ev.baseId);
+    return true;
+  });
+
   // Sortierung
   filtered.sort((a, b) => {
     const dateA = a.Datum || "9999-99-99";
@@ -2266,8 +2289,8 @@ function filterAndRender() {
     }
   }
 
-  if (!selectedCalendarDate && query && sectionTitleEl) {
-    sectionTitleEl.textContent = `Suchergebnisse (${filtered.length})`;
+  if (!selectedCalendarDate && sectionTitleEl) {
+    sectionTitleEl.textContent = sectionTitleEl.textContent.replace(/\d+\)$/, `${filtered.length})`);
   }
 
   renderEvents(filtered);
@@ -2391,11 +2414,10 @@ function showEventDetails(data) {
         : "Noch kein Datum festgelegt";
   if (
     !data.DatumFlexibel &&
-    data.Kategorie === "Urlaub / Abwesend" &&
     data.Enddatum &&
-    data.Enddatum > data.Datum
+    data.Enddatum > (data.rangeStart || data.Datum)
   ) {
-    dateDisplayStr = `${formatDateObj(data.Datum).day}.${formatDateObj(data.Datum).monthShort} – ${formatDateObj(data.Enddatum).formattedLong}`;
+    dateDisplayStr = `${formatDateObj(data.rangeStart || data.Datum).formattedLong} – ${formatDateObj(data.Enddatum).formattedLong}`;
   }
 
   const isAllDay = data.isAllDay || !data.Uhrzeit;
