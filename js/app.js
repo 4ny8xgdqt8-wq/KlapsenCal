@@ -1817,6 +1817,142 @@ function getISOWeekNumber(d) {
   return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
 }
 
+// Schichtdaten werden getrennt pro Tag gespeichert, damit Änderungen sich nicht überschreiben.
+let shiftPattern = null;
+let shiftEntries = {};
+let shiftViewDate = new Date();
+
+function shiftDateString(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function shiftMonday(dateStr) {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  return date.toISOString().slice(0, 10);
+}
+function peterShift(dateStr) {
+  const override = shiftEntries[`peter_${dateStr}`];
+  if (override) return { type: override.type, changed: true };
+  if (!shiftPattern?.anchor || dateStr < shiftMonday(shiftPattern.anchor)) return null;
+  const weekday = new Date(`${dateStr}T12:00:00`).getDay();
+  if (weekday === 0 || weekday === 6) return null;
+  const weeks = Math.round((Date.parse(`${shiftMonday(dateStr)}T00:00:00Z`) - Date.parse(`${shiftMonday(shiftPattern.anchor)}T00:00:00Z`)) / 604800000);
+  const type = weeks % 2 === 0 ? shiftPattern.type : (shiftPattern.type === "early" ? "late" : "early");
+  return { type, changed: false };
+}
+function shiftDescription(dateStr) {
+  const labels = [];
+  const shift = peterShift(dateStr);
+  if (shift?.type === "late") {
+    const typeLabel = { early: "Frühschicht", late: "Spätschicht", off: "Frei" }[shift.type];
+    labels.push(`Peter: ${typeLabel}${shift.changed ? " (geändert)" : ""}`);
+  }
+  if (shiftEntries[`dani_${dateStr}`]) labels.push("Dani: Arbeit");
+  return labels;
+}
+function renderShiftDay() {
+  const el = document.getElementById("shift-day-summary");
+  if (!el) return;
+  const labels = selectedCalendarDate ? shiftDescription(selectedCalendarDate) : [];
+  el.textContent = labels.join(" · ");
+  el.hidden = !labels.length;
+}
+window.renderShiftDay = renderShiftDay;
+function initShiftsListener() {
+  onSnapshot(collection(db, "data_schichten"), (snapshot) => {
+    const entries = {};
+    let pattern = null;
+    snapshot.forEach((item) => {
+      if (item.id === "peter_rhythm") pattern = item.data();
+      else entries[item.id] = item.data();
+    });
+    shiftPattern = pattern;
+    shiftEntries = entries;
+    renderCalendarWidget();
+    renderShiftDay();
+    if (document.getElementById("shift-modal").style.display === "flex") renderShiftWeekends();
+  }, (error) => {
+    console.warn("Schichten konnten nicht geladen werden:", error.code || error.name);
+    document.getElementById("shift-status").textContent = "Schichten konnten nicht geladen werden. Bitte Verbindung und Berechtigungen prüfen.";
+  });
+}
+function renderShiftWeekends() {
+  document.getElementById("shift-month-title").textContent = `${MONTH_NAMES_LONG[shiftViewDate.getMonth()]} ${shiftViewDate.getFullYear()}`;
+  const container = document.getElementById("shift-weekends");
+  container.innerHTML = "";
+  const year = shiftViewDate.getFullYear(), month = shiftViewDate.getMonth();
+  const days = new Date(year, month + 1, 0).getDate();
+  for (let day = 1; day <= days; day++) {
+    const date = new Date(year, month, day, 12);
+    if (date.getDay() !== 0 && date.getDay() !== 6) continue;
+    const dateStr = shiftDateString(date);
+    const active = !!shiftEntries[`dani_${dateStr}`];
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `shift-weekend-button${active ? " active" : ""}`;
+    button.textContent = `${date.getDay() === 6 ? "Sa" : "So"} ${day}.${String(month + 1).padStart(2, "0")}. ${active ? "· Arbeit" : "· Frei"}`;
+    button.setAttribute("aria-pressed", String(active));
+    button.onclick = async () => {
+      button.disabled = true;
+      try {
+        if (!(await ensureAuth())) throw new Error("Anmeldung fehlgeschlagen");
+        const ref = doc(db, "data_schichten", `dani_${dateStr}`);
+        if (active) await deleteDoc(ref); else await setDoc(ref, { person: "dani", date: dateStr, type: "work" });
+        document.getElementById("shift-status").textContent = "Gespeichert.";
+      } catch (error) { document.getElementById("shift-status").textContent = `Speichern fehlgeschlagen: ${error.message}`; }
+      finally { button.disabled = false; }
+    };
+    container.appendChild(button);
+  }
+}
+window.shiftMonth = (offset) => { shiftViewDate = new Date(shiftViewDate.getFullYear(), shiftViewDate.getMonth() + offset, 1); renderShiftWeekends(); };
+window.openShiftModal = () => {
+  shiftViewDate = new Date(calCurrentYear, calCurrentMonth, 1);
+  document.getElementById("shift-anchor").value = shiftPattern?.anchor || "";
+  document.getElementById("shift-anchor-type").value = shiftPattern?.type || "early";
+  document.getElementById("shift-exception-date").value = selectedCalendarDate || shiftDateString(new Date());
+  document.getElementById("shift-status").textContent = "";
+  renderShiftWeekends();
+  document.getElementById("shift-modal").style.display = "flex";
+};
+window.closeShiftModal = () => { document.getElementById("shift-modal").style.display = "none"; };
+document.getElementById("shift-pattern-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  try {
+    if (!(await ensureAuth())) throw new Error("Anmeldung fehlgeschlagen");
+    const pattern = { anchor: document.getElementById("shift-anchor").value, type: document.getElementById("shift-anchor-type").value };
+    await setDoc(doc(db, "data_schichten", "peter_rhythm"), pattern, { merge: true });
+    document.getElementById("shift-status").textContent = "Wochenrhythmus gespeichert.";
+  } catch (error) { document.getElementById("shift-status").textContent = `Speichern fehlgeschlagen: ${error.message}`; }
+  finally { button.disabled = false; }
+});
+document.getElementById("shift-exception-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  try {
+    if (!(await ensureAuth())) throw new Error("Anmeldung fehlgeschlagen");
+    const selected = document.getElementById("shift-exception-date").value;
+    const wholeWeek = document.getElementById("shift-exception-scope").value === "week";
+    const type = document.getElementById("shift-exception-type").value;
+    const start = wholeWeek ? shiftMonday(selected) : selected;
+    const dates = Array.from({ length: wholeWeek ? 7 : 1 }, (_, index) => {
+      const date = new Date(`${start}T00:00:00Z`);
+      date.setUTCDate(date.getUTCDate() + index);
+      return date.toISOString().slice(0, 10);
+    });
+    await Promise.all(dates.map((date) => {
+      const ref = doc(db, "data_schichten", `peter_${date}`);
+      return type === "reset" ? deleteDoc(ref) : setDoc(ref, { person: "peter", date, type });
+    }));
+    document.getElementById("shift-status").textContent = "Abweichung gespeichert.";
+  } catch (error) { document.getElementById("shift-status").textContent = `Speichern fehlgeschlagen: ${error.message}`; }
+  finally { button.disabled = false; }
+});
+
 function renderCalendarWidget() {
   const titleEl = document.getElementById("calendar-month-year");
   const gridEl = document.getElementById("calendar-days-grid");
@@ -1885,6 +2021,17 @@ function renderCalendarWidget() {
     kwCell.className = "calendar-kw-cell";
     kwCell.title = `Kalenderwoche ${kwNum}`;
     kwCell.textContent = kwNum;
+    const lateDays = allGridDays.slice(w, w + 7).filter((day) =>
+      peterShift(shiftDateString(day.dateObj))?.type === "late",
+    );
+    if (lateDays.length) {
+      const marker = document.createElement("span");
+      marker.className = "shift-marker peter shift-week-marker";
+      marker.setAttribute("aria-hidden", "true");
+      kwCell.appendChild(marker);
+      kwCell.title = `Kalenderwoche ${kwNum} · Peter: Spätschicht (${lateDays.map((day) => formatDateObj(shiftDateString(day.dateObj)).formattedLong).join(", ")})`;
+      kwCell.setAttribute("aria-label", kwCell.title);
+    }
     gridEl.appendChild(kwCell);
 
     // 7 Wochentags-Zellen
@@ -1912,7 +2059,15 @@ function renderCalendarWidget() {
 
         cell.className = classes.join(" ");
         cell.innerHTML = `<span class="cal-day-num">${dayInfo.dayNum}</span>`;
-        cell.onclick = () => window.selectCalendarDay(dateStr);
+        cell.onclick = () => { window.selectCalendarDay(dateStr); renderShiftDay(); };
+        const shifts = shiftDescription(dateStr);
+        if (shifts.length) cell.title = shifts.join(" · ");
+        if (shiftEntries[`dani_${dateStr}`]) {
+          const marker = document.createElement("span");
+          marker.className = "shift-marker dani shift-day-marker";
+          marker.setAttribute("aria-label", "Dani: Arbeit");
+          cell.querySelector(".cal-day-num").appendChild(marker);
+        }
 
         if (hasEvents) {
           const dayCats = [
@@ -1973,6 +2128,7 @@ function renderCalendarWidget() {
     }
   }
 
+  renderShiftDay();
   initCalendarSwipeGestures();
 }
 window.renderCalendarWidget = renderCalendarWidget;
@@ -7385,6 +7541,7 @@ async function startFirebaseListeners() {
   initAuthorsListener();
   initCategoriesListener();
   initEventsListener();
+  initShiftsListener();
   initKasseListener();
   initPurchasesListener();
   initStauderListener();

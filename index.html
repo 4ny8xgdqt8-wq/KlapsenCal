@@ -109,6 +109,7 @@
         <!-- Monats-Kalender Widget -->
         <div class="calendar-widget" id="calendar-widget">
           <div class="calendar-header">
+            <div class="calendar-header-left">
             <button
               type="button"
               class="calendar-nav-btn"
@@ -117,6 +118,8 @@
             >
               ‹
             </button>
+            <button type="button" class="calendar-today-btn calendar-shift-btn" onclick="window.openShiftModal()" title="Schichten verwalten" aria-label="Schichten verwalten">Schichten</button>
+            </div>
             <div class="calendar-month-title" id="calendar-month-year">
               Monat 2026
             </div>
@@ -144,6 +147,8 @@
             ><span>So</span>
           </div>
           <div class="calendar-days-grid" id="calendar-days-grid"></div>
+          <div class="shift-legend"><span><i class="shift-marker peter"></i> Petter Spätschicht</span><span><i class="shift-marker dani"></i> Dani</span></div>
+          <div id="shift-day-summary" class="shift-day-summary" aria-live="polite"></div>
         </div>
 
         <!-- Abschnitts-Titel & Zurück-Button -->
@@ -1383,6 +1388,34 @@
               "
             ></p>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="shift-modal" class="custom-modal-overlay" style="display:none" onclick="if (event.target === this) window.closeShiftModal()">
+      <div class="event-modal-card" role="dialog" aria-modal="true" aria-labelledby="shift-modal-title">
+        <div class="detail-header modal-title-header">
+          <h2 id="shift-modal-title" class="modal-title">Schichten verwalten</h2>
+          <button type="button" class="btn-detail-icon" onclick="window.closeShiftModal()" aria-label="Schließen">×</button>
+        </div>
+        <div class="event-modal-body shift-management">
+          <p>Für alle sichtbar. Änderungen werden gemeinsam gespeichert.</p>
+          <form id="shift-pattern-form">
+            <h3>Peter · Wochenrhythmus</h3>
+            <p>Wähle einen Tag in einer bekannten Schichtwoche. Der Wechsel gilt ab dieser Woche.</p>
+            <div class="form-group"><label for="shift-anchor">Bekannte Schichtwoche</label><input id="shift-anchor" type="date" required></div>
+            <div class="form-group"><label for="shift-anchor-type">Schicht in dieser Woche</label><select id="shift-anchor-type"><option value="early">Frühschicht</option><option value="late">Spätschicht</option></select></div>
+            <button type="submit" class="calendar-today-btn">Wochenrhythmus speichern</button>
+          </form>
+          <form id="shift-exception-form">
+            <h3>Peter · Abweichung</h3>
+            <div class="form-group"><label for="shift-exception-date">Datum</label><input id="shift-exception-date" type="date" required></div>
+            <div class="form-group"><label for="shift-exception-scope">Gilt für</label><select id="shift-exception-scope"><option value="day">Diesen Tag</option><option value="week">Ganze Woche (Mo–So)</option></select></div>
+            <div class="form-group"><label for="shift-exception-type">Schicht</label><select id="shift-exception-type"><option value="early">Frühschicht</option><option value="late">Spätschicht</option><option value="off">Frei</option><option value="reset">Wieder Wochenrhythmus verwenden</option></select></div>
+            <button type="submit" class="calendar-today-btn">Abweichung speichern</button>
+          </form>
+          <section><h3>Dani · Wochenendarbeit</h3><p>Wochenendtage antippen, um Arbeit einzutragen oder zu entfernen.</p><div class="shift-month-nav"><button type="button" class="calendar-today-btn" onclick="window.shiftMonth(-1)">‹</button><strong id="shift-month-title"></strong><button type="button" class="calendar-today-btn" onclick="window.shiftMonth(1)">›</button></div><div id="shift-weekends" class="shift-weekends"></div></section>
+          <p id="shift-status" role="status"></p>
         </div>
       </div>
     </div>

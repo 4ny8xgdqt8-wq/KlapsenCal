@@ -338,9 +338,11 @@ header {
 .calendar-kw-cell {
   height: 40px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 5px;
   font-size: 0.62rem;
+  line-height: 0.78rem;
   font-weight: 800;
   color: #475569;
   background: rgba(255, 255, 255, 0.02);
@@ -9529,3 +9531,26 @@ textarea {
     font-size: 8px;
   }
 }
+
+/* Gemeinsame Schichtplanung */
+.shift-legend, .shift-month-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.calendar-header-left { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.calendar-shift-btn { flex-shrink: 0; }
+.calendar-month-title { text-align: center; }
+.shift-legend { justify-content: center; margin-top: 8px; color: #aebdb4; font-size: 0.67rem; }
+.shift-legend span { display: flex; align-items: center; gap: 4px; }
+.calendar-day-cell span.cal-day-num { position: relative; }
+.shift-day-marker { position: absolute; left: calc(100% + 3px); top: 50%; transform: translateY(-50%); }
+.shift-marker { display: inline-block; width: 5px; height: 5px; border-radius: 50%; }
+.shift-marker.peter { background: #60a5fa; }
+.shift-week-marker { margin: 3px 0 0 3px; flex-shrink: 0; }
+.shift-marker.dani { background: #f9a8d4; }
+.shift-day-summary { margin-top: 8px; color: #d4e9de; font-size: 0.8rem; line-height: 1.4; }
+.shift-management h3 { margin: 20px 0 8px; font-size: 1rem; }
+.shift-management p { color: #b6c8be; font-size: 0.82rem; line-height: 1.4; }
+.shift-management form, .shift-management section { padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.shift-management input:not([type=checkbox]), .shift-management select { width: 100%; box-sizing: border-box; padding: 10px; color: #f2f8f4; background: #202e26; border: 1px solid #4c6557; border-radius: 8px; color-scheme: dark; }
+.shift-month-nav { margin: 12px 0; }
+.shift-weekends { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.shift-weekend-button { padding: 9px 4px; border: 1px solid #4c6557; border-radius: 8px; color: #d9e8dd; background: #202e26; cursor: pointer; }
+.shift-weekend-button.active { border-color: #f9a8d4; background: #653b52; color: #fff; }
