@@ -8100,8 +8100,8 @@ body.is-scrolled .tab-bar {
   transform: translateY(-1px);
 }
 
-#termine.has-selected-calendar-day #timeframe-container,
-#termine.has-selected-calendar-day #event-sort {
+#termine.has-selected-calendar-day .event-filter-timeframe,
+#termine.has-selected-calendar-day .event-filter-sort {
   display: none;
 }
 
@@ -9553,6 +9553,15 @@ textarea {
 .shift-management p { color: #b6c8be; font-size: 0.82rem; line-height: 1.4; }
 .shift-management form, .shift-management section { padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .shift-management input:not([type=checkbox]), .shift-management select { width: 100%; box-sizing: border-box; padding: 10px; color: #f2f8f4; background: #202e26; border: 1px solid #4c6557; border-radius: 8px; color-scheme: dark; }
+#shift-modal .shift-management input[type="date"] {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
 .shift-month-nav { margin: 12px 0; }
 .shift-weekends { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .shift-weekend-button { padding: 9px 4px; border: 1px solid #4c6557; border-radius: 8px; color: #d9e8dd; background: #202e26; cursor: pointer; }
@@ -9584,3 +9593,15 @@ textarea {
 
 .shift-day-summary:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .holiday-day-label { display: inline-block; padding: 4px 9px; border: 1px solid rgba(232, 197, 124, 0.45); border-radius: 8px; background: rgba(232, 197, 124, 0.12); color: #f5dcaa; font-weight: 700; }
+
+/* Kompakte Terminfilter neben der Suche */
+.event-filters-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; flex-shrink: 0; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 10px; color: var(--primary-color); background: var(--surface-raised); font-size: 0.82rem; font-weight: 750; cursor: pointer; list-style: none; }
+.event-filters-toggle::-webkit-details-marker { display: none; }
+.event-filters-toggle::after { content: "▾"; margin-left: 3px; }
+.event-filters-toggle[aria-expanded="true"]::after { content: "▴"; }
+.event-filter-count:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; min-width: 19px; height: 19px; padding: 0 4px; border-radius: 10px; color: #10201f; background: var(--primary-color); font-size: 0.7rem; }
+.event-filters-panel { margin: 0 0 10px; padding: 12px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--card-bg); }
+.event-filter-label { display: block; margin: 0 0 6px; color: var(--text-muted); font-size: 0.76rem; font-weight: 700; }
+.event-filter-sort { margin-bottom: 10px; }
+.event-filter-sort .event-sort-select { width: 100%; max-width: none; }
+.event-filter-reset { min-height: 40px; padding: 7px 10px; border: 1px solid var(--border-color); border-radius: 9px; color: var(--primary-color); background: transparent; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }

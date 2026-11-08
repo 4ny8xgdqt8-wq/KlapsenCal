@@ -172,7 +172,15 @@
           </button>
         </div>
 
-        <!-- Zeitraum Filter Chips -->
+        <div class="event-search-row">
+          <button type="button" class="event-filters-toggle" id="event-filters-toggle" aria-expanded="false" aria-controls="event-filters-panel" onclick="window.toggleEventFilters()">Filter <span id="event-filter-count" class="event-filter-count" hidden></span></button>
+          <div class="search-container event-search-grow">
+            <span class="search-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg></span>
+            <input type="text" id="event-search" class="search-input" placeholder="Suchen..." oninput="filterAndRender()" />
+          </div>
+        </div>
+        <div class="event-filters-panel" id="event-filters-panel" hidden>
+            <div class="event-filter-timeframe"><div class="event-filter-label">Zeitraum</div>
         <div class="timeframe-filter-bar" id="timeframe-container">
           <button
             type="button"
@@ -211,7 +219,8 @@
           </button>
         </div>
 
-        <!-- Kategorien Filter Chips -->
+            </div>
+            <div class="event-filter-label">Kategorie</div>
         <div class="filter-chips" id="filter-container">
           <div
             class="filter-chip active"
@@ -221,18 +230,7 @@
           </div>
         </div>
 
-        <!-- Suche & Sortierung (Kompakt) -->
-        <div class="event-search-row">
-          <div class="search-container event-search-grow">
-            <span class="search-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg></span>
-            <input
-              type="text"
-              id="event-search"
-              class="search-input"
-              placeholder="Suchen..."
-              oninput="filterAndRender()"
-            />
-          </div>
+            <div class="event-filter-sort"><label class="event-filter-label" for="event-sort">Sortierung</label>
           <select
             id="event-sort"
             class="sort-select event-sort-select"
@@ -242,6 +240,8 @@
             <option value="newest">Neueste</option>
             <option value="alpha">A-Z</option>
           </select>
+            </div>
+            <button type="button" class="event-filter-reset" onclick="window.resetEventFilters()">Filter zurücksetzen</button>
         </div>
 
         <!-- Termine Liste Container -->

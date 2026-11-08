@@ -2360,6 +2360,12 @@ function filterAndRender() {
 
   const query = (searchEl ? searchEl.value : "").toLowerCase().trim();
   const sortType = sortEl ? sortEl.value : "upcoming";
+  const filterCount = Number(selectedTimeframe !== "30d") + Number(selectedCategory !== "Alle") + Number(sortType !== "upcoming");
+  const filterCountEl = document.getElementById("event-filter-count");
+  if (filterCountEl) {
+    filterCountEl.textContent = filterCount;
+    filterCountEl.hidden = filterCount === 0;
+  }
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -2492,6 +2498,23 @@ function filterAndRender() {
   filterAndRenderUndated();
 }
 window.filterAndRender = filterAndRender;
+
+window.toggleEventFilters = function () {
+  const panel = document.getElementById("event-filters-panel");
+  const toggle = document.getElementById("event-filters-toggle");
+  panel.hidden = !panel.hidden;
+  toggle.setAttribute("aria-expanded", String(!panel.hidden));
+};
+
+window.resetEventFilters = function () {
+  selectedTimeframe = "30d";
+  selectedCategory = "Alle";
+  const sort = document.getElementById("event-sort");
+  if (sort) sort.value = "upcoming";
+  document.querySelectorAll("#timeframe-container .timeframe-chip").forEach((chip, index) => chip.classList.toggle("active", index === 0));
+  document.querySelectorAll("#filter-container .filter-chip").forEach((chip, index) => chip.classList.toggle("active", index === 0));
+  filterAndRender();
+};
 
 window.selectCategory = function (name, el) {
   selectedCategory = name;
