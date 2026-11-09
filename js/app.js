@@ -186,7 +186,7 @@ const DEFAULT_AUTHORS = [
   "Daniel",
   "Dani",
   "Peter",
-  "MamaMone",
+  "Mone",
   "Tanja",
   "Thorsten",
   "Nic",
@@ -196,7 +196,7 @@ const DEFAULT_AUTHORS = [
   "Alexander",
 ];
 function getAuthorAvatarPath(name) {
-  const avatarName = name === "Dani" ? "Daniela" : name === "MamaMone" ? "Simone" : name;
+  const avatarName = name === "Dani" ? "Daniela" : name === "Mone" ? "Simone" : name;
   return `avatars/${avatarName}.webp`;
 }
 const DEFAULT_CATEGORIES = [
@@ -284,7 +284,7 @@ const ADULT_NAMES = [
   "Daniel",
   "Dani",
   "Peter",
-  "MamaMone",
+  "Mone",
   "Tanja",
   "Thorsten",
 ];
@@ -388,7 +388,7 @@ function getPushPreferences() {
 
 function getPushDeviceAuthor() {
   const saved = localStorage.getItem("selected_author") || "";
-  const name = saved === "Daniela" ? "Dani" : saved === "Simone" ? "MamaMone" : saved;
+  const name = saved === "Daniela" ? "Dani" : (saved === "Simone" || saved === "MamaMone") ? "Mone" : saved;
   return allAuthors.includes(name) ? name : "";
 }
 
@@ -3851,7 +3851,7 @@ const kassePurposePresets = [
 ];
 const kasseFamilyMembers = {
   "Familie Schwabschmi": ["Daniel", "Dani"],
-  "Familie Zalewski": ["Peter", "MamaMone"],
+  "Familie Zalewski": ["Peter", "Mone"],
   "Familie Tornau": ["Tanja", "Thorsten"],
 };
 const kassePurposeAliases = new Map([

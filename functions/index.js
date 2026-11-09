@@ -170,14 +170,14 @@ exports.onEventCreated = functions
       "Dani",
       "Peter",
       "Simone",
-      "MamaMone",
+      "Mone",
       "Tanja",
       "Thorsten",
     ];
     const matchedAvatar = knownAvatars.find(
       (a) => a.toLowerCase() === (ersteller || "").trim().toLowerCase(),
     );
-    const avatarName = matchedAvatar === "Dani" ? "Daniela" : matchedAvatar === "MamaMone" ? "Simone" : matchedAvatar;
+    const avatarName = matchedAvatar === "Dani" ? "Daniela" : matchedAvatar === "Mone" ? "Simone" : matchedAvatar;
     const icon = avatarName ? `avatars/${avatarName}.webp` : "logo.png";
 
     const actions = [{ action: "open_event", title: "📅 Kalender" }];
@@ -250,14 +250,14 @@ exports.onEventUpdated = functions
       "Dani",
       "Peter",
       "Simone",
-      "MamaMone",
+      "Mone",
       "Tanja",
       "Thorsten",
     ];
     const matchedAvatar = knownAvatars.find(
       (a) => a.toLowerCase() === (ersteller || "").trim().toLowerCase(),
     );
-    const avatarName = matchedAvatar === "Dani" ? "Daniela" : matchedAvatar === "MamaMone" ? "Simone" : matchedAvatar;
+    const avatarName = matchedAvatar === "Dani" ? "Daniela" : matchedAvatar === "Mone" ? "Simone" : matchedAvatar;
     const icon = avatarName ? `avatars/${avatarName}.webp` : "logo.png";
 
     const actions = [{ action: "open_event", title: "📅 Kalender" }];
