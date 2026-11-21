@@ -102,6 +102,7 @@ async function broadcastPushNotification(payload, excludeAuthor = null) {
           : tag.startsWith("stauder-") ? "stauder"
             : tag.startsWith("kasse-") ? "kasse"
               : tag.startsWith("anschaffung-") ? "purchases"
+                : tag.startsWith("ausgabe-") ? "expenses"
                 : tag.startsWith("lokal-") ? "locales" : "";
       if (category && data.preferences?.[category] === false) return;
 
@@ -432,6 +433,28 @@ exports.onAnschaffungCreated = functions
       body: preisText ? `${titel}${preisText}.` : `${titel} steht auf der Wunschliste.`,
       url: "./index.html#anschaffungen",
       tag: `anschaffung-${docId}`,
+    });
+    return null;
+  });
+
+/** Neue Familienausgabe -> Push nur beim Anlegen, nicht bei Zahlungsänderungen. */
+exports.onAusgabeCreated = functions
+  .region("europe-west1")
+  .firestore.document("data_ausgaben/{docId}")
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    if (!data || data.type !== "expense" || !data.description ||
+        !Number.isSafeInteger(data.cents) || data.cents <= 0) return null;
+
+    const betrag = (data.cents / 100).toLocaleString("de-DE", {
+      style: "currency",
+      currency: "EUR",
+    });
+    await broadcastPushNotification({
+      title: "Neue Ausgabe 💸",
+      body: `${data.description} · ${betrag}`,
+      url: "./index.html#ausgaben",
+      tag: `ausgabe-${context.params.docId}`,
     });
     return null;
   });

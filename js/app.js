@@ -374,7 +374,7 @@ if ("serviceWorker" in navigator) {
     void refreshPushStatus();
   }).catch(() => {});
 }
-const pushCategories = ["events", "reminders", "stauder", "kasse", "purchases", "locales"];
+const pushCategories = ["events", "reminders", "stauder", "kasse", "purchases", "expenses", "locales"];
 
 function getPushErrorCode(error) {
   return (typeof error?.code === "string" && error.code) || error?.name || "unbekannt";
@@ -7813,12 +7813,12 @@ function handleDeepLinkHash() {
         }
       }, 500);
     }
-  } else if (target === "aufgaben" || target === "anschaffungen") {
+  } else if (target === "aufgaben" || target === "anschaffungen" || target === "ausgaben") {
     if (typeof window.switchTab === "function") {
       window.switchTab("aufgaben");
       if (typeof window.switchAufgabenSubTab === "function") {
         window.switchAufgabenSubTab(
-          target === "aufgaben" ? "aufgaben" : "anschaffungen",
+          target === "ausgaben" ? "ausgaben" : "anschaffungen",
         );
       }
     }
