@@ -3038,7 +3038,7 @@ window.switchAufgabenSubTab = switchAufgabenSubTab;
 // Ausgaben und Zahlungen werden in Cent gespeichert, damit die Summe exakt bleibt.
 const expenseFamilies = {
   Zalewski: ["Mone", "Peter", "Alexander"],
-  Schwabschmi: ["Nick", "Tristan", "Daniel", "Daniela"],
+  Schwabschmi: ["Nic", "Tristan", "Daniel", "Dani"],
   Tornau: ["Simon", "Emily", "Tanja", "Thorsten"],
 };
 let expenseEntries = [];
@@ -3053,7 +3053,10 @@ function expenseEscape(value) {
 
 function initExpensesListener() {
   onSnapshot(collection(db, "data_ausgaben"), (snapshot) => {
-    expenseEntries = snapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+    expenseEntries = snapshot.docs.map((item) => {
+      const data = item.data();
+      return { ...data, id: item.id, ...(Array.isArray(data.people) ? { people: [...new Set(data.people.map((person) => person === "Nick" ? "Nic" : person))] } : {}) };
+    });
     document.getElementById("expenses-status").textContent = "";
     renderExpenses();
   }, (error) => {
