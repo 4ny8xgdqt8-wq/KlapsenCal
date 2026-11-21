@@ -459,6 +459,45 @@ exports.onAusgabeCreated = functions
     return null;
   });
 
+// Entspricht der Aufteilung im Ausgabenbereich; unbekannte Daten bleiben erhalten.
+function isSettledFamilyExpense(data) {
+  const families = {
+    Zalewski: ["Mone", "Peter", "Alexander"],
+    Schwabschmi: ["Nic", "Tristan", "Daniel", "Daniela"],
+    Tornau: ["Simon", "Emily", "Tanja", "Thorsten"],
+  };
+  if (!data || data.type !== "expense" || !Object.hasOwn(families, data.payer) ||
+      !Number.isSafeInteger(data.cents) || data.cents <= 0 ||
+      !Number.isSafeInteger(data.createdMs) || data.createdMs <= 0 ||
+      !Array.isArray(data.people) || !data.people.length) return false;
+  const selected = [...new Set(data.people.map((name) => name === "Nick" ? "Nic" : name))];
+  const people = Object.entries(families).flatMap(([family, members]) =>
+    members.filter((name) => selected.includes(name)).map(() => family));
+  if (people.length !== selected.length) return false;
+  const base = Math.floor(data.cents / people.length);
+  const remainder = data.cents % people.length;
+  const shares = {};
+  people.forEach((family, index) => {
+    shares[family] = (shares[family] || 0) + base + (index < remainder ? 1 : 0);
+  });
+  return Object.entries(shares).every(([family, amount]) =>
+    family === data.payer || amount === 0 || data.paidBy?.[family] === true);
+}
+
+exports.trimSettledExpenses = functions
+  .region("europe-west1")
+  .firestore.document("data_ausgaben/{docId}")
+  .onWrite(async () => {
+    await db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(db.collection("data_ausgaben"));
+      const settled = snapshot.docs
+        .filter((item) => isSettledFamilyExpense(item.data()))
+        .sort((a, b) => b.data().createdMs - a.data().createdMs || a.id.localeCompare(b.id));
+      settled.slice(5, 405).forEach((item) => transaction.delete(item.ref));
+    });
+    return null;
+  });
+
 /**
  * 7. Neues Lokal / Restaurant -> Push an alle Handys
  */

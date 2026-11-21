@@ -11,6 +11,7 @@ import {
   enableIndexedDbPersistence,
   getFirestore,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -3132,7 +3133,7 @@ function renderExpenses() {
     const shareTable = shares ? `<div class="expenses-share-table"><div class="expenses-share-header"><span>Familie</span><span>Anteil</span><span>Bezahlt</span></div>${shares}</div>` : "";
     const header = `<div class="expenses-entry"><strong>${title}</strong><strong>${formatEuro((Number(entry.cents) || 0) / 100)}</strong></div>`;
     const contents = `<p>${details}</p>${participants}${shareTable}`;
-    if (complete) return `<div class="expenses-card expenses-timeline-entry is-paid"><details data-paid-expense="${expenseEscape(entry.id)}" ${expandedPaidExpenses.has(entry.id) ? "open" : ""}><summary>${header}<span class="expenses-paid-status">Vollständig bezahlt</span></summary>${contents}</details></div>`;
+    if (complete) return `<div class="expenses-card expenses-timeline-entry is-paid"><details data-paid-expense="${expenseEscape(entry.id)}" ${expandedPaidExpenses.has(entry.id) ? "open" : ""}><summary>${header}<span class="expenses-paid-status">Vollständig bezahlt</span></summary>${contents}</details><button type="button" class="btn-header-action expenses-delete" data-expense-delete="${expenseEscape(entry.id)}">${uiIcon("delete")} Löschen</button></div>`;
     return `<div class="expenses-card expenses-timeline-entry">${header}${contents}</div>`;
   }).join("") : '<p class="expenses-intro">Noch keine Ausgaben eingetragen.</p>';
 }
@@ -3204,6 +3205,38 @@ document.getElementById("expenses-list").addEventListener("change", async (event
     window.showAppModal("Fehler", "Der Zahlungsstatus konnte nicht gespeichert werden: " + error.message);
   } finally {
     checkbox.disabled = false;
+  }
+});
+
+document.getElementById("expenses-list").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-expense-delete]");
+  if (!button) return;
+  const entry = expenseEntries.find((item) => item.id === button.dataset.expenseDelete);
+  if (!entry || entry.type !== "expense" || !Number.isSafeInteger(entry.cents) || !Array.isArray(entry.people)) return;
+  const shares = Object.entries(expenseShares(entry));
+  if (!shares.length || !shares.every(([family, amount]) => family === entry.payer || amount === 0 || entry.paidBy?.[family])) {
+    window.showAppModal("Ausgabe noch offen", "Nur vollständig bezahlte Ausgaben können gelöscht werden.");
+    return;
+  }
+  if (!window.confirm("Diese vollständig bezahlte Ausgabe wirklich löschen?")) return;
+  button.disabled = true;
+  try {
+    if (!(await ensureAuth())) throw new Error("Keine gültige Firebase-Sitzung");
+    await runTransaction(db, async (transaction) => {
+      const ref = doc(db, "data_ausgaben", entry.id);
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists()) throw new Error("Die Ausgabe wurde bereits gelöscht.");
+      const current = snapshot.data();
+      if (current.type !== "expense" || !Number.isSafeInteger(current.cents) || !Array.isArray(current.people)) throw new Error("Die Ausgabe ist ungültig.");
+      const normalized = { ...current, people: current.people.map((person) => person === "Nick" ? "Nic" : person) };
+      const currentShares = Object.entries(expenseShares(normalized));
+      if (!currentShares.length || !currentShares.every(([family, amount]) => family === current.payer || amount === 0 || current.paidBy?.[family])) throw new Error("Die Ausgabe ist nicht mehr vollständig bezahlt.");
+      transaction.delete(ref);
+    });
+    expandedPaidExpenses.delete(entry.id);
+  } catch (error) {
+    button.disabled = false;
+    window.showAppModal("Fehler", "Die Ausgabe konnte nicht gelöscht werden: " + error.message);
   }
 });
 
