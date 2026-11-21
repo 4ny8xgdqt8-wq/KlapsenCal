@@ -9882,5 +9882,19 @@ textarea {
   .lokal-user-chip.missing, .btn-remove-ing-row) { color: var(--status-danger); }
 :root[data-theme="light"] .recipe-detail-hero .rezept-author-box { color: #fff; }
 
+/* Stauder: helle Flächen und kontrastreiche Schrift im Hellmodus. */
+:root[data-theme="light"] #subview-stauder :is(.stauder-stock-card, .stauder-goal-card, .stauder-stat-card, .stauder-chart-card, .stauder-kisten-kpi-card, .stauder-kisten-item) {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 16px rgba(30, 65, 55, 0.08);
+}
+:root[data-theme="light"] #subview-stauder :is(.stauder-unit-label, .stauder-kpi-val, .stauder-stat-detail, .stauder-kisten-qty-badge, .stauder-bar-label.current-month) { color: var(--primary-color); }
+:root[data-theme="light"] #subview-stauder :is(.stauder-chart-title, .stauder-kisten-name) { color: var(--text-color); }
+:root[data-theme="light"] #subview-stauder :is(.stauder-sub-flaschen, .stauder-goal-stat-label, .stauder-milestones, .stauder-kpi-label, .stauder-kpi-unit, .stauder-stat-title, .stauder-kisten-date, .stauder-bar-label) { color: var(--text-muted); }
+:root[data-theme="light"] #subview-stauder .stauder-big-num { text-shadow: none; }
+:root[data-theme="light"] #subview-stauder .stauder-bar-val { color: var(--text-color) !important; }
+:root[data-theme="light"] #subview-stauder .stauder-goal-stat-val.diff-val { color: var(--text-color) !important; }
+:root[data-theme="light"] #subview-stauder .btn-stauder-shop { color: var(--primary-color); background: var(--surface-raised); border-color: var(--border-color); }
+
 .title-stack[role="button"] { cursor: pointer; }
 .title-stack[role="button"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 4px; border-radius: 4px; }
