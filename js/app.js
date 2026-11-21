@@ -2980,6 +2980,7 @@ let currentAufgabenSubTab = "anschaffungen";
 window.currentAufgabenSubTab = currentAufgabenSubTab;
 
 function switchAufgabenSubTab(subTab) {
+  if (!["anschaffungen", "ausgaben", "stauder"].includes(subTab)) subTab = "anschaffungen";
   currentAufgabenSubTab = subTab;
   window.currentAufgabenSubTab = subTab;
 
@@ -2989,21 +2990,21 @@ function switchAufgabenSubTab(subTab) {
   }
   window.scrollTo(0, 0);
 
-  const btnTasks = document.getElementById("seg-btn-tasks");
   const btnPurchases = document.getElementById("seg-btn-purchases");
   const btnStauder = document.getElementById("seg-btn-stauder");
-  const viewTasks = document.getElementById("subview-tasks");
+  const btnExpenses = document.getElementById("seg-btn-expenses");
   const viewPurchases = document.getElementById("subview-purchases");
   const viewStauder = document.getElementById("subview-stauder");
+  const viewExpenses = document.getElementById("subview-expenses");
   const subTitle = document.getElementById("header-sub-title");
 
   // Deaktivieren aller Buttons und Ausblenden aller Subviews
   if (btnPurchases) btnPurchases.classList.remove("active");
-  if (btnTasks) btnTasks.classList.remove("active");
   if (btnStauder) btnStauder.classList.remove("active");
+  if (btnExpenses) btnExpenses.classList.remove("active");
   if (viewPurchases) viewPurchases.style.display = "none";
-  if (viewTasks) viewTasks.style.display = "none";
   if (viewStauder) viewStauder.style.display = "none";
+  if (viewExpenses) viewExpenses.style.display = "none";
 
   if (subTab === "anschaffungen") {
     if (btnPurchases) btnPurchases.classList.add("active");
@@ -3014,6 +3015,10 @@ function switchAufgabenSubTab(subTab) {
       }
     }
     if (subTitle) subTitle.textContent = "Offene Anschaffungen & Budget";
+  } else if (subTab === "ausgaben") {
+    if (btnExpenses) btnExpenses.classList.add("active");
+    if (viewExpenses) viewExpenses.style.display = "block";
+    if (subTitle) subTitle.textContent = "Ausgaben";
   } else if (subTab === "stauder") {
     if (btnStauder) btnStauder.classList.add("active");
     if (viewStauder) {
@@ -3026,19 +3031,170 @@ function switchAufgabenSubTab(subTab) {
       }
     }
     if (subTitle) subTitle.textContent = "Stauder Kronkorken & Kisten";
-  } else {
-    if (btnTasks) btnTasks.classList.add("active");
-    if (viewTasks) {
-      viewTasks.style.display = "block";
-      renderAllTasks();
-    }
-    if (subTitle) subTitle.textContent = "Was fehlt noch für die Termine";
   }
 }
 window.switchAufgabenSubTab = switchAufgabenSubTab;
 
+// Ausgaben und Zahlungen werden in Cent gespeichert, damit die Summe exakt bleibt.
+const expenseFamilies = {
+  Zalewski: ["Mone", "Peter", "Alexander"],
+  Schwabschmi: ["Nick", "Tristan", "Daniel", "Daniela"],
+  Tornau: ["Simon", "Emily", "Tanja", "Thorsten"],
+};
+let expenseEntries = [];
+let expenseSaving = false;
+
+function expenseEscape(value) {
+  const el = document.createElement("span");
+  el.textContent = String(value ?? "");
+  return el.innerHTML;
+}
+
+function initExpensesListener() {
+  onSnapshot(collection(db, "data_ausgaben"), (snapshot) => {
+    expenseEntries = snapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+    document.getElementById("expenses-status").textContent = "";
+    renderExpenses();
+  }, (error) => {
+    console.error("Fehler beim Laden der Ausgaben:", error);
+    document.getElementById("expenses-status").textContent = "Ausgaben konnten nicht geladen werden. Bitte Verbindung und Berechtigungen prüfen.";
+  });
+}
+
+function expenseShares(entry) {
+  const people = Object.entries(expenseFamilies).flatMap(([family, members]) => members.map((person) => ({ family, person })));
+  const selected = people.filter(({ person }) => (entry.people || []).includes(person));
+  const shares = {};
+  if (!selected.length) return shares;
+  const base = Math.floor(entry.cents / selected.length);
+  const remainder = entry.cents % selected.length;
+  selected.forEach(({ family }, index) => { shares[family] = (shares[family] || 0) + base + (index < remainder ? 1 : 0); });
+  return shares;
+}
+
+function expenseAvatars(people) {
+  return people.length ? `<div class="expenses-avatars" aria-label="Beteiligte: ${people.map(expenseEscape).join(", ")}">${people.map((person) => `<span class="expenses-avatar" title="${expenseEscape(person)}" aria-label="${expenseEscape(person)}">${expenseEscape(person.charAt(0))}<img src="${expenseEscape(getAuthorAvatarPath(person))}" alt="" onerror="this.style.display='none'"></span>`).join("")}</div>` : "";
+}
+
+function formatExpenseFamilyAmount(cents) {
+  return `${Math.ceil(cents / 100).toLocaleString("de-DE")} €`;
+}
+
+function renderExpenses() {
+  const names = Object.keys(expenseFamilies);
+  const balances = Object.fromEntries(names.map((name) => [name, 0]));
+  const debts = Object.fromEntries(names.map((name) => [name, Object.fromEntries(names.map((other) => [other, 0]))]));
+  const entries = expenseEntries.slice().sort((a, b) => (b.createdMs || 0) - (a.createdMs || 0));
+  for (const entry of entries) {
+    if (!Number.isSafeInteger(entry.cents) || entry.cents <= 0) continue;
+    if (entry.type === "expense" && names.includes(entry.payer) && Array.isArray(entry.people)) {
+      const shares = expenseShares(entry);
+      for (const [family, amount] of Object.entries(shares)) {
+        if (family === entry.payer || entry.paidBy?.[family]) continue;
+        balances[entry.payer] += amount;
+        balances[family] -= amount;
+        debts[family][entry.payer] += amount;
+      }
+    } else if (entry.type === "payment" && names.includes(entry.from) && names.includes(entry.to) && entry.from !== entry.to) {
+      balances[entry.from] += entry.cents;
+      balances[entry.to] -= entry.cents;
+      debts[entry.to][entry.from] += entry.cents;
+    }
+  }
+  const transfers = [];
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      const difference = debts[names[i]][names[j]] - debts[names[j]][names[i]];
+      if (!difference) continue;
+      const from = difference > 0 ? names[i] : names[j];
+      const to = difference > 0 ? names[j] : names[i];
+      transfers.push(`<div class="expenses-transfer-row"><span>${expenseEscape(from)}</span><span>${expenseEscape(to)}</span><strong class="expenses-transfer-amount">${formatExpenseFamilyAmount(Math.abs(difference))}</strong></div>`);
+    }
+  }
+  const familyCards = names.map((name) => {
+    return `<div class="expenses-family-card"><span>${expenseEscape(name)}</span>${expenseAvatars(expenseFamilies[name])}<strong>${formatExpenseFamilyAmount(Math.abs(balances[name]))}</strong><small>${balances[name] > 0 ? "bekommt zurück" : balances[name] < 0 ? "noch offen" : "ausgeglichen"}</small></div>`;
+  }).join("");
+  document.getElementById("expenses-summary").innerHTML = `<div class="expenses-family-grid">${familyCards}</div><div class="expenses-transfers"><h3>Wer zahlt an wen?</h3>${transfers.length ? `<div class="expenses-transfer-table"><div class="expenses-transfer-header"><span>Von</span><span>An</span><span>Betrag</span></div>${transfers.join("")}</div>` : "<p>Alle Familien sind ausgeglichen ✓</p>"}</div><p class="expenses-intro">Gegenseitige Anteile zwischen zwei Familien werden verrechnet.<br>Offene Beträge werden auf den nächsten vollen Euro aufgerundet (z. B. 2,14 € → 3 €).</p>`;
+  const list = document.getElementById("expenses-list");
+  list.innerHTML = entries.length ? entries.map((entry) => {
+    const isPayment = entry.type === "payment";
+    const title = isPayment ? "Zahlung" : expenseEscape(entry.description);
+    const details = isPayment ? `${expenseEscape(entry.from)} → ${expenseEscape(entry.to)}` : `Bezahlt von ${expenseEscape(entry.payer)}`;
+    const participants = !isPayment && Array.isArray(entry.people) ? `<div class="expenses-participants"><span class="expenses-participants-label">Für diese Personen</span><div class="expenses-participant-list">${entry.people.map((person) => `<span class="expenses-participant">${expenseAvatars([person])}<span>${expenseEscape(person)}</span></span>`).join("")}</div></div>` : "";
+    const familyShares = !isPayment && Number.isSafeInteger(entry.cents) && Array.isArray(entry.people) ? Object.entries(expenseShares(entry)) : [];
+    const complete = familyShares.length > 0 && familyShares.every(([family, amount]) => family === entry.payer || amount === 0 || entry.paidBy?.[family]);
+    const shares = familyShares.map(([family, amount]) => `<div class="expenses-share-row${family !== entry.payer && entry.paidBy?.[family] ? " is-paid" : ""}"><span class="expenses-share-family">${expenseAvatars(expenseFamilies[family].filter((person) => entry.people.includes(person)))}<span>${expenseEscape(family)}</span></span><strong>${formatExpenseFamilyAmount(amount)}</strong><span class="expenses-share-status">${family === entry.payer ? '<span class="expenses-own-paid" title="Selbst bezahlt" aria-label="Selbst bezahlt">✓</span>' : `<input type="checkbox" data-expense-paid="${expenseEscape(entry.id)}" data-family="${expenseEscape(family)}" aria-label="Anteil von ${expenseEscape(family)} als bezahlt markieren" ${entry.paidBy?.[family] ? "checked" : ""}>`}</span></div>`).join("");
+    const shareTable = shares ? `<div class="expenses-share-table"><div class="expenses-share-header"><span>Familie</span><span>Anteil</span><span>Bezahlt</span></div>${shares}</div>` : "";
+    return `<div class="expenses-card expenses-timeline-entry${complete ? " is-paid" : ""}"><div class="expenses-entry"><strong>${title}</strong><strong>${formatEuro((Number(entry.cents) || 0) / 100)}</strong></div><p>${details}</p>${participants}${complete ? '<p class="expenses-paid-status">Vollständig bezahlt</p>' : ""}${shareTable}</div>`;
+  }).join("") : '<p class="expenses-intro">Noch keine Ausgaben eingetragen.</p>';
+}
+
+function prepareExpenseForm() {
+  const form = document.getElementById("expense-form");
+  form.reset();
+  const options = Object.keys(expenseFamilies).map((name) => `<option value="${name}">${name}</option>`).join("");
+  document.getElementById("expense-payer").innerHTML = options;
+  document.getElementById("expense-people").innerHTML = Object.entries(expenseFamilies).map(([family, members]) => `<div class="expenses-family"><strong>${family}</strong><div>${members.map((name) => `<label><input type="checkbox" name="expense-person" value="${name}"> ${name}</label>`).join("")}</div></div>`).join("");
+  document.getElementById("expense-modal").style.display = "flex";
+}
+window.openExpenseForm = prepareExpenseForm;
+window.closeExpenseForm = () => { document.getElementById("expense-modal").style.display = "none"; };
+
+document.getElementById("expense-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (expenseSaving) return;
+  const amount = Number(document.getElementById("expense-amount").value);
+  const cents = Math.round(amount * 100);
+  if (!Number.isSafeInteger(cents) || cents <= 0 || Math.abs(amount * 100 - cents) > 0.00001) {
+    window.showAppModal("Ungültiger Betrag", "Bitte gib einen Betrag größer als 0 mit höchstens zwei Nachkommastellen ein.");
+    return;
+  }
+  let entry;
+    const description = document.getElementById("expense-description").value.trim();
+    const selected = [...document.querySelectorAll('input[name="expense-person"]:checked')].map((input) => input.value);
+    if (!description || !selected.length) {
+      window.showAppModal("Angaben fehlen", "Bitte gib einen Zweck ein und wähle mindestens eine Person aus.");
+      return;
+    }
+    entry = { type: "expense", description, payer: document.getElementById("expense-payer").value, people: selected, cents };
+  expenseSaving = true;
+  const submit = event.currentTarget.querySelector('[type="submit"]');
+  submit.disabled = true;
+  try {
+    if (!(await ensureAuth())) throw new Error("Keine gültige Firebase-Sitzung");
+    await addDoc(collection(db, "data_ausgaben"), { ...entry, createdMs: Date.now(), createdAt: serverTimestamp() });
+    window.closeExpenseForm();
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    window.showAppModal("Fehler", "Der Eintrag konnte nicht gespeichert werden: " + error.message);
+  } finally {
+    expenseSaving = false;
+    submit.disabled = false;
+  }
+});
+
+document.getElementById("expenses-list").addEventListener("change", async (event) => {
+  const checkbox = event.target.closest("[data-expense-paid]");
+  if (!checkbox || !Object.hasOwn(expenseFamilies, checkbox.dataset.family)) return;
+  if (!checkbox.checked && !window.confirm(`Soll der Anteil von ${checkbox.dataset.family} wieder als offen markiert werden?`)) {
+    checkbox.checked = true;
+    return;
+  }
+  checkbox.disabled = true;
+  try {
+    if (!(await ensureAuth())) throw new Error("Keine gültige Firebase-Sitzung");
+    await updateDoc(doc(db, "data_ausgaben", checkbox.dataset.expensePaid), { [`paidBy.${checkbox.dataset.family}`]: checkbox.checked });
+  } catch (error) {
+    checkbox.checked = !checkbox.checked;
+    window.showAppModal("Fehler", "Der Zahlungsstatus konnte nicht gespeichert werden: " + error.message);
+  } finally {
+    checkbox.disabled = false;
+  }
+});
+
 function renderAllTasks() {
   const container = document.getElementById("all-tasks-container");
+  if (!container) return;
   container.innerHTML = "";
 
   const now = new Date();
@@ -3269,7 +3425,7 @@ let cachedUnfinishedTasksCount = 0;
 let cachedOpenPurchasesCount = 0;
 
 function updateCombinedBadges() {
-  const totalCount = cachedUnfinishedTasksCount + cachedOpenPurchasesCount;
+  const totalCount = cachedOpenPurchasesCount;
 
   // Haupt-Badge in der Tab-Bar ("Was fehlt?")
   const mainBadge = document.getElementById("tasks-badge");
@@ -3289,13 +3445,6 @@ function updateCombinedBadges() {
   }
 
   // Sub-Badges im Segmented Switcher
-  const segTasks = document.getElementById("seg-badge-tasks");
-  if (segTasks) {
-    segTasks.textContent = cachedUnfinishedTasksCount;
-    segTasks.style.display =
-      cachedUnfinishedTasksCount > 0 ? "inline-flex" : "none";
-  }
-
   const segPurchases = document.getElementById("seg-badge-purchases");
   if (segPurchases) {
     segPurchases.textContent = cachedOpenPurchasesCount;
@@ -7605,6 +7754,7 @@ async function startFirebaseListeners() {
   initEventsListener();
   initShiftsListener();
   initKasseListener();
+  initExpensesListener();
   initPurchasesListener();
   initStauderListener();
   initStauderKistenListener();
