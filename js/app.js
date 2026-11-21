@@ -3043,6 +3043,7 @@ const expenseFamilies = {
 };
 let expenseEntries = [];
 let expenseSaving = false;
+const expandedPaidExpenses = new Set();
 
 function expenseEscape(value) {
   const el = document.createElement("span");
@@ -3123,11 +3124,22 @@ function renderExpenses() {
     const participants = !isPayment && Array.isArray(entry.people) ? `<div class="expenses-participants"><span class="expenses-participants-label">Für diese Personen</span><div class="expenses-participant-list">${entry.people.map((person) => `<span class="expenses-participant">${expenseAvatars([person])}<span>${expenseEscape(person)}</span></span>`).join("")}</div></div>` : "";
     const familyShares = !isPayment && Number.isSafeInteger(entry.cents) && Array.isArray(entry.people) ? Object.entries(expenseShares(entry)) : [];
     const complete = familyShares.length > 0 && familyShares.every(([family, amount]) => family === entry.payer || amount === 0 || entry.paidBy?.[family]);
+    if (!complete) expandedPaidExpenses.delete(entry.id);
     const shares = familyShares.map(([family, amount]) => `<div class="expenses-share-row${family !== entry.payer && entry.paidBy?.[family] ? " is-paid" : ""}"><span class="expenses-share-family">${expenseAvatars(expenseFamilies[family].filter((person) => entry.people.includes(person)))}<span>${expenseEscape(family)}</span></span><strong>${formatExpenseFamilyAmount(amount)}</strong><span class="expenses-share-status">${family === entry.payer ? '<span class="expenses-own-paid" title="Selbst bezahlt" aria-label="Selbst bezahlt">✓</span>' : `<input type="checkbox" data-expense-paid="${expenseEscape(entry.id)}" data-family="${expenseEscape(family)}" aria-label="Anteil von ${expenseEscape(family)} als bezahlt markieren" ${entry.paidBy?.[family] ? "checked" : ""}>`}</span></div>`).join("");
     const shareTable = shares ? `<div class="expenses-share-table"><div class="expenses-share-header"><span>Familie</span><span>Anteil</span><span>Bezahlt</span></div>${shares}</div>` : "";
-    return `<div class="expenses-card expenses-timeline-entry${complete ? " is-paid" : ""}"><div class="expenses-entry"><strong>${title}</strong><strong>${formatEuro((Number(entry.cents) || 0) / 100)}</strong></div><p>${details}</p>${participants}${complete ? '<p class="expenses-paid-status">Vollständig bezahlt</p>' : ""}${shareTable}</div>`;
+    const header = `<div class="expenses-entry"><strong>${title}</strong><strong>${formatEuro((Number(entry.cents) || 0) / 100)}</strong></div>`;
+    const contents = `<p>${details}</p>${participants}${shareTable}`;
+    if (complete) return `<div class="expenses-card expenses-timeline-entry is-paid"><details data-paid-expense="${expenseEscape(entry.id)}" ${expandedPaidExpenses.has(entry.id) ? "open" : ""}><summary>${header}<span class="expenses-paid-status">Vollständig bezahlt</span></summary>${contents}</details></div>`;
+    return `<div class="expenses-card expenses-timeline-entry">${header}${contents}</div>`;
   }).join("") : '<p class="expenses-intro">Noch keine Ausgaben eingetragen.</p>';
 }
+
+document.getElementById("expenses-list").addEventListener("toggle", (event) => {
+  const details = event.target;
+  if (!details.matches("details[data-paid-expense]")) return;
+  if (details.open) expandedPaidExpenses.add(details.dataset.paidExpense);
+  else expandedPaidExpenses.delete(details.dataset.paidExpense);
+}, true);
 
 function prepareExpenseForm() {
   const form = document.getElementById("expense-form");
